@@ -2,7 +2,7 @@
   "name": "pbl4",
   "version": "1.0.0",
   "description": "��#\u0000 \u0000P\u0000B\u0000L\u00004\u0000\r\u0000 \u0000",
-  "main": "index.js",
+  "main": "assets/js/script.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
@@ -19,6 +19,7 @@
   },
   "homepage": "https://github.com/thdyqt/PBL4#readme",
   "devDependencies": {
-    "electron": "^43.4.1"
+    "electron": "^43.4.1",
+    "electron-reload": "^2.0.0-alpha.1"
   }
 }
