@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FastDown — Tải xuống đa luồng</title>
+    <link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body>
+    <main class="app-shell">
+        <section class="hero">
+            <div class="brand-mark" aria-hidden="true">↓</div>
+            <div>
+                <p class="eyebrow">WINDOWS DOWNLOAD ACCELERATOR</p>
+                <h1>FastDown</h1>
+                <p class="subtitle">Tải tệp nhanh hơn bằng nhiều kết nối song song.</p>
+            </div>
+            <div class="connection-status"><span></span> Sẵn sàng tải</div>
+        </section>
+
+        <section class="download-form" aria-label="Tạo tác vụ tải xuống">
+            <label for="url">Liên kết tải về</label>
+            <div class="url-row">
+                <input id="url" type="url" inputmode="url" placeholder="https://example.com/tep-can-tai.zip" autocomplete="url">
+                <button id="paste-button" class="secondary-button" type="button">Dán liên kết</button>
+            </div>
+            <div class="options-row">
+                <div class="save-field">
+                    <label for="save-path">Lưu tại</label>
+                    <div class="path-row">
+                        <input id="save-path" type="text" placeholder="Chưa chọn vị trí lưu" readonly>
+                        <button id="browse-button" class="secondary-button" type="button">Chọn nơi lưu</button>
+                    </div>
+                </div>
+                <label class="thread-field" for="threads">Số luồng
+                    <select id="threads">
+                        <option value="1">1 luồng</option>
+                        <option value="2">2 luồng</option>
+                        <option value="4" selected>4 luồng</option>
+                        <option value="8">8 luồng</option>
+                        <option value="12">12 luồng</option>
+                        <option value="16">16 luồng</option>
+                    </select>
+                </label>
+                <button id="start-button" class="primary-button" type="button">Bắt đầu tải</button>
+            </div>
+            <p id="form-message" class="form-message" role="status"></p>
+        </section>
+
+        <section class="downloads-section" aria-labelledby="downloads-title">
+            <div class="section-heading">
+                <div>
+                    <p class="eyebrow">HÀNG ĐỢI</p>
+                    <h2 id="downloads-title">Tệp đang tải</h2>
+                </div>
+                <span id="download-count" class="count-badge">0 tác vụ</span>
+            </div>
+            <div id="empty-state" class="empty-state">
+                <div class="empty-icon">⇩</div>
+                <h3>Chưa có tệp nào</h3>
+                <p>Dán liên kết tải về, chọn vị trí lưu rồi bắt đầu.</p>
+            </div>
+            <div id="download-list" class="download-list" aria-live="polite"></div>
+        </section>
+        <footer>FastDown sử dụng HTTP Range Requests. Máy chủ không hỗ trợ Range sẽ tự động tải một luồng.</footer>
+    </main>
+    <script src="assets/js/renderer.js"></script>
+</body>
+</html>

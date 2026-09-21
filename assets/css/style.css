@@ -1,0 +1,62 @@
+@import url('https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap');
+
+:root { color: #172033; background: #f6f8fc; font-family: 'Be Vietnam Pro', system-ui, sans-serif; }
+* { box-sizing: border-box; }
+body { margin: 0; min-width: 320px; min-height: 100vh; background: radial-gradient(circle at 8% 0%, #e7eeff 0, transparent 26rem), #f6f8fc; color: #172033; }
+button, input, select { font: inherit; }
+button { cursor: pointer; }
+button:disabled { cursor: wait; opacity: .62; }
+.app-shell { width: min(1060px, calc(100% - 48px)); margin: 0 auto; padding: 48px 0 28px; }
+.hero { display: flex; align-items: center; gap: 16px; margin-bottom: 35px; }
+.brand-mark { display: grid; width: 50px; height: 50px; place-items: center; border-radius: 15px; background: linear-gradient(135deg, #3159e8, #6c43df); box-shadow: 0 12px 25px #4e5bd33b; color: white; font-size: 31px; font-weight: 600; }
+.eyebrow { margin: 0 0 5px; color: #5d6e93; font: 500 10px 'DM Mono', monospace; letter-spacing: .12em; }
+h1, h2, h3, p { margin-top: 0; }
+h1 { margin-bottom: 3px; font-size: 27px; letter-spacing: -.04em; }
+.subtitle { margin: 0; color: #68738b; font-size: 13px; }
+.connection-status { margin-left: auto; display: flex; align-items: center; gap: 7px; color: #5a6781; font-size: 12px; }
+.connection-status span { width: 8px; height: 8px; background: #36bf83; border-radius: 50%; box-shadow: 0 0 0 4px #36bf8321; }
+.download-form, .downloads-section { border: 1px solid #e5e9f2; border-radius: 18px; background: rgba(255, 255, 255, .92); box-shadow: 0 8px 35px #263c7310; }
+.download-form { padding: 23px; }
+label { display: block; color: #35425c; font-size: 12px; font-weight: 600; }
+.url-row, .path-row { display: flex; gap: 9px; margin-top: 8px; }
+input, select { width: 100%; border: 1px solid #dce2ed; outline: none; border-radius: 9px; background: #fff; color: #19253d; transition: border-color .2s, box-shadow .2s; }
+input { height: 43px; padding: 0 13px; font-size: 13px; }
+input:focus, select:focus { border-color: #566fe2; box-shadow: 0 0 0 3px #586fe21c; }
+input[readonly] { color: #65708a; background: #fafbfe; }
+.secondary-button, .primary-button, .card-action, .icon-button { border: 0; border-radius: 9px; white-space: nowrap; font-size: 12px; font-weight: 600; transition: transform .15s, background .15s; }
+.secondary-button { padding: 0 14px; color: #36435c; background: #edf0f6; }
+.secondary-button:hover { background: #e2e7f1; }
+.options-row { display: flex; align-items: end; gap: 15px; margin-top: 17px; }
+.save-field { flex: 1; min-width: 0; }
+.thread-field { width: 114px; flex: none; }
+select { height: 40px; margin-top: 8px; padding: 0 9px; font-size: 12px; }
+.primary-button { height: 40px; padding: 0 19px; color: #fff; background: #3458db; box-shadow: 0 6px 14px #3458db36; }
+.primary-button:hover { background: #274acb; transform: translateY(-1px); }
+.form-message { min-height: 17px; margin: 12px 0 0; color: #5570cc; font-size: 11px; }
+.form-message.error { color: #c64b56; }
+.downloads-section { margin-top: 22px; padding: 23px; }
+.section-heading { display: flex; justify-content: space-between; align-items: center; }
+h2 { margin-bottom: 0; font-size: 18px; letter-spacing: -.025em; }
+.count-badge { padding: 5px 9px; border-radius: 20px; color: #63708a; background: #f0f3f8; font: 500 10px 'DM Mono', monospace; }
+.empty-state { padding: 47px 10px 45px; color: #6e7890; text-align: center; }
+.empty-state[hidden] { display: none; }
+.empty-icon { display: grid; width: 38px; height: 38px; place-items: center; margin: 0 auto 12px; border-radius: 12px; color: #6d7db1; background: #edf1fb; font-size: 24px; }
+.empty-state h3 { margin-bottom: 5px; color: #3f4b62; font-size: 14px; }
+.empty-state p { margin: 0; font-size: 12px; }
+.download-list { display: grid; gap: 10px; margin-top: 19px; }
+.download-card { display: flex; align-items: center; gap: 13px; padding: 14px 13px; border: 1px solid #e8ecf4; border-radius: 12px; background: #fff; }
+.download-card.completed { border-color: #d5eee4; background: #fcfffd; }
+.download-card.failed { border-color: #f2dadd; }
+.file-icon { display: grid; width: 36px; height: 36px; flex: none; place-items: center; border-radius: 10px; color: #4d63bd; background: #e9edfc; font-size: 19px; font-weight: 700; }
+.completed .file-icon { color: #279567; background: #e4f7ef; }
+.download-content { flex: 1; min-width: 0; }
+.file-line { display: flex; align-items: center; gap: 8px; }
+.file-line h3 { overflow: hidden; margin: 0; color: #29354c; font-size: 13px; font-weight: 600; text-overflow: ellipsis; white-space: nowrap; }
+.state { flex: none; padding: 3px 6px; border-radius: 4px; color: #526dd2; background: #eff2fe; font: 500 9px 'DM Mono', monospace; }
+.state.completed { color: #298d65; background: #e7f7f0; }.state.paused { color: #927335; background: #fff5d9; }.state.failed { color: #b64852; background: #fdebed; }
+.path { overflow: hidden; margin: 3px 0 7px; color: #8993a7; font-size: 10px; text-overflow: ellipsis; white-space: nowrap; }
+.progress-track { height: 5px; overflow: hidden; border-radius: 999px; background: #edf0f6; }.progress-track span { display: block; height: 100%; border-radius: inherit; background: linear-gradient(90deg, #4167e5, #8462e8); transition: width .3s ease; }.completed .progress-track span { background: #33b67d; }.failed .progress-track span { background: #db6973; }
+.download-meta { display: flex; justify-content: space-between; gap: 12px; margin-top: 6px; color: #7a8498; font: 400 9px 'DM Mono', monospace; }.download-meta span:last-child { overflow: hidden; text-align: right; text-overflow: ellipsis; white-space: nowrap; }
+.card-actions { display: flex; align-items: center; gap: 6px; }.card-action { padding: 8px 10px; color: #4c61b8; background: #edf0fc; }.card-action:hover { background: #e3e8fb; }.icon-button { display: grid; width: 29px; height: 29px; place-items: center; color: #8b94a7; background: transparent; font-size: 20px; font-weight: 400; }.icon-button:hover { color: #be4c58; background: #fff0f1; }
+footer { margin: 18px 2px 0; color: #8b94a7; font-size: 10px; text-align: center; }
+@media (max-width: 680px) { .app-shell { width: min(100% - 28px, 1060px); padding-top: 28px; }.connection-status { display: none; }.options-row { align-items: stretch; flex-wrap: wrap; }.save-field { min-width: 100%; }.thread-field { flex: 1; }.primary-button { flex: 1; }.download-meta { display: block; }.download-meta span:last-child { display: block; margin-top: 3px; text-align: left; }.card-action { display: none; } }
