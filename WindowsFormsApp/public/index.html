@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DUT Download Accelerator</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.3.1/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/viewerjs/1.13.0/viewer.min.css" integrity="sha512-eLs5UFuWC/5nAsCUuBbx9W8ry51hsWDqpnhWUjE4aGAzgdO3iPB+KiaaTqH3IKT2OFAO66hOrnR6O2YlJvDdjw==" crossorigin="anonymous" referrerpolicy="no-referrer">
+    <link rel="stylesheet" href="https://unpkg.com/aos@2.3.1/dist/aos.css">
+</head>
+<body>
+    <!-- Section-1 -->
+    <div class="section-1" data-aos="fade-up" data-aos-duration="800">
+        <div class="container">
+            <div class="inner-wrap">
+                <div class="inner-brand">
+                    <img src="images/Logo.png" alt="Logo">
+                    <div class="inner-title">
+                        <h1>DUT Download Accelerator</h1>
+                        <div>PBL4 - Hệ thống tăng tốc tải về</div>
+                    </div>
+                </div>
+                <div class="inner-status"><span></span> Sẵn sàng tải</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Section-2 -->
+    <div class="section-2" data-aos="fade-up" data-aos-duration="800" data-aos-delay="150">
+        <div class="container">
+            <div class="inner-wrap">
+                <div class="url-row">
+                    <label for="url" class="inner-label">Liên kết tải về</label>
+                    <div class="url-input">
+                        <input type="url" class="inner-input" id="url" name="url" inputmode="url" placeholder="https://example.com/tep-can-tai.zip" autocomplete="url">
+                        <i class="fa-regular fa-copy"></i>
+                    </div>
+                </div>
+                <div class="options-row">
+                    <div class="save-field">
+                        <label for="save-path" class="inner-label">Lưu tại</label>
+                        <div class="save-path-row">
+                            <input type="text" class="inner-input" id="save-path" name="savePath" placeholder="Chưa chọn vị trí lưu" readonly>
+                            <button class="inner-browse-button">Chọn nơi lưu</button>
+                        </div>
+                    </div>
+                    <div class="thread-field">
+                        <label for="thread" class="inner-label">Số luồng</label>
+                        <div class="thread-row">
+                            <select name="thread" id="thread">
+                                <option value="1">1 luồng</option>
+                                <option value="2">2 luồng</option>
+                                <option value="4" selected>4 luồng</option>
+                                <option value="8">8 luồng</option>
+                                <option value="12">12 luồng</option>
+                                <option value="16">16 luồng</option>
+                            </select>
+                            <button class="inner-download-button">Bắt đầu tải</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Section-3 -->
+    <div class="container">
+        <div class="section-3" data-aos="fade-up" data-aos-duration="800" data-aos-delay="300">
+            <div class="inner-head">
+                <div>
+                    <div class="inner-queue-label">HÀNG ĐỢI</div>
+                    <h2 class="inner-download-title">Tệp đang tải</h2>
+                </div>
+                <div>
+                    <div class="inner-count-badge">0 tác vụ</div>
+                </div>
+            </div>
+            <div class="inner-state">
+                <i class="fa-solid fa-circle-down"></i>
+                <h3>Chưa có tệp nào</h3>
+                <div>Dán liên kết tải về, chọn vị trí lưu rồi bắt đầu.</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+    <script src="https://unpkg.com/just-validate@latest/dist/just-validate.production.min.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
