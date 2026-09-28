@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PBL4 - Advanced Download Manager</title>
+    <!-- Tích hợp thư viện Icon -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="app-layout">
+        <!-- Cột Menu Trái -->
+        <aside class="sidebar">
+            <div class="logo">
+                <i class="fa-solid fa-cloud-arrow-down"></i>
+                <span>PBL4 Downloader</span>
+            </div>
+            <nav class="categories">
+                <div class="nav-title">DANH MỤC</div>
+                <a href="#" class="active"><i class="fa-solid fa-layer-group"></i> Tất cả</a>
+                <a href="#"><i class="fa-solid fa-spinner"></i> Đang tải</a>
+                <a href="#"><i class="fa-solid fa-circle-check"></i> Đã hoàn thành</a>
+                <a href="#"><i class="fa-solid fa-music"></i> Âm thanh</a>
+                <a href="#"><i class="fa-solid fa-video"></i> Video</a>
+                <a href="#"><i class="fa-solid fa-file-zipper"></i> Nén / Tài liệu</a>
+            </nav>
+        </aside>
+
+        <!-- Khu vực Nội dung chính -->
+        <main class="main-content">
+            <!-- Thanh Công cụ (Toolbar) -->
+            <header class="toolbar">
+                <button id="btnAdd" class="btn btn-primary"><i class="fa-solid fa-plus"></i> Thêm URL</button>
+                <button class="btn btn-secondary"><i class="fa-solid fa-play"></i> Tiếp tục</button>
+                <button class="btn btn-secondary"><i class="fa-solid fa-pause"></i> Tạm dừng</button>
+                <button class="btn btn-danger"><i class="fa-solid fa-trash"></i> Xóa</button>
+                <button class="btn btn-icon"><i class="fa-solid fa-gear"></i></button>
+            </header>
+
+            <!-- Bảng Dữ liệu (Data Grid) -->
+            <div class="data-grid-container">
+                <table class="data-grid">
+                    <thead>
+                        <tr>
+                            <th width="30"><input type="checkbox"></th>
+                            <th>Tên Tập Tin</th>
+                            <th width="100">Kích Thước</th>
+                            <th width="120">Tình Trạng</th>
+                            <th width="120">Tốc Độ</th>
+                            <th width="100">Thời Gian</th>
+                            <th width="200">Tiến Trình (Đa luồng)</th>
+                        </tr>
+                    </thead>
+                    <tbody id="downloadTableBody">
+                        <!-- Dữ liệu mẫu tĩnh -->
+                        <tr>
+                            <td><input type="checkbox"></td>
+                            <td><i class="fa-solid fa-file-zipper file-icon"></i> ubuntu-22.04-desktop-amd64.iso</td>
+                            <td>4.6 GB</td>
+                            <td><span class="status completed">Hoàn thành</span></td>
+                            <td>0 KB/s</td>
+                            <td>00:00:00</td>
+                            <td>
+                                <div class="progress-bar-container">
+                                    <div class="progress-fill" style="width: 100%; background: #2ecc71;"></div>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </main>
+    </div>
+
+    <!-- Cửa sổ nổi (Modal) Thêm URL Mới -->
+    <div class="modal-overlay" id="addUrlModal">
+        <div class="modal-box">
+            <div class="modal-header">
+                <h3>Thêm Liên Kết Tải Về Mới</h3>
+                <button class="close-btn" id="btnCloseModal"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>Địa chỉ (URL):</label>
+                    <input type="text" id="urlInput" placeholder="http://...">
+                </div>
+                <div class="form-group row">
+                    <div class="col">
+                        <label>Lưu vào:</label>
+                        <input type="text" value="C:\Users\Downloads\" disabled>
+                    </div>
+                    <div class="col">
+                        <label>Số luồng (Threads):</label>
+                        <select id="threadCount">
+                            <option value="4">4 Luồng</option>
+                            <option value="8" selected>8 Luồng</option>
+                            <option value="16">16 Luồng</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" id="btnCancelModal">Hủy</button>
+                <button class="btn btn-primary" id="btnStartDownload">Bắt đầu tải</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
