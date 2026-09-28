@@ -12,6 +12,8 @@
     <FileAlignment>512</FileAlignment>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
     <Deterministic>true</Deterministic>
+    <NuGetPackageImportStamp>
+    </NuGetPackageImportStamp>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <PlatformTarget>AnyCPU</PlatformTarget>
@@ -33,6 +35,15 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="Microsoft.Web.WebView2.Core, Version=1.0.4191.47, Culture=neutral, PublicKeyToken=2a8ab48044d2601e, processorArchitecture=MSIL">
+      <HintPath>packages\Microsoft.Web.WebView2.1.0.4191.47\lib\net462\Microsoft.Web.WebView2.Core.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.Web.WebView2.WinForms, Version=1.0.4191.47, Culture=neutral, PublicKeyToken=2a8ab48044d2601e, processorArchitecture=MSIL">
+      <HintPath>packages\Microsoft.Web.WebView2.1.0.4191.47\lib\net462\Microsoft.Web.WebView2.WinForms.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.Web.WebView2.Wpf, Version=1.0.4191.47, Culture=neutral, PublicKeyToken=2a8ab48044d2601e, processorArchitecture=MSIL">
+      <HintPath>packages\Microsoft.Web.WebView2.1.0.4191.47\lib\net462\Microsoft.Web.WebView2.Wpf.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Xml.Linq" />
@@ -52,8 +63,12 @@
     <Compile Include="Form1.Designer.cs">
       <DependentUpon>Form1.cs</DependentUpon>
     </Compile>
+    <Compile Include="obj\Debug\.NETFramework,Version=v4.8.AssemblyAttributes.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <EmbeddedResource Include="Form1.resx">
+      <DependentUpon>Form1.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="Properties\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
@@ -63,6 +78,28 @@
       <AutoGen>True</AutoGen>
       <DependentUpon>Resources.resx</DependentUpon>
     </Compile>
+    <None Include="obj\Debug\DesignTimeResolveAssemblyReferences.cache" />
+    <None Include="obj\Debug\DesignTimeResolveAssemblyReferencesInput.cache" />
+    <None Include="obj\Debug\WindowsFormsApp.csproj.AssemblyReference.cache" />
+    <None Include="packages.config" />
+    <None Include="packages\Microsoft.Web.WebView2.1.0.4191.47\.signature.p7s" />
+    <None Include="packages\Microsoft.Web.WebView2.1.0.4191.47\buildTransitive\Microsoft.Web.WebView2.targets" />
+    <None Include="packages\Microsoft.Web.WebView2.1.0.4191.47\build\Common.targets" />
+    <None Include="packages\Microsoft.Web.WebView2.1.0.4191.47\build\Microsoft.Web.WebView2.targets" />
+    <None Include="packages\Microsoft.Web.WebView2.1.0.4191.47\build\native\arm64\WebView2Loader.dll.lib" />
+    <None Include="packages\Microsoft.Web.WebView2.1.0.4191.47\build\native\arm64\WebView2LoaderStatic.lib" />
+    <None Include="packages\Microsoft.Web.WebView2.1.0.4191.47\build\native\include-winrt\WebView2Interop.tlb" />
+    <None Include="packages\Microsoft.Web.WebView2.1.0.4191.47\build\native\Microsoft.Web.WebView2.targets" />
+    <None Include="packages\Microsoft.Web.WebView2.1.0.4191.47\build\native\x64\WebView2Loader.dll.lib" />
+    <None Include="packages\Microsoft.Web.WebView2.1.0.4191.47\build\native\x64\WebView2LoaderStatic.lib" />
+    <None Include="packages\Microsoft.Web.WebView2.1.0.4191.47\build\native\x86\WebView2Loader.dll.lib" />
+    <None Include="packages\Microsoft.Web.WebView2.1.0.4191.47\build\native\x86\WebView2LoaderStatic.lib" />
+    <None Include="packages\Microsoft.Web.WebView2.1.0.4191.47\build\wv2winrt.targets" />
+    <None Include="packages\Microsoft.Web.WebView2.1.0.4191.47\lib\Microsoft.Web.WebView2.Core.winmd" />
+    <None Include="packages\Microsoft.Web.WebView2.1.0.4191.47\Microsoft.Web.WebView2.1.0.4191.47.nupkg" />
+    <None Include="packages\Microsoft.Web.WebView2.1.0.4191.47\tools\wv2winrt\winrt_winmd.winmd" />
+    <None Include="packages\Microsoft.Web.WebView2.1.0.4191.47\tools\wv2winrt\wv2winrt.exe.config" />
+    <None Include="packages\Microsoft.Web.WebView2.1.0.4191.47\WebView2.tlb" />
     <None Include="Properties\Settings.settings">
       <Generator>SettingsSingleFileGenerator</Generator>
       <LastGenOutput>Settings.Designer.cs</LastGenOutput>
@@ -76,5 +113,99 @@
   <ItemGroup>
     <None Include="App.config" />
   </ItemGroup>
+  <ItemGroup>
+    <Content Include="packages\Microsoft.Web.WebView2.1.0.4191.47\build\native\arm64\WebView2Loader.dll" />
+    <Content Include="packages\Microsoft.Web.WebView2.1.0.4191.47\build\native\include-winrt\WebView2Interop.h" />
+    <Content Include="packages\Microsoft.Web.WebView2.1.0.4191.47\build\native\include-winrt\WebView2Interop.idl" />
+    <Content Include="packages\Microsoft.Web.WebView2.1.0.4191.47\build\native\include\WebView2.h" />
+    <Content Include="packages\Microsoft.Web.WebView2.1.0.4191.47\build\native\include\WebView2EnvironmentOptions.h" />
+    <Content Include="packages\Microsoft.Web.WebView2.1.0.4191.47\build\native\x64\WebView2Loader.dll" />
+    <Content Include="packages\Microsoft.Web.WebView2.1.0.4191.47\build\native\x86\WebView2Loader.dll" />
+    <Content Include="packages\Microsoft.Web.WebView2.1.0.4191.47\build\WebView2Rules.Project.xml" />
+    <Content Include="packages\Microsoft.Web.WebView2.1.0.4191.47\lib\net462\Microsoft.Web.WebView2.Core.dll" />
+    <Content Include="packages\Microsoft.Web.WebView2.1.0.4191.47\lib\net462\Microsoft.Web.WebView2.Core.xml" />
+    <Content Include="packages\Microsoft.Web.WebView2.1.0.4191.47\lib\net462\Microsoft.Web.WebView2.WinForms.dll" />
+    <Content Include="packages\Microsoft.Web.WebView2.1.0.4191.47\lib\net462\Microsoft.Web.WebView2.WinForms.xml" />
+    <Content Include="packages\Microsoft.Web.WebView2.1.0.4191.47\lib\net462\Microsoft.Web.WebView2.Wpf.dll" />
+    <Content Include="packages\Microsoft.Web.WebView2.1.0.4191.47\lib\net462\Microsoft.Web.WebView2.Wpf.xml" />
+    <Content Include="packages\Microsoft.Web.WebView2.1.0.4191.47\lib_manual\net5.0-windows10.0.17763.0\Microsoft.Web.WebView2.Wpf.dll" />
+    <Content Include="packages\Microsoft.Web.WebView2.1.0.4191.47\lib_manual\net5.0-windows10.0.17763.0\Microsoft.Web.WebView2.Wpf.xml" />
+    <Content Include="packages\Microsoft.Web.WebView2.1.0.4191.47\lib_manual\net6.0-windows10.0.17763.0\Microsoft.Web.WebView2.Core.Projection.dll" />
+    <Content Include="packages\Microsoft.Web.WebView2.1.0.4191.47\lib_manual\net8.0-windows10.0.17763.0\Microsoft.Web.WebView2.Core.Projection.dll" />
+    <Content Include="packages\Microsoft.Web.WebView2.1.0.4191.47\lib_manual\netcoreapp3.0\Microsoft.Web.WebView2.Core.dll" />
+    <Content Include="packages\Microsoft.Web.WebView2.1.0.4191.47\lib_manual\netcoreapp3.0\Microsoft.Web.WebView2.Core.xml" />
+    <Content Include="packages\Microsoft.Web.WebView2.1.0.4191.47\lib_manual\netcoreapp3.0\Microsoft.Web.WebView2.WinForms.dll" />
+    <Content Include="packages\Microsoft.Web.WebView2.1.0.4191.47\lib_manual\netcoreapp3.0\Microsoft.Web.WebView2.WinForms.xml" />
+    <Content Include="packages\Microsoft.Web.WebView2.1.0.4191.47\lib_manual\netcoreapp3.0\Microsoft.Web.WebView2.Wpf.dll" />
+    <Content Include="packages\Microsoft.Web.WebView2.1.0.4191.47\lib_manual\netcoreapp3.0\Microsoft.Web.WebView2.Wpf.xml" />
+    <Content Include="packages\Microsoft.Web.WebView2.1.0.4191.47\LICENSE.txt" />
+    <Content Include="packages\Microsoft.Web.WebView2.1.0.4191.47\NOTICE.txt" />
+    <Content Include="packages\Microsoft.Web.WebView2.1.0.4191.47\runtimes\win-arm64\native\WebView2Loader.dll" />
+    <Content Include="packages\Microsoft.Web.WebView2.1.0.4191.47\runtimes\win-arm64\native_uap\Microsoft.Web.WebView2.Core.dll" />
+    <Content Include="packages\Microsoft.Web.WebView2.1.0.4191.47\runtimes\win-x64\native\WebView2Loader.dll" />
+    <Content Include="packages\Microsoft.Web.WebView2.1.0.4191.47\runtimes\win-x64\native_uap\Microsoft.Web.WebView2.Core.dll" />
+    <Content Include="packages\Microsoft.Web.WebView2.1.0.4191.47\runtimes\win-x86\native\WebView2Loader.dll" />
+    <Content Include="packages\Microsoft.Web.WebView2.1.0.4191.47\runtimes\win-x86\native_uap\Microsoft.Web.WebView2.Core.dll" />
+    <Content Include="packages\Microsoft.Web.WebView2.1.0.4191.47\tools\VisualStudioToolsManifest.xml" />
+    <Content Include="packages\Microsoft.Web.WebView2.1.0.4191.47\tools\wv2winrt\Antlr3.Runtime.dll" />
+    <Content Include="packages\Microsoft.Web.WebView2.1.0.4191.47\tools\wv2winrt\Antlr4.StringTemplate.dll" />
+    <Content Include="packages\Microsoft.Web.WebView2.1.0.4191.47\tools\wv2winrt\codegen_util.dll" />
+    <Content Include="packages\Microsoft.Web.WebView2.1.0.4191.47\tools\wv2winrt\concrt140_app.dll" />
+    <Content Include="packages\Microsoft.Web.WebView2.1.0.4191.47\tools\wv2winrt\cs\System.CommandLine.resources.dll" />
+    <Content Include="packages\Microsoft.Web.WebView2.1.0.4191.47\tools\wv2winrt\de\System.CommandLine.resources.dll" />
+    <Content Include="packages\Microsoft.Web.WebView2.1.0.4191.47\tools\wv2winrt\es\System.CommandLine.resources.dll" />
+    <Content Include="packages\Microsoft.Web.WebView2.1.0.4191.47\tools\wv2winrt\fr\System.CommandLine.resources.dll" />
+    <Content Include="packages\Microsoft.Web.WebView2.1.0.4191.47\tools\wv2winrt\it\System.CommandLine.resources.dll" />
+    <Content Include="packages\Microsoft.Web.WebView2.1.0.4191.47\tools\wv2winrt\ja\System.CommandLine.resources.dll" />
+    <Content Include="packages\Microsoft.Web.WebView2.1.0.4191.47\tools\wv2winrt\ko\System.CommandLine.resources.dll" />
+    <Content Include="packages\Microsoft.Web.WebView2.1.0.4191.47\tools\wv2winrt\msvcp140_1_app.dll" />
+    <Content Include="packages\Microsoft.Web.WebView2.1.0.4191.47\tools\wv2winrt\msvcp140_2_app.dll" />
+    <Content Include="packages\Microsoft.Web.WebView2.1.0.4191.47\tools\wv2winrt\msvcp140_app.dll" />
+    <Content Include="packages\Microsoft.Web.WebView2.1.0.4191.47\tools\wv2winrt\pl\System.CommandLine.resources.dll" />
+    <Content Include="packages\Microsoft.Web.WebView2.1.0.4191.47\tools\wv2winrt\pt-BR\System.CommandLine.resources.dll" />
+    <Content Include="packages\Microsoft.Web.WebView2.1.0.4191.47\tools\wv2winrt\ru\System.CommandLine.resources.dll" />
+    <Content Include="packages\Microsoft.Web.WebView2.1.0.4191.47\tools\wv2winrt\System.Buffers.dll" />
+    <Content Include="packages\Microsoft.Web.WebView2.1.0.4191.47\tools\wv2winrt\System.CommandLine.dll" />
+    <Content Include="packages\Microsoft.Web.WebView2.1.0.4191.47\tools\wv2winrt\System.CommandLine.DragonFruit.dll" />
+    <Content Include="packages\Microsoft.Web.WebView2.1.0.4191.47\tools\wv2winrt\System.CommandLine.Rendering.dll" />
+    <Content Include="packages\Microsoft.Web.WebView2.1.0.4191.47\tools\wv2winrt\System.Memory.dll" />
+    <Content Include="packages\Microsoft.Web.WebView2.1.0.4191.47\tools\wv2winrt\System.Numerics.Vectors.dll" />
+    <Content Include="packages\Microsoft.Web.WebView2.1.0.4191.47\tools\wv2winrt\System.Runtime.CompilerServices.Unsafe.dll" />
+    <Content Include="packages\Microsoft.Web.WebView2.1.0.4191.47\tools\wv2winrt\tr\System.CommandLine.resources.dll" />
+    <Content Include="packages\Microsoft.Web.WebView2.1.0.4191.47\tools\wv2winrt\type_hierarchy.dll" />
+    <Content Include="packages\Microsoft.Web.WebView2.1.0.4191.47\tools\wv2winrt\vcamp140_app.dll" />
+    <Content Include="packages\Microsoft.Web.WebView2.1.0.4191.47\tools\wv2winrt\vccorlib140_app.dll" />
+    <Content Include="packages\Microsoft.Web.WebView2.1.0.4191.47\tools\wv2winrt\vcomp140_app.dll" />
+    <Content Include="packages\Microsoft.Web.WebView2.1.0.4191.47\tools\wv2winrt\vcruntime140_app.dll" />
+    <Content Include="packages\Microsoft.Web.WebView2.1.0.4191.47\tools\wv2winrt\winrt_winmd.dll" />
+    <Content Include="packages\Microsoft.Web.WebView2.1.0.4191.47\tools\wv2winrt\wv2winrt.exe" />
+    <Content Include="packages\Microsoft.Web.WebView2.1.0.4191.47\tools\wv2winrt\wv2winrt.xml" />
+    <Content Include="packages\Microsoft.Web.WebView2.1.0.4191.47\tools\wv2winrt\zh-Hans\System.CommandLine.resources.dll" />
+    <Content Include="packages\Microsoft.Web.WebView2.1.0.4191.47\tools\wv2winrt\zh-Hant\System.CommandLine.resources.dll" />
+    <Content Include="packages\Microsoft.Web.WebView2.1.0.4191.47\WebView2.idl" />
+    <Content Include="public\images\Logo.png">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="public\index.html">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="public\script.js">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="public\style.css">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="bin\Debug\" />
+    <Folder Include="obj\Debug\TempPE\" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <Import Project="packages\Microsoft.Web.WebView2.1.0.4191.47\build\Microsoft.Web.WebView2.targets" Condition="Exists('packages\Microsoft.Web.WebView2.1.0.4191.47\build\Microsoft.Web.WebView2.targets')" />
+  <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
+    <PropertyGroup>
+      <ErrorText>This project references NuGet package(s) that are missing on this computer. Use NuGet Package Restore to download them.  For more information, see http://go.microsoft.com/fwlink/?LinkID=322105. The missing file is {0}.</ErrorText>
+    </PropertyGroup>
+    <Error Condition="!Exists('packages\Microsoft.Web.WebView2.1.0.4191.47\build\Microsoft.Web.WebView2.targets')" Text="$([System.String]::Format('$(ErrorText)', 'packages\Microsoft.Web.WebView2.1.0.4191.47\build\Microsoft.Web.WebView2.targets'))" />
+  </Target>
 </Project>
