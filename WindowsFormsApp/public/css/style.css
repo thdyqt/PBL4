@@ -408,7 +408,7 @@ a {
 .section-2 .inner-wrap {
     display: flex;
     flex-direction: column;
-    gap: 20px;
+    gap: 30px;
     background-color: white;
     padding: 20px 25px 40px 25px;
     border-radius: 10px;
@@ -422,6 +422,42 @@ a {
     display: flex;
     flex-direction: column;
     gap: 8px;
+}
+
+.section-2 form .url-input, .section-2 form .save-path-row {
+    position: relative;
+}
+
+.section-2 form .just-validate-error-label {
+    position: absolute;
+    top: calc(100% + 4px); 
+    left: 4px;
+    font-size: 12px;
+    font-weight: 500;
+    color: #ef4444; 
+    animation: slideDownFade 0.3s ease-out forwards; 
+    white-space: nowrap;
+    pointer-events: none; 
+}
+
+.section-2 form input.just-validate-error-field {
+    border-color: #ef4444 !important;
+    background-color: #fef2f2 !important;
+}
+
+.section-2 form .url-input:has(input.just-validate-error-field) {
+    border-color: #ef4444 !important;
+    background-color: #fef2f2 !important;
+    box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.1) !important; 
+}
+
+.section-2 form input.just-validate-success-field {
+    border-color: #10b981 !important;
+}
+
+.section-2 form .url-input:has(input.just-validate-success-field) {
+    border-color: #10b981 !important;
+    box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.1) !important; 
 }
 
 .section-2 .inner-label {
@@ -698,4 +734,15 @@ a {
     0% { box-shadow: 0 0 0 0 rgba(49, 217, 85, 0.7); }
     70% { box-shadow: 0 0 0 6px rgba(49, 217, 85, 0); }
     100% { box-shadow: 0 0 0 0 rgba(49, 217, 85, 0); }
+}
+
+@keyframes slideDownFade {
+    from { 
+        opacity: 0; 
+        transform: translateY(-4px); 
+    }
+    to { 
+        opacity: 1; 
+        transform: translateY(0); 
+    }
 }

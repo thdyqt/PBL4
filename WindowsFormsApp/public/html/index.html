@@ -26,40 +26,42 @@
 
         <!-- Section-2 -->
         <div class="section-2" data-aos="fade-up" data-aos-duration="800" data-aos-delay="150">
-            <div class="container">
-                <div class="inner-wrap">
-                    <div class="url-row">
-                        <label for="url" class="inner-label">Liên kết tải về</label>
-                        <div class="url-input">
-                            <input type="url" class="inner-input" id="url" name="url" inputmode="url" placeholder="https://example.com/tep-can-tai.zip" autocomplete="url">
-                            <i class="fa-regular fa-copy"></i>
-                        </div>
-                    </div>
-                    <div class="options-row">
-                        <div class="save-field">
-                            <label for="save-path" class="inner-label">Lưu tại</label>
-                            <div class="save-path-row">
-                                <input type="text" class="inner-input" id="save-path" name="savePath" placeholder="Chưa chọn vị trí lưu" readonly>
-                                <button class="inner-browse-button">Chọn nơi lưu</button>
+            <form id="input-form">
+                <div class="container">
+                    <div class="inner-wrap">
+                        <div class="url-row">
+                            <label for="url" class="inner-label">Liên kết tải về</label>
+                            <div class="url-input">
+                                <input type="url" class="inner-input" id="url" name="url" inputmode="url" placeholder="https://example.com/tep-can-tai.zip" autocomplete="url">
+                                <i class="fa-regular fa-clipboard btn-paste"></i>
                             </div>
                         </div>
-                        <div class="thread-field">
-                            <label for="thread" class="inner-label">Số luồng</label>
-                            <div class="thread-row">
-                                <select name="thread" id="thread">
-                                    <option value="1">1 luồng</option>
-                                    <option value="2">2 luồng</option>
-                                    <option value="4" selected>4 luồng</option>
-                                    <option value="8">8 luồng</option>
-                                    <option value="12">12 luồng</option>
-                                    <option value="16">16 luồng</option>
-                                </select>
-                                <button class="inner-download-button">Bắt đầu tải</button>
+                        <div class="options-row">
+                            <div class="save-field">
+                                <label for="save-path" class="inner-label">Lưu tại</label>
+                                <div class="save-path-row">
+                                    <input type="text" class="inner-input" id="save-path" name="save-path" placeholder="Chưa chọn vị trí lưu" readonly>
+                                    <button type="button" class="inner-browse-button">Chọn nơi lưu</button>
+                                </div>
+                            </div>
+                            <div class="thread-field">
+                                <label for="thread" class="inner-label">Số luồng</label>
+                                <div class="thread-row">
+                                    <select name="thread" id="thread">
+                                        <option value="1">1 luồng</option>
+                                        <option value="2">2 luồng</option>
+                                        <option value="4" selected>4 luồng</option>
+                                        <option value="8">8 luồng</option>
+                                        <option value="12">12 luồng</option>
+                                        <option value="16">16 luồng</option>
+                                    </select>
+                                    <button type="submit" class="inner-download-button">Bắt đầu tải</button>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
-            </div>
+            </form>
         </div>
 
         <!-- Section-3 -->
