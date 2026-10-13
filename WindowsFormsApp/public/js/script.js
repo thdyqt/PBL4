@@ -136,47 +136,55 @@ if (inputForm) {
             const savePath = event.target.savePath.value;
             const thread = event.target.thread.value;
 
-            // 1. Trích xuất tên file từ URL 
+            // 1. Trích xuất tên file từ URL
             const fileName = url.substring(url.lastIndexOf('/') + 1) || "unknown_file";
 
-            // 2. Ẩn trạng thái "Chưa có tệp nào"
+            // 2. Tạo một ID duy nhất cho tác vụ này (dựa vào thời gian thực)
+            const taskId = 'task-' + Date.now();
+
+            // 3. Ẩn trạng thái "Chưa có tệp nào"
             const emptyState = document.getElementById("empty-state");
             if (emptyState) emptyState.style.display = "none";
 
-            // 3. Cập nhật số lượng tác vụ
-            const taskCounter = document.getElementById("task-counter");
-            if (taskCounter) taskCounter.textContent = "1 tác vụ";
-
+            // 4. Tạo mã HTML cho tệp đang tải (Sử dụng taskId cho các thẻ chứa dữ liệu)
             const downloadHTML = `
-                <div class="download-item" id="task-1">
+                <div class="download-item" id="${taskId}">
                     <div class="progress-header">
                         <div class="file-info">
                             <i class="fa-solid fa-file-zipper"></i>
                             <span class="file-name">${fileName}</span>
                         </div>
-                        <div class="progress-percentage" id="percent-text">0%</div>
+                        <div class="progress-percentage" id="${taskId}-percent">0%</div>
                     </div>
                     
                     <div class="progress-bar-container">
-                        <div class="progress-bar-fill" id="main-progress"></div>
+                        <div class="progress-bar-fill" id="${taskId}-progress"></div>
                     </div>
                     
                     <div class="progress-stats">
-                        <span class="stat-item">Tốc độ: <b id="speed-text">Đang tính...</b></span>
-                        <span class="stat-item">Đã tải: <b id="downloaded-text">0 MB / -- MB</b></span>
-                        <span class="stat-item">Còn lại: <b id="eta-text">--:--</b></span>
+                        <span class="stat-item">Tốc độ: <b id="${taskId}-speed">Đang tính...</b></span>
+                        <span class="stat-item">Đã tải: <b id="${taskId}-downloaded">0 MB / -- MB</b></span>
+                        <span class="stat-item">Còn lại: <b id="${taskId}-eta">--:--</b></span>
                     </div>
                 </div>
             `;
 
-            // 5. Bơm HTML vào danh sách
+            // 5. Bơm HTML vào danh sách 
             const downloadList = document.getElementById("download-list");
             if (downloadList) {
-                downloadList.innerHTML = downloadHTML; 
+                downloadList.insertAdjacentHTML('afterbegin', downloadHTML); 
+            }
+
+            // 6. Cập nhật số lượng tác vụ linh hoạt
+            const taskCounter = document.getElementById("task-counter"); 
+            if (taskCounter && downloadList) {
+                const currentTasks = downloadList.querySelectorAll('.download-item').length;
+                taskCounter.textContent = `${currentTasks} tác vụ`;
             }
 
             const payload = JSON.stringify({
                 action: "START_DOWNLOAD", 
+                taskId: taskId, 
                 url: url,
                 savePath: savePath,
                 thread: thread
@@ -184,8 +192,13 @@ if (inputForm) {
 
             if (window.chrome && window.chrome.webview) {
                 window.chrome.webview.postMessage(payload);
+                console.log("Đã gửi tác vụ mới:", taskId);
             } else {
                 console.log("Đã giả lập gửi lệnh xuống C#:", payload);
             }
+            
+            // 8. Reset lại form sau khi bấm tải để nhập link mới nhanh hơn
+            event.target.reset();
+            document.getElementById('save-path').value = '';
         });
 }
