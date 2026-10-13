@@ -128,12 +128,52 @@ if (inputForm) {
                 errorMessage: "Vui lòng chọn vị trí lưu file!"
             },
         ])
+        
         .onSuccess(event => {
             event.preventDefault();
 
             const url = event.target.url.value;
             const savePath = event.target.savePath.value;
             const thread = event.target.thread.value;
+
+            // 1. Trích xuất tên file từ URL 
+            const fileName = url.substring(url.lastIndexOf('/') + 1) || "unknown_file";
+
+            // 2. Ẩn trạng thái "Chưa có tệp nào"
+            const emptyState = document.getElementById("empty-state");
+            if (emptyState) emptyState.style.display = "none";
+
+            // 3. Cập nhật số lượng tác vụ
+            const taskCounter = document.getElementById("task-counter");
+            if (taskCounter) taskCounter.textContent = "1 tác vụ";
+
+            const downloadHTML = `
+                <div class="download-item" id="task-1">
+                    <div class="progress-header">
+                        <div class="file-info">
+                            <i class="fa-solid fa-file-zipper"></i>
+                            <span class="file-name">${fileName}</span>
+                        </div>
+                        <div class="progress-percentage" id="percent-text">0%</div>
+                    </div>
+                    
+                    <div class="progress-bar-container">
+                        <div class="progress-bar-fill" id="main-progress"></div>
+                    </div>
+                    
+                    <div class="progress-stats">
+                        <span class="stat-item">Tốc độ: <b id="speed-text">Đang tính...</b></span>
+                        <span class="stat-item">Đã tải: <b id="downloaded-text">0 MB / -- MB</b></span>
+                        <span class="stat-item">Còn lại: <b id="eta-text">--:--</b></span>
+                    </div>
+                </div>
+            `;
+
+            // 5. Bơm HTML vào danh sách
+            const downloadList = document.getElementById("download-list");
+            if (downloadList) {
+                downloadList.innerHTML = downloadHTML; 
+            }
 
             const payload = JSON.stringify({
                 action: "START_DOWNLOAD", 
@@ -142,13 +182,10 @@ if (inputForm) {
                 thread: thread
             });
 
-            // Gửi dữ liệu xuyên qua WebView2 xuống cho Backend C#
             if (window.chrome && window.chrome.webview) {
                 window.chrome.webview.postMessage(payload);
-                
-                console.log("Đã bắn tín hiệu START_DOWNLOAD xuống C#");
             } else {
-                alert("Tính năng tải chỉ hoạt động khi chạy trên phần mềm Desktop!");
+                console.log("Đã giả lập gửi lệnh xuống C#:", payload);
             }
-        })
+        });
 }
