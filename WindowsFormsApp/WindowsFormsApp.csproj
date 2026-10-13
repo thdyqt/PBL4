@@ -255,4 +255,7 @@
     <Error Condition="!Exists('packages\System.ValueTuple.4.6.2\build\net471\System.ValueTuple.targets')" Text="$([System.String]::Format('$(ErrorText)', 'packages\System.ValueTuple.4.6.2\build\net471\System.ValueTuple.targets'))" />
   </Target>
   <Import Project="packages\System.ValueTuple.4.6.2\build\net471\System.ValueTuple.targets" Condition="Exists('packages\System.ValueTuple.4.6.2\build\net471\System.ValueTuple.targets')" />
+    <ItemGroup>
+		<Content Include="public\**\*" />
+	</ItemGroup>
 </Project>
