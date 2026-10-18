@@ -65,37 +65,37 @@ class Sider extends HTMLElement {
                 <div class="inner-menu-title">DANH MỤC</div>
                 <ul class="inner-menu">
                     <li>
-                        <a class="active" href="#">
+                        <a class="active" href="#" data-filter="home">
                             <i class="fa-solid fa-house"></i> Trang chủ
                         </a>
                     </li>
                     <li>
-                        <a href="#">
+                        <a href="#" data-filter="all">
                             <i class="fa-solid fa-layer-group"></i> Tất cả
                         </a>
                     </li>
                     <li>
-                        <a href="#">
+                        <a href="#" data-filter="downloading">
                             <i class="fa-solid fa-spinner"></i> Đang tải
                         </a>
                     </li>
                     <li>
-                        <a href="#">
+                        <a href="#" data-filter="completed">
                             <i class="fa-solid fa-circle-check"></i> Đã hoàn thành
                         </a>
                     </li>
                     <li>
-                        <a href="#">
+                        <a href="#" data-filter="audio">
                             <i class="fa-solid fa-music"></i> Âm thanh
                         </a>
                     </li>
                     <li>
-                        <a href="#">
+                        <a href="#" data-filter="video">
                             <i class="fa-solid fa-video"></i> Video
                         </a>
                     </li>
                     <li>
-                        <a href="#">
+                        <a href="#" data-filter="document">
                             <i class="fa-solid fa-file-zipper"></i> Nén / Tài liệu
                         </a>
                     </li>

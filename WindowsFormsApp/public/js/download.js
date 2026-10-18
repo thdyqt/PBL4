@@ -43,7 +43,7 @@
             status.className = "download-status";
             item.appendChild(status);
         }
-        if (segmentCount > 1 && !item.querySelector(".segment-bars")) {
+        if (segmentCount >= 1 && !item.querySelector(".segment-bars")) {
             const wrap = document.createElement("div");
             wrap.className = "segment-bars";
             for (let i = 0; i < segmentCount; i++) {
@@ -59,10 +59,24 @@
         if (!item) return;
 
         const status = ensureExtras(item, d.supportsRanges ? (d.segments || []).length : 0);
+        const previousState = item.dataset.state;
         item.dataset.state = d.state;
+        if (d.targetPath) item.dataset.targetPath = d.targetPath;
 
         const nameEl = item.querySelector(".file-name");
-        if (nameEl && d.fileName) nameEl.textContent = d.fileName;
+        if (nameEl && d.fileName) {
+            nameEl.textContent = d.fileName;
+            if (window.getFileCategory) {
+                const cat = window.getFileCategory(d.fileName);
+                item.dataset.category = cat;
+                const icon = item.querySelector(".file-info i");
+                if (icon) {
+                    icon.className = cat === "audio" ? "fa-solid fa-music" :
+                                     cat === "video" ? "fa-solid fa-video" :
+                                     cat === "document" ? "fa-solid fa-file-zipper" : "fa-solid fa-file";
+                }
+            }
+        }
 
         const known = d.totalBytes > 0;
         const ratio = known ? Math.min(d.downloaded / d.totalBytes, 1) : 0;
@@ -75,8 +89,33 @@
 
         set("percent", known || d.state === "completed" ? percent + "%" : "...");
         set("downloaded", `${fmtBytes(d.downloaded)} / ${known ? fmtBytes(d.totalBytes) : "--"}`);
-        set("speed", d.state === "downloading" ? fmtBytes(d.speed) + "/s" : "—");
-        set("eta", d.state === "downloading" ? fmtEta(d.etaSeconds) : "--:--");
+
+        if (d.state === "completed") {
+            if (!item.dataset.elapsedTime) {
+                const startTime = parseInt(item.dataset.startTime || Date.now(), 10);
+                const elapsedSec = Math.max(0.1, (Date.now() - startTime) / 1000).toFixed(1);
+                item.dataset.elapsedTime = elapsedSec;
+
+                const avgSpeedStr = (d.totalBytes > 0 && parseFloat(elapsedSec) > 0)
+                    ? fmtBytes(d.totalBytes / parseFloat(elapsedSec)) + "/s"
+                    : "";
+                item.dataset.avgSpeed = avgSpeedStr;
+
+                console.log(`[KẾT QUẢ TẢI] Tệp: ${d.fileName || "unknown"} | Số luồng: ${d.threads} | Dung lượng: ${fmtBytes(d.totalBytes)} | Thời gian: ${elapsedSec}s${avgSpeedStr ? ` | Tốc độ TB: ${avgSpeedStr}` : ""}`);
+            }
+
+            const elapsedSec = item.dataset.elapsedTime;
+            const avgSpeed = item.dataset.avgSpeed;
+
+            const etaLabel = document.getElementById(`${d.taskId}-eta-label`);
+            if (etaLabel) etaLabel.textContent = "Thời gian tải:";
+
+            set("eta", elapsedSec ? elapsedSec + "s" : "--:--");
+            set("speed", avgSpeed ? avgSpeed : "—");
+        } else {
+            set("speed", d.state === "downloading" ? fmtBytes(d.speed) + "/s" : "—");
+            set("eta", d.state === "downloading" ? fmtEta(d.etaSeconds) : "--:--");
+        }
 
         const bar = document.getElementById(`${d.taskId}-progress`);
         if (bar) bar.style.width = percent + "%";
@@ -92,11 +131,30 @@
             text += d.supportsRanges
                 ? ` — ${d.threads} luồng`
                 : " — 1 luồng (server không hỗ trợ Range)";
+        } else if (d.state === "completed") {
+            const elapsedSec = item.dataset.elapsedTime;
+            const avgSpeed = item.dataset.avgSpeed;
+            text = `Hoàn thành — ${d.threads} luồng` +
+                   (elapsedSec ? ` (Thời gian: ${elapsedSec}s${avgSpeed ? ` — Tốc độ TB: ${avgSpeed}` : ""})` : "");
         }
         if (d.state === "failed" && d.error) text += ": " + d.error;
         status.textContent = text;
         status.classList.toggle("is-error", d.state === "failed");
         status.classList.toggle("is-done", d.state === "completed");
+
+        if (d.state === "completed" && !item.querySelector(".download-actions")) {
+            const actions = document.createElement("div");
+            actions.className = "download-actions";
+            actions.innerHTML = `
+                <button type="button" class="btn-action btn-open-file" data-action="open-file"><i class="fa-solid fa-arrow-up-right-from-square"></i> Mở file</button>
+                <button type="button" class="btn-action btn-open-folder" data-action="open-folder"><i class="fa-regular fa-folder-open"></i> Mở thư mục</button>
+            `;
+            item.appendChild(actions);
+        }
+
+        if (previousState !== d.state && window.applyFilter) {
+            window.applyFilter();
+        }
     }
 
     function applyError(msg) {
@@ -106,6 +164,7 @@
         item.dataset.state = "failed";
         status.textContent = "Lỗi: " + msg.message;
         status.classList.add("is-error");
+        if (window.applyFilter) window.applyFilter();
     }
 
     if (hasHost) {
@@ -122,15 +181,35 @@
 
     // ---------- số tác vụ + trạng thái rỗng ----------
     window.updateTaskCounter = function () {
-        const count = document.querySelectorAll("#download-list .download-item").length;
-        const badge = document.querySelector(".inner-count-badge");
-        if (badge) badge.textContent = `${count} tác vụ`;
-        const empty = document.getElementById("empty-state");
-        if (empty) empty.style.display = count === 0 ? "" : "none";
+        if (window.applyFilter) {
+            window.applyFilter();
+        } else {
+            const count = document.querySelectorAll("#download-list .download-item").length;
+            const badge = document.querySelector(".inner-count-badge");
+            if (badge) badge.textContent = `${count} tác vụ`;
+            const empty = document.getElementById("empty-state");
+            if (empty) empty.style.display = count === 0 ? "" : "none";
+        }
     };
 
-    // ---------- chọn tác vụ + nút trên header ----------
+    // ---------- chọn tác vụ + nút trên header / tác vụ hoàn thành ----------
     document.addEventListener("click", (e) => {
+        const actionBtn = e.target.closest(".download-actions .btn-action");
+        if (actionBtn) {
+            const item = actionBtn.closest(".download-item");
+            if (!item) return;
+            const action = actionBtn.dataset.action;
+            const taskId = item.id;
+            const path = item.dataset.targetPath || "";
+
+            if (action === "open-file") {
+                post({ action: "OPEN_FILE", taskId: taskId, path: path });
+            } else if (action === "open-folder") {
+                post({ action: "OPEN_FOLDER", taskId: taskId, path: path });
+            }
+            return;
+        }
+
         const item = e.target.closest(".download-item");
         if (item) item.classList.toggle("selected");
 

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.IO;
 using System.Text.Json;
 using System.Threading.Tasks;
@@ -55,7 +55,7 @@ namespace WindowsFormsApp.IPC
                                 string taskId = GetString(root, "taskId");
                                 string url = GetString(root, "url");
                                 string savePath = GetString(root, "savePath");
-                                int threads = GetInt(root, "thread", 4);
+                                int threads = GetInt(root, "thread", GetInt(root, "threads", 4));
                                 _ = HandleStartDownloadAsync(taskId, url, savePath, threads);
                                 break;
                             }
@@ -75,6 +75,14 @@ namespace WindowsFormsApp.IPC
                         case "SET_SPEED_LIMIT":
                             // kbps = KB/giây, 0 = không giới hạn
                             _manager.SpeedLimitBytesPerSecond = GetInt(root, "kbps", 0) * 1024L;
+                            break;
+
+                        case "OPEN_FILE":
+                            HandleOpenFile(GetString(root, "taskId"), GetString(root, "path"));
+                            break;
+
+                        case "OPEN_FOLDER":
+                            HandleOpenFolder(GetString(root, "taskId"), GetString(root, "path"));
                             break;
                     }
                 }
@@ -228,6 +236,68 @@ namespace WindowsFormsApp.IPC
         {
             var response = new { action = "DOWNLOAD_ERROR", taskId = taskId, message = message };
             _mainForm.SendToWeb(JsonSerializer.Serialize(response));
+        }
+
+        private void HandleOpenFile(string taskId, string path)
+        {
+            try
+            {
+                string targetPath = !string.IsNullOrWhiteSpace(path) ? path : _manager.GetTargetPath(taskId);
+                if (string.IsNullOrWhiteSpace(targetPath) || !File.Exists(targetPath))
+                {
+                    MessageBox.Show("Tệp không tồn tại hoặc đã bị di chuyển.", "Thông báo", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    return;
+                }
+
+                System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+                {
+                    FileName = targetPath,
+                    UseShellExecute = true
+                });
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Không thể mở tệp: " + ex.Message, "Lỗi", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        private void HandleOpenFolder(string taskId, string path)
+        {
+            try
+            {
+                string targetPath = !string.IsNullOrWhiteSpace(path) ? path : _manager.GetTargetPath(taskId);
+                if (string.IsNullOrWhiteSpace(targetPath))
+                {
+                    MessageBox.Show("Không tìm thấy đường dẫn tệp.", "Thông báo", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    return;
+                }
+
+                if (File.Exists(targetPath))
+                {
+                    // Mở thư mục và chọn (bôi đen) tệp trong File Explorer
+                    System.Diagnostics.Process.Start("explorer.exe", "/select,\"" + targetPath + "\"");
+                }
+                else
+                {
+                    string folder = Path.GetDirectoryName(targetPath);
+                    if (!string.IsNullOrWhiteSpace(folder) && Directory.Exists(folder))
+                    {
+                        System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+                        {
+                            FileName = folder,
+                            UseShellExecute = true
+                        });
+                    }
+                    else
+                    {
+                        MessageBox.Show("Thư mục chứa tệp không tồn tại.", "Thông báo", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Không thể mở thư mục: " + ex.Message, "Lỗi", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
         }
     }
 }

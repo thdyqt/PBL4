@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
@@ -194,6 +194,14 @@ namespace WindowsFormsApp.Download
         {
             DownloadJob job;
             if (_jobs.TryRemove(taskId, out job)) await job.CancelAsync().ConfigureAwait(false);
+        }
+
+        /// <summary>Lấy đường dẫn tệp đích của tác vụ theo taskId.</summary>
+        public string GetTargetPath(string taskId)
+        {
+            DownloadJob job;
+            if (_jobs.TryGetValue(taskId, out job)) return job.TargetPath;
+            return null;
         }
 
         public void Shutdown()

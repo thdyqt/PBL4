@@ -140,13 +140,21 @@ if (inputForm) {
 
             const url = event.target.url.value;
             const savePath = event.target.elements["save-path"].value;
-            const thread = event.target.thread.value;
+            const threadEl = document.getElementById("thread");
+            const threadNum = threadEl ? parseInt(threadEl.value, 10) : 4;
+            const thread = (!isNaN(threadNum) && threadNum >= 1) ? threadNum : 4;
 
-            // 1. Trích xuất tên file từ URL
+            // 1. Trích xuất tên file từ URL và xác định danh mục file
             let fileName = "unknown_file";
             try {
                 fileName = decodeURIComponent(new URL(url).pathname.split("/").pop()) || fileName;
             } catch (e) { /* giữ tên mặc định, C# sẽ gửi lại tên thật */ }
+
+            const category = window.getFileCategory ? window.getFileCategory(fileName) : "other";
+            let iconClass = "fa-solid fa-file";
+            if (category === "audio") iconClass = "fa-solid fa-music";
+            else if (category === "video") iconClass = "fa-solid fa-video";
+            else if (category === "document") iconClass = "fa-solid fa-file-zipper";
 
             // 2. Tạo một ID duy nhất cho tác vụ này (dựa vào thời gian thực)
             const taskId = 'task-' + Date.now();
@@ -157,10 +165,10 @@ if (inputForm) {
 
             // 4. Tạo mã HTML cho tệp đang tải (Sử dụng taskId cho các thẻ chứa dữ liệu)
             const downloadHTML = `
-                <div class="download-item" id="${taskId}">
+                <div class="download-item" id="${taskId}" data-state="preparing" data-category="${category}" data-start-time="${Date.now()}">
                     <div class="progress-header">
                         <div class="file-info">
-                            <i class="fa-solid fa-file-zipper"></i>
+                            <i class="${iconClass}"></i>
                             <span class="file-name">${fileName}</span>
                         </div>
                         <div class="progress-percentage" id="${taskId}-percent">0%</div>
@@ -173,7 +181,7 @@ if (inputForm) {
                     <div class="progress-stats">
                         <span class="stat-item">Tốc độ: <b id="${taskId}-speed">Đang tính...</b></span>
                         <span class="stat-item">Đã tải: <b id="${taskId}-downloaded">0 MB / -- MB</b></span>
-                        <span class="stat-item">Còn lại: <b id="${taskId}-eta">--:--</b></span>
+                        <span class="stat-item"><span id="${taskId}-eta-label">Còn lại:</span> <b id="${taskId}-eta">--:--</b></span>
                     </div>
                 </div>
             `;
@@ -184,26 +192,27 @@ if (inputForm) {
                 downloadList.insertAdjacentHTML('afterbegin', downloadHTML); 
             }
 
-            // 6. Cập nhật số lượng tác vụ (định nghĩa trong download.js)
-            if (window.updateTaskCounter) window.updateTaskCounter();
+            // 6. Cập nhật số lượng tác vụ và áp dụng bộ lọc hiện tại
+            if (window.applyFilter) window.applyFilter();
+            else if (window.updateTaskCounter) window.updateTaskCounter();
 
             const payload = JSON.stringify({
                 action: "START_DOWNLOAD", 
                 taskId: taskId, 
                 url: url,
                 savePath: savePath,
-                thread: parseInt(thread, 10)
+                thread: thread,
+                threads: thread
             });
 
             if (window.chrome && window.chrome.webview) {
                 window.chrome.webview.postMessage(payload);
-                console.log("Đã gửi tác vụ mới:", taskId);
+                console.log("Đã gửi tác vụ mới:", taskId, "Số luồng:", thread);
             } else {
                 console.log("Đã giả lập gửi lệnh xuống C#:", payload);
             }
             
-            // 8. Reset lại form sau khi bấm tải để nhập link mới nhanh hơn
-            event.target.reset();
-            document.getElementById('save-path').value = '';
+            // 8. Chỉ xóa ô URL để có thể tải tiếp tệp khác, giữ nguyên số luồng và nơi lưu đã chọn
+            if (urlInput) urlInput.value = '';
         });
 }

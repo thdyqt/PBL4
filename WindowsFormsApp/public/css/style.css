@@ -865,3 +865,80 @@ a {
     background-color: #2A73A3;
     transition: width 0.3s ease;
 }
+
+/* Nút thao tác khi tải xong */
+.download-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 14px;
+    padding-top: 12px;
+    border-top: 1px dashed #E2E8F0;
+    animation: slideDownFade 0.3s ease forwards;
+}
+
+.download-actions .btn-action {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 14px;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    border: 1px solid #E2E8F0;
+    background-color: #FFFFFF;
+    color: #334155;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.download-actions .btn-action:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+}
+
+.download-actions .btn-action i {
+    font-size: 13px;
+    transition: transform 0.2s ease;
+}
+
+.download-actions .btn-action:hover i {
+    transform: scale(1.15);
+}
+
+.download-actions .btn-open-file {
+    background-color: #EFF6FF;
+    border-color: #BFDBFE;
+    color: #1E5173;
+}
+
+.download-actions .btn-open-file i {
+    color: #1E5173;
+}
+
+.download-actions .btn-open-file:hover {
+    background-color: #1E5173;
+    border-color: #1E5173;
+    color: #FFFFFF;
+}
+
+.download-actions .btn-open-file:hover i {
+    color: #FFFFFF;
+}
+
+.download-actions .btn-open-folder {
+    background-color: #F8FAFC;
+    border-color: #E2E8F0;
+    color: #475569;
+}
+
+.download-actions .btn-open-folder i {
+    color: #64748B;
+}
+
+.download-actions .btn-open-folder:hover {
+    background-color: #F1F5F9;
+    border-color: #CBD5E1;
+    color: #1E293B;
+}
+
