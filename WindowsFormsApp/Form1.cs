@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
@@ -26,20 +26,28 @@ namespace WindowsFormsApp
 
         private async void InitializeWebView()
         {
-            // 1. Chờ môi trường WebView2 khởi động xong
-            await webView.EnsureCoreWebView2Async(null);
+            try
+            {
+                // 1. Chờ môi trường WebView2 khởi động xong
+                await webView.EnsureCoreWebView2Async(null);
 
-            // 2. Lấy đường dẫn gốc của ứng dụng (thư mục bin/Debug nơi chứa file .exe)
-            string appPath = Application.StartupPath;
+                // 2. Lấy đường dẫn gốc của ứng dụng (thư mục bin/Debug nơi chứa file .exe)
+                string appPath = Application.StartupPath;
 
-            // 3. Nối đường dẫn gốc với thư mục public để trỏ thẳng tới file index.html
-            string htmlFilePath = Path.Combine(appPath, "public/html", "index.html");
+                // 3. Nối đường dẫn gốc với thư mục public để trỏ thẳng tới file index.html
+                string htmlFilePath = Path.Combine(appPath, "public/html", "index.html");
 
-            // 4. Lắng nghe các thông điệp (messages) được gửi từ mã JavaScript ở Frontend
-            webView.CoreWebView2.WebMessageReceived += CoreWebView2_WebMessageReceived;
+                // 4. Lắng nghe các thông điệp (messages) được gửi từ mã JavaScript ở Frontend
+                webView.CoreWebView2.WebMessageReceived += CoreWebView2_WebMessageReceived;
 
-            // 5. Yêu cầu lõi WebView2 mở file giao diện cục bộ này lên
-            webView.CoreWebView2.Navigate(htmlFilePath);
+                // 5. Yêu cầu lõi WebView2 mở file giao diện cục bộ này lên
+                webView.CoreWebView2.Navigate(htmlFilePath);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Không khởi tạo được WebView2: " + ex.Message +
+                                "\nHãy cài WebView2 Runtime của Microsoft.", "Lỗi");
+            }
         }
 
         private void Form1_Load(object sender, EventArgs e)
@@ -47,14 +55,36 @@ namespace WindowsFormsApp
             InitializeWebView();
         }
 
+        protected override void OnFormClosing(FormClosingEventArgs e)
+        {
+            // Dừng các luồng tải và lưu tiến độ (file .dlmeta) để lần sau tiếp tục được
+            _messageHandler.Shutdown();
+            base.OnFormClosing(e);
+        }
+
         // --- Hàm bắt thông điệp IPC từ Web gửi tới C# ---
-        private void CoreWebView2_WebMessageReceived(object sender, Microsoft.Web.WebView2.Core.CoreWebView2WebMessageReceivedEventArgs e)
+        private void CoreWebView2_WebMessageReceived(object sender, CoreWebView2WebMessageReceivedEventArgs e)
         {
             string jsonMessage = e.TryGetWebMessageAsString();
             _messageHandler.ProcessMessage(jsonMessage);
         }
+
+        /// <summary>
+        /// Gửi JSON lên giao diện. An toàn khi gọi từ luồng nền (tiến độ tải được phát từ luồng khác):
+        /// WebView2 chỉ cho phép gọi trên luồng giao diện nên ta tự chuyển luồng.
+        /// </summary>
         public void SendToWeb(string jsonMessage)
         {
+            if (IsDisposed || !IsHandleCreated) return;
+
+            if (InvokeRequired)
+            {
+                try { BeginInvoke(new Action<string>(SendToWeb), jsonMessage); }
+                catch (ObjectDisposedException) { }
+                catch (InvalidOperationException) { }
+                return;
+            }
+
             if (webView != null && webView.CoreWebView2 != null)
             {
                 webView.CoreWebView2.PostWebMessageAsString(jsonMessage);
