@@ -44,9 +44,9 @@ class Header extends HTMLElement {
                         </div>
                     </div>
                     <div class="inner-button-list">
-                        <button class="inner-button btn-resume"><i class="fa-solid fa-play"></i> Tiếp tục</button>
-                        <button class="inner-button"><i class="fa-solid fa-pause"></i> Tạm dừng</button>
-                        <button class="inner-button btn-danger"><i class="fa-solid fa-trash"></i> Xóa</button>
+                        <button class="inner-button btn-resume" data-action="resume"><i class="fa-solid fa-play"></i> Tiếp tục</button>
+                        <button class="inner-button" data-action="pause"><i class="fa-solid fa-pause"></i> Tạm dừng</button>
+                        <button class="inner-button btn-danger" data-action="remove"><i class="fa-solid fa-trash"></i> Xóa</button>
                         <button class="inner-button btn-icon"><i class="fa-solid fa-gear"></i></button>
                         <button class="inner-button-menu"><i class="fa-solid fa-bars"></i></button>
                     </div>

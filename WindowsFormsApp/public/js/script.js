@@ -98,19 +98,6 @@ if (window.chrome && window.chrome.webview) {
                     }
                 }
             }
-            if (response.action === "DOWNLOAD_ACCEPTED") {
-                console.log("C# đã nhận lệnh tải:", response.data);
-                const speedEl = document.getElementById(`${response.taskId}-speed`);
-                if (speedEl) speedEl.textContent = "Đã nhận lệnh";
-            }
-
-            if (response.action === "DOWNLOAD_ERROR") {
-                const speedEl = document.getElementById(`${response.taskId}-speed`);
-                if (speedEl) {
-                    speedEl.textContent = response.message;
-                    speedEl.style.color = "#dc2626";
-                }
-            }
 
         } catch (error) {
             console.error("Lỗi đọc dữ liệu từ C#: ", error);
@@ -151,15 +138,15 @@ if (inputForm) {
         .onSuccess(event => {
             event.preventDefault();
 
-            const form = event.target;
-            const url = form.elements["url"].value.trim();
-            const savePath = form.elements["save-path"].value;
-            const thread = parseInt(form.elements["thread"].value, 10); // gửi số, không gửi chuỗi
+            const url = event.target.url.value;
+            const savePath = event.target.elements["save-path"].value;
+            const thread = event.target.thread.value;
 
+            // 1. Trích xuất tên file từ URL
             let fileName = "unknown_file";
             try {
                 fileName = decodeURIComponent(new URL(url).pathname.split("/").pop()) || fileName;
-            } catch (e) { /* giữ tên mặc định */ }
+            } catch (e) { /* giữ tên mặc định, C# sẽ gửi lại tên thật */ }
 
             // 2. Tạo một ID duy nhất cho tác vụ này (dựa vào thời gian thực)
             const taskId = 'task-' + Date.now();
@@ -197,18 +184,15 @@ if (inputForm) {
                 downloadList.insertAdjacentHTML('afterbegin', downloadHTML); 
             }
 
-            // 6. Cập nhật số lượng tác vụ linh hoạt
-            const badge = document.querySelector(".inner-count-badge");
-            if (badge && downloadList) {
-                badge.textContent = `${downloadList.querySelectorAll(".download-item").length} tác vụ`;
-            }
+            // 6. Cập nhật số lượng tác vụ (định nghĩa trong download.js)
+            if (window.updateTaskCounter) window.updateTaskCounter();
 
             const payload = JSON.stringify({
                 action: "START_DOWNLOAD", 
                 taskId: taskId, 
                 url: url,
                 savePath: savePath,
-                thread: thread
+                thread: parseInt(thread, 10)
             });
 
             if (window.chrome && window.chrome.webview) {

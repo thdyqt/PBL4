@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
@@ -14,6 +15,11 @@ namespace WindowsFormsApp
         [STAThread]
         static void Main()
         {
+            // .NET Framework mặc định chỉ cho 2 kết nối đồng thời tới cùng một máy chủ.
+            // Không nâng giới hạn này thì 16 luồng tải thực chất vẫn chỉ chạy 2 luồng.
+            ServicePointManager.DefaultConnectionLimit = 64;
+            ServicePointManager.SecurityProtocol |= SecurityProtocolType.Tls12;
+
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
             Application.Run(new Form1());
