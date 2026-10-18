@@ -87,6 +87,7 @@ namespace WindowsFormsApp.IPC
                 }
             }
         }
+        
         private void HandleStartDownload(JsonElement root)
         {
             string taskId = root.GetProperty("taskId").GetString();
