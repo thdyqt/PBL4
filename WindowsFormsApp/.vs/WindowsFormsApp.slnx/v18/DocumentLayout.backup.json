@@ -3,7 +3,11 @@
   "WorkspaceRootPath": "C:\\PBL4-Branch\\WindowsFormsApp\\",
   "Documents": [
     {
-      "AbsoluteMoniker": "D:0:0:{0CA66970-641B-47A6-920F-C34259560ECE}|WindowsFormsApp.csproj|c:\\pbl4-branch\\windowsformsapp\\form1.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "AbsoluteMoniker": "D:0:0:{0CA66970-641B-47A6-920F-C34259560ECE}|WindowsFormsApp.csproj|c:\\pbl4-branch\\windowsformsapp\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{0CA66970-641B-47A6-920F-C34259560ECE}|WindowsFormsApp.csproj|solutionrelative:program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{0CA66970-641B-47A6-920F-C34259560ECE}|WindowsFormsApp.csproj|C:\\PBL4-Branch\\WindowsFormsApp\\form1.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{0CA66970-641B-47A6-920F-C34259560ECE}|WindowsFormsApp.csproj|solutionrelative:form1.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
@@ -31,27 +35,39 @@
             {
               "$type": "Document",
               "DocumentIndex": 0,
-              "Title": "Form1.cs",
-              "DocumentMoniker": "C:\\PBL4-Branch\\WindowsFormsApp\\Form1.cs",
-              "RelativeDocumentMoniker": "Form1.cs",
-              "ToolTip": "C:\\PBL4-Branch\\WindowsFormsApp\\Form1.cs",
-              "RelativeToolTip": "Form1.cs",
-              "ViewState": "AgIAAEEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Title": "Program.cs",
+              "DocumentMoniker": "C:\\PBL4-Branch\\WindowsFormsApp\\Program.cs",
+              "RelativeDocumentMoniker": "Program.cs",
+              "ToolTip": "C:\\PBL4-Branch\\WindowsFormsApp\\Program.cs",
+              "RelativeToolTip": "Program.cs",
+              "ViewState": "AgIAABQAAAAAAAAAAAAiwBkAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-10-18T12:52:55.637Z",
+              "WhenOpened": "2026-10-18T13:25:35.966Z",
               "EditorCaption": ""
             },
             {
               "$type": "Document",
-              "DocumentIndex": 1,
+              "DocumentIndex": 2,
               "Title": "MessageHandler.cs",
               "DocumentMoniker": "C:\\PBL4-Branch\\WindowsFormsApp\\IPC\\MessageHandler.cs",
               "RelativeDocumentMoniker": "IPC\\MessageHandler.cs",
-              "ToolTip": "C:\\PBL4-Branch\\WindowsFormsApp\\IPC\\MessageHandler.cs",
-              "RelativeToolTip": "IPC\\MessageHandler.cs",
-              "ViewState": "AgIAAMwAAAAAAAAAAAAqwAAAAAAAAAAAAAAAAA==",
+              "ToolTip": "C:\\PBL4-Branch\\WindowsFormsApp\\IPC\\MessageHandler.cs*",
+              "RelativeToolTip": "IPC\\MessageHandler.cs*",
+              "ViewState": "AgIAALQAAAAAAAAAAAAUwLsAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
               "WhenOpened": "2026-10-18T12:49:08.394Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 1,
+              "Title": "Form1.cs",
+              "DocumentMoniker": "C:\\PBL4-Branch\\WindowsFormsApp\\Form1.cs",
+              "RelativeDocumentMoniker": "Form1.cs",
+              "ToolTip": "C:\\PBL4-Branch\\WindowsFormsApp\\Form1.cs*",
+              "RelativeToolTip": "Form1.cs*",
+              "ViewState": "AgIAAF4AAAAAAAAAAAAAAF4AAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-10-18T12:52:55.637Z"
             },
             {
               "$type": "Bookmark",

@@ -98,39 +98,6 @@ if (window.chrome && window.chrome.webview) {
                     }
                 }
             }
-            if (response.action === "DOWNLOAD_ACCEPTED") {
-                const d = response.data;
-                const item = document.getElementById(response.taskId);
-                if (item) {
-                    const nameEl = item.querySelector(".file-name");
-                    if (nameEl) nameEl.textContent = d.fileName;
-                }
-                const dl = document.getElementById(`${response.taskId}-downloaded`);
-                if (dl) dl.textContent = `0 / ${d.length >= 0 ? (d.length / 1048576).toFixed(2) + " MB" : "không rõ"}`;
-
-                const sp = document.getElementById(`${response.taskId}-speed`);
-                const n = d.segments ? d.segments.length : 0;
-                console.log("Các đoạn:", d.segments);
-                if (sp) sp.textContent = d.supportsRanges ? `Chia ${n} đoạn ✓` : "Chỉ tải 1 luồng";
-            }
-            if (response.action === "DOWNLOAD_DONE") {
-                const d = response.data;
-                const bar = document.getElementById(`${response.taskId}-progress`);
-                if (bar) bar.style.width = "100%";
-                const pct = document.getElementById(`${response.taskId}-percent`);
-                if (pct) pct.textContent = "100%";
-                const dl = document.getElementById(`${response.taskId}-downloaded`);
-                if (dl) dl.textContent = `${(d.bytes / 1048576).toFixed(2)} MB / ${(d.bytes / 1048576).toFixed(2)} MB`;
-                const sp = document.getElementById(`${response.taskId}-speed`);
-                if (sp) sp.textContent = `Xong: ${d.threads} luồng, ${(d.ms / 1000).toFixed(1)} s, ${d.mbPerSec.toFixed(2)} MB/s`;
-            }
-            if (response.action === "DOWNLOAD_ERROR") {
-                const speedEl = document.getElementById(`${response.taskId}-speed`);
-                if (speedEl) {
-                    speedEl.textContent = response.message;
-                    speedEl.style.color = "#dc2626";
-                }
-            }
 
         } catch (error) {
             console.error("Lỗi đọc dữ liệu từ C#: ", error);
@@ -171,15 +138,15 @@ if (inputForm) {
         .onSuccess(event => {
             event.preventDefault();
 
-            const form = event.target;
-            const url = form.elements["url"].value.trim();
-            const savePath = form.elements["save-path"].value;
-            const thread = parseInt(form.elements["thread"].value, 10); // gửi số, không gửi chuỗi
+            const url = event.target.url.value;
+            const savePath = event.target.elements["save-path"].value;
+            const thread = event.target.thread.value;
 
+            // 1. Trích xuất tên file từ URL
             let fileName = "unknown_file";
             try {
                 fileName = decodeURIComponent(new URL(url).pathname.split("/").pop()) || fileName;
-            } catch (e) { /* giữ tên mặc định */ }
+            } catch (e) { /* giữ tên mặc định, C# sẽ gửi lại tên thật */ }
 
             // 2. Tạo một ID duy nhất cho tác vụ này (dựa vào thời gian thực)
             const taskId = 'task-' + Date.now();
@@ -217,18 +184,15 @@ if (inputForm) {
                 downloadList.insertAdjacentHTML('afterbegin', downloadHTML); 
             }
 
-            // 6. Cập nhật số lượng tác vụ linh hoạt
-            const badge = document.querySelector(".inner-count-badge");
-            if (badge && downloadList) {
-                badge.textContent = `${downloadList.querySelectorAll(".download-item").length} tác vụ`;
-            }
+            // 6. Cập nhật số lượng tác vụ (định nghĩa trong download.js)
+            if (window.updateTaskCounter) window.updateTaskCounter();
 
             const payload = JSON.stringify({
                 action: "START_DOWNLOAD", 
                 taskId: taskId, 
                 url: url,
                 savePath: savePath,
-                thread: thread
+                thread: parseInt(thread, 10)
             });
 
             if (window.chrome && window.chrome.webview) {
