@@ -3,34 +3,12 @@
   "WorkspaceRootPath": "C:\\PBL4-Branch\\WindowsFormsApp\\",
   "Documents": [
     {
-      "AbsoluteMoniker": "D:0:0:{D12EC702-1392-403A-AFC5-962C198A1850}|C:\\PBL4-Branch{380B8886-6064-4E03-8122-DFFFDCB9B9B1}|C:\\PBL4-Branch\\range_server.py||{3B902123-F8A7-4915-9F01-361F908088D0}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{0CA66970-641B-47A6-920F-C34259560ECE}|WindowsFormsApp.csproj|C:\\PBL4-Branch\\WindowsFormsApp\\public\\js\\script.js||{14D17961-FE51-464D-9111-C4AF11D7D99A}",
-      "RelativeMoniker": "D:0:0:{0CA66970-641B-47A6-920F-C34259560ECE}|WindowsFormsApp.csproj|solutionrelative:public\\js\\script.js||{14D17961-FE51-464D-9111-C4AF11D7D99A}"
+      "AbsoluteMoniker": "D:0:0:{0CA66970-641B-47A6-920F-C34259560ECE}|WindowsFormsApp.csproj|c:\\pbl4-branch\\windowsformsapp\\form1.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{0CA66970-641B-47A6-920F-C34259560ECE}|WindowsFormsApp.csproj|solutionrelative:form1.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
       "AbsoluteMoniker": "D:0:0:{0CA66970-641B-47A6-920F-C34259560ECE}|WindowsFormsApp.csproj|C:\\PBL4-Branch\\WindowsFormsApp\\ipc\\messagehandler.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{0CA66970-641B-47A6-920F-C34259560ECE}|WindowsFormsApp.csproj|solutionrelative:ipc\\messagehandler.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{0CA66970-641B-47A6-920F-C34259560ECE}|WindowsFormsApp.csproj|C:\\PBL4-Branch\\WindowsFormsApp\\form1.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{0CA66970-641B-47A6-920F-C34259560ECE}|WindowsFormsApp.csproj|solutionrelative:form1.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\pbl4-new\\assets\\js\\script.js||{14D17961-FE51-464D-9111-C4AF11D7D99A}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{0CA66970-641B-47A6-920F-C34259560ECE}|WindowsFormsApp.csproj|C:\\PBL4-Branch\\WindowsFormsApp\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{0CA66970-641B-47A6-920F-C34259560ECE}|WindowsFormsApp.csproj|solutionrelative:program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{0CA66970-641B-47A6-920F-C34259560ECE}|WindowsFormsApp.csproj|C:\\PBL4-Branch\\WindowsFormsApp\\download\\remoteprobe.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{0CA66970-641B-47A6-920F-C34259560ECE}|WindowsFormsApp.csproj|solutionrelative:download\\remoteprobe.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{0CA66970-641B-47A6-920F-C34259560ECE}|WindowsFormsApp.csproj|C:\\PBL4-Branch\\WindowsFormsApp\\public\\js\\components.js||{14D17961-FE51-464D-9111-C4AF11D7D99A}",
-      "RelativeMoniker": "D:0:0:{0CA66970-641B-47A6-920F-C34259560ECE}|WindowsFormsApp.csproj|solutionrelative:public\\js\\components.js||{14D17961-FE51-464D-9111-C4AF11D7D99A}"
     }
   ],
   "DocumentGroupContainers": [
@@ -53,105 +31,31 @@
             {
               "$type": "Document",
               "DocumentIndex": 0,
-              "Title": "range_server.py",
-              "DocumentMoniker": "C:\\PBL4-Branch\\range_server.py",
-              "RelativeDocumentMoniker": "..\\range_server.py",
-              "ToolTip": "C:\\PBL4-Branch\\range_server.py",
-              "RelativeToolTip": "..\\range_server.py",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAUAAAAJAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.002457|",
-              "WhenOpened": "2026-10-16T09:19:47.271Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 3,
               "Title": "Form1.cs",
               "DocumentMoniker": "C:\\PBL4-Branch\\WindowsFormsApp\\Form1.cs",
               "RelativeDocumentMoniker": "Form1.cs",
               "ToolTip": "C:\\PBL4-Branch\\WindowsFormsApp\\Form1.cs",
               "RelativeToolTip": "Form1.cs",
-              "ViewState": "AgIAABAAAAAAAAAAAAAIwBcAAAB5AAAAAAAAAA==",
+              "ViewState": "AgIAAEEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-10-16T09:11:19.896Z"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 5,
-              "Title": "Program.cs",
-              "DocumentMoniker": "C:\\PBL4-Branch\\WindowsFormsApp\\Program.cs",
-              "RelativeDocumentMoniker": "Program.cs",
-              "ToolTip": "C:\\PBL4-Branch\\WindowsFormsApp\\Program.cs",
-              "RelativeToolTip": "Program.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-10-13T15:44:16.095Z"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 6,
-              "Title": "RemoteProbe.cs",
-              "DocumentMoniker": "C:\\PBL4-Branch\\WindowsFormsApp\\Download\\RemoteProbe.cs",
-              "RelativeDocumentMoniker": "Download\\RemoteProbe.cs",
-              "ToolTip": "C:\\PBL4-Branch\\WindowsFormsApp\\Download\\RemoteProbe.cs",
-              "RelativeToolTip": "Download\\RemoteProbe.cs",
-              "ViewState": "AgIAAAkAAAAAAAAAAAAAAAAAAAANAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-10-15T17:02:07.897Z"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 2,
-              "Title": "MessageHandler.cs",
-              "DocumentMoniker": "C:\\PBL4-Branch\\WindowsFormsApp\\IPC\\MessageHandler.cs",
-              "RelativeDocumentMoniker": "IPC\\MessageHandler.cs",
-              "ToolTip": "C:\\PBL4-Branch\\WindowsFormsApp\\IPC\\MessageHandler.cs",
-              "RelativeToolTip": "IPC\\MessageHandler.cs",
-              "ViewState": "AgIAAK8AAAAAAAAAAAAAALwAAAARAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-10-15T11:20:13.113Z",
+              "WhenOpened": "2026-10-18T12:52:55.637Z",
               "EditorCaption": ""
             },
             {
               "$type": "Document",
               "DocumentIndex": 1,
-              "Title": "script.js",
-              "DocumentMoniker": "C:\\PBL4-Branch\\WindowsFormsApp\\public\\js\\script.js",
-              "RelativeDocumentMoniker": "public\\js\\script.js",
-              "ToolTip": "C:\\PBL4-Branch\\WindowsFormsApp\\public\\js\\script.js",
-              "RelativeToolTip": "public\\js\\script.js",
-              "ViewState": "AgIAAGkAAAAAAAAAAAAAAHgAAAANAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001646|",
-              "WhenOpened": "2026-10-15T11:15:25.458Z",
-              "EditorCaption": ""
+              "Title": "MessageHandler.cs",
+              "DocumentMoniker": "C:\\PBL4-Branch\\WindowsFormsApp\\IPC\\MessageHandler.cs",
+              "RelativeDocumentMoniker": "IPC\\MessageHandler.cs",
+              "ToolTip": "C:\\PBL4-Branch\\WindowsFormsApp\\IPC\\MessageHandler.cs",
+              "RelativeToolTip": "IPC\\MessageHandler.cs",
+              "ViewState": "AgIAAMwAAAAAAAAAAAAqwAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-10-18T12:49:08.394Z"
             },
             {
               "$type": "Bookmark",
               "Name": "ST:0:0:{269a02dc-6af8-11d3-bdc4-00c04f688e50}"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 4,
-              "Title": "script.js",
-              "DocumentMoniker": "C:\\pbl4-new\\assets\\js\\script.js",
-              "RelativeDocumentMoniker": "..\\..\\pbl4-new\\assets\\js\\script.js",
-              "ToolTip": "C:\\pbl4-new\\assets\\js\\script.js",
-              "RelativeToolTip": "..\\..\\pbl4-new\\assets\\js\\script.js",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001646|",
-              "WhenOpened": "2026-10-15T11:14:45.744Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 7,
-              "Title": "components.js",
-              "DocumentMoniker": "C:\\PBL4-Branch\\WindowsFormsApp\\public\\js\\components.js",
-              "RelativeDocumentMoniker": "public\\js\\components.js",
-              "ToolTip": "C:\\PBL4-Branch\\WindowsFormsApp\\public\\js\\components.js",
-              "RelativeToolTip": "public\\js\\components.js",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001646|",
-              "WhenOpened": "2026-10-15T14:04:48.012Z"
             }
           ]
         },
