@@ -21,6 +21,7 @@ namespace WindowsFormsApp
         public Form1()
         {
             InitializeComponent();
+            System.Diagnostics.Debug.WriteLine("[SegmentPlanner] " + WindowsFormsApp.Download.SegmentPlanner.SelfTest());
             _messageHandler = new MessageHandler(this);
         }
 

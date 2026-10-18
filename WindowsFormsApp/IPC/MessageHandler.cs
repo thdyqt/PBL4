@@ -1,13 +1,35 @@
 ﻿using System;
-using System.Text.Json;
-using System.Windows.Forms;
 using System.IO;
+using System.Net;
+using System.Net.Http;
+using System.Text.Json;
+using System.Threading;
+using System.Threading.Tasks;
+using System.Windows.Forms;
+using WindowsFormsApp.Download;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Linq;
 
 namespace WindowsFormsApp.IPC
 {
     public class MessageHandler
     {
         private Form1 _mainForm;
+        private static readonly HttpClient Http = CreateHttpClient();
+
+        private static HttpClient CreateHttpClient()
+        {
+            var handler = new HttpClientHandler
+            {
+                AllowAutoRedirect = true,
+                AutomaticDecompression = DecompressionMethods.None // sau này Range sẽ sai nếu server nén
+            };
+            var client = new HttpClient(handler);
+            client.Timeout = TimeSpan.FromSeconds(30);
+            client.DefaultRequestHeaders.UserAgent.ParseAdd("DUTDownloadAccelerator/1.0");
+            return client;
+        }
 
         public MessageHandler(Form1 mainForm)
         {
@@ -30,8 +52,15 @@ namespace WindowsFormsApp.IPC
                         HandleBrowseFolder();
                         break;
                     case "START_DOWNLOAD":
-                        HandleStartDownload(doc.RootElement);
-                        break;
+                        {
+                            JsonElement root = doc.RootElement;
+                            string taskId = root.GetProperty("taskId").GetString();
+                            string url = root.GetProperty("url").GetString();
+                            string savePath = root.GetProperty("savePath").GetString();
+                            int threads = root.GetProperty("thread").GetInt32();
+                            _ = HandleStartDownloadAsync(taskId, url, savePath, threads);
+                            break;
+                        }
                 }
             }
             catch (Exception ex)
@@ -87,15 +116,8 @@ namespace WindowsFormsApp.IPC
                 }
             }
         }
-        private void HandleStartDownload(JsonElement root)
+        private async Task HandleStartDownloadAsync(string taskId, string url, string savePath, int threads)
         {
-            string taskId = root.GetProperty("taskId").GetString();
-            string url = root.GetProperty("url").GetString();
-            string savePath = root.GetProperty("savePath").GetString();
-            int threads = root.GetProperty("thread").GetInt32();
-
-            // Kiểm tra lại ở C#: JS chỉ kiểm tra để người dùng đỡ nhập sai,
-            // không thể coi dữ liệu từ giao diện là đáng tin.
             Uri uri;
             if (!Uri.TryCreate(url, UriKind.Absolute, out uri) ||
                 (uri.Scheme != Uri.UriSchemeHttp && uri.Scheme != Uri.UriSchemeHttps))
@@ -103,23 +125,81 @@ namespace WindowsFormsApp.IPC
                 SendError(taskId, "Liên kết không hợp lệ (chỉ hỗ trợ HTTP/HTTPS).");
                 return;
             }
-
             if (string.IsNullOrWhiteSpace(savePath) || !Directory.Exists(savePath))
             {
                 SendError(taskId, "Thư mục lưu không tồn tại.");
                 return;
             }
 
-            threads = Math.Max(1, Math.Min(threads, 16));
-
-            // TODO bước sau: gọi engine tải ở đây. Hiện chỉ xác nhận đã nhận lệnh.
-            var response = new
+            try
             {
-                action = "DOWNLOAD_ACCEPTED",
-                taskId = taskId,
-                data = new { url = url, savePath = savePath, threads = threads }
-            };
-            _mainForm.SendToWeb(JsonSerializer.Serialize(response));
+                // Không dùng ConfigureAwait(false) ở đây: sau await, code quay lại luồng giao diện,
+                // nên gọi SendToWeb (WebView2) an toàn.
+                RemoteFileInfo info = await RemoteProbe.InspectAsync(Http, url, CancellationToken.None);
+                // Bước 4: chia đoạn (chỉ chia khi server hỗ trợ Range)
+                List<Segment> segments = (info.SupportsRanges && info.Length > 1)
+                    ? SegmentPlanner.Split(info.Length, threads)
+                    : new List<Segment>();
+
+                foreach (Segment s in segments) Debug.WriteLine("[Segment] " + s);
+
+                var response = new
+                {
+                    action = "DOWNLOAD_ACCEPTED",
+                    taskId = taskId,
+                    data = new
+                    {
+                        fileName = info.FileName,
+                        length = info.Length,
+                        supportsRanges = info.SupportsRanges,
+                        finalUrl = info.Url,
+                        segments = segments.Select(s => new { start = s.Start, end = s.End }).ToList()
+                    }
+                };
+                _mainForm.SendToWeb(JsonSerializer.Serialize(response));
+                // ===== BƯỚC 6 (TẠM): tải TẤT CẢ các đoạn song song =====
+                if (segments.Count > 0)
+                {
+                    string target = Path.Combine(savePath, info.FileName);
+
+                    var sw = Stopwatch.StartNew();
+                    await ParallelDownloader.DownloadAllAsync(Http, info.Url, target, info.Length, segments, CancellationToken.None);
+                    sw.Stop();
+
+                    long bytes = segments.Sum(s => s.Downloaded);
+                    double seconds = Math.Max(sw.Elapsed.TotalSeconds, 0.001);
+                    double mbPerSec = bytes / 1048576.0 / seconds;
+
+                    Debug.WriteLine("[Step6] " + segments.Count + " luồng, " + bytes + " byte, "
+                                    + sw.ElapsedMilliseconds + " ms, " + mbPerSec.ToString("F2") + " MB/s");
+
+                    var done = new
+                    {
+                        action = "DOWNLOAD_DONE",
+                        taskId = taskId,
+                        data = new
+                        {
+                            threads = segments.Count,
+                            bytes = bytes,
+                            ms = sw.ElapsedMilliseconds,
+                            mbPerSec = mbPerSec
+                        }
+                    };
+                    _mainForm.SendToWeb(JsonSerializer.Serialize(done));
+                }
+            }
+            catch (TaskCanceledException)
+            {
+                SendError(taskId, "Máy chủ không phản hồi (quá 30 giây).");
+            }
+            catch (HttpRequestException ex)
+            {
+                SendError(taskId, "Không kết nối được: " + (ex.InnerException != null ? ex.InnerException.Message : ex.Message));
+            }
+            catch (Exception ex)
+            {
+                SendError(taskId, ex.Message);
+            }
         }
 
         private void SendError(string taskId, string message)

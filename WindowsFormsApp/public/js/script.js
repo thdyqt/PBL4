@@ -99,11 +99,31 @@ if (window.chrome && window.chrome.webview) {
                 }
             }
             if (response.action === "DOWNLOAD_ACCEPTED") {
-                console.log("C# đã nhận lệnh tải:", response.data);
-                const speedEl = document.getElementById(`${response.taskId}-speed`);
-                if (speedEl) speedEl.textContent = "Đã nhận lệnh";
-            }
+                const d = response.data;
+                const item = document.getElementById(response.taskId);
+                if (item) {
+                    const nameEl = item.querySelector(".file-name");
+                    if (nameEl) nameEl.textContent = d.fileName;
+                }
+                const dl = document.getElementById(`${response.taskId}-downloaded`);
+                if (dl) dl.textContent = `0 / ${d.length >= 0 ? (d.length / 1048576).toFixed(2) + " MB" : "không rõ"}`;
 
+                const sp = document.getElementById(`${response.taskId}-speed`);
+                const n = d.segments ? d.segments.length : 0;
+                console.log("Các đoạn:", d.segments);
+                if (sp) sp.textContent = d.supportsRanges ? `Chia ${n} đoạn ✓` : "Chỉ tải 1 luồng";
+            }
+            if (response.action === "DOWNLOAD_DONE") {
+                const d = response.data;
+                const bar = document.getElementById(`${response.taskId}-progress`);
+                if (bar) bar.style.width = "100%";
+                const pct = document.getElementById(`${response.taskId}-percent`);
+                if (pct) pct.textContent = "100%";
+                const dl = document.getElementById(`${response.taskId}-downloaded`);
+                if (dl) dl.textContent = `${(d.bytes / 1048576).toFixed(2)} MB / ${(d.bytes / 1048576).toFixed(2)} MB`;
+                const sp = document.getElementById(`${response.taskId}-speed`);
+                if (sp) sp.textContent = `Xong: ${d.threads} luồng, ${(d.ms / 1000).toFixed(1)} s, ${d.mbPerSec.toFixed(2)} MB/s`;
+            }
             if (response.action === "DOWNLOAD_ERROR") {
                 const speedEl = document.getElementById(`${response.taskId}-speed`);
                 if (speedEl) {

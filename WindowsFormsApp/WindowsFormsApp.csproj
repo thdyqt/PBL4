@@ -88,6 +88,10 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+  <Compile Include="Download\ParallelDownloader.cs" />
+  <Compile Include="Download\RemoteProbe.cs" />
+  <Compile Include="Download\Segment.cs" />
+  <Compile Include="Download\SegmentDownloader.cs" />
     <Compile Include="Form1.cs">
       <SubType>Form</SubType>
     </Compile>
