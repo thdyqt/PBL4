@@ -98,6 +98,19 @@ if (window.chrome && window.chrome.webview) {
                     }
                 }
             }
+            if (response.action === "DOWNLOAD_ACCEPTED") {
+                console.log("C# đã nhận lệnh tải:", response.data);
+                const speedEl = document.getElementById(`${response.taskId}-speed`);
+                if (speedEl) speedEl.textContent = "Đã nhận lệnh";
+            }
+
+            if (response.action === "DOWNLOAD_ERROR") {
+                const speedEl = document.getElementById(`${response.taskId}-speed`);
+                if (speedEl) {
+                    speedEl.textContent = response.message;
+                    speedEl.style.color = "#dc2626";
+                }
+            }
 
         } catch (error) {
             console.error("Lỗi đọc dữ liệu từ C#: ", error);
@@ -117,9 +130,15 @@ if (inputForm) {
                 errorMessage: "Vui lòng nhập đường link tải về!"
             },
             {
-                rule: "customRegexp",
-                value: /^(https?:\/\/)?([\da-z\.-]+)\.([a-z\.]{2,6})([\/\w \.-]*)*\/?$/,
-                errorMessage: "Liên kết không hợp lệ! Vui lòng nhập đúng định dạng!"
+                validator: (value) => {
+                    try {
+                        const u = new URL(value);
+                        return u.protocol === "http:" || u.protocol === "https:";
+                    } catch (e) {
+                        return false;
+                    }
+                },
+                errorMessage: "Liên kết không hợp lệ! Hãy nhập URL bắt đầu bằng http:// hoặc https://"
             }
         ])
         .addField("#save-path", [
@@ -132,12 +151,15 @@ if (inputForm) {
         .onSuccess(event => {
             event.preventDefault();
 
-            const url = event.target.url.value;
-            const savePath = event.target.savePath.value;
-            const thread = event.target.thread.value;
+            const form = event.target;
+            const url = form.elements["url"].value.trim();
+            const savePath = form.elements["save-path"].value;
+            const thread = parseInt(form.elements["thread"].value, 10); // gửi số, không gửi chuỗi
 
-            // 1. Trích xuất tên file từ URL
-            const fileName = url.substring(url.lastIndexOf('/') + 1) || "unknown_file";
+            let fileName = "unknown_file";
+            try {
+                fileName = decodeURIComponent(new URL(url).pathname.split("/").pop()) || fileName;
+            } catch (e) { /* giữ tên mặc định */ }
 
             // 2. Tạo một ID duy nhất cho tác vụ này (dựa vào thời gian thực)
             const taskId = 'task-' + Date.now();
@@ -176,10 +198,9 @@ if (inputForm) {
             }
 
             // 6. Cập nhật số lượng tác vụ linh hoạt
-            const taskCounter = document.getElementById("task-counter"); 
-            if (taskCounter && downloadList) {
-                const currentTasks = downloadList.querySelectorAll('.download-item').length;
-                taskCounter.textContent = `${currentTasks} tác vụ`;
+            const badge = document.querySelector(".inner-count-badge");
+            if (badge && downloadList) {
+                badge.textContent = `${downloadList.querySelectorAll(".download-item").length} tác vụ`;
             }
 
             const payload = JSON.stringify({
