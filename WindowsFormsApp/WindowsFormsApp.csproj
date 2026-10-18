@@ -119,6 +119,9 @@
       <AutoGen>True</AutoGen>
       <DependentUpon>Resources.resx</DependentUpon>
     </Compile>
+    <None Include="Download\test.bin" />
+    <None Include="Download\test\test.bin" />
+    <None Include="Download\tools\test.bin" />
     <None Include="obj\Debug\DesignTimeResolveAssemblyReferences.cache" />
     <None Include="obj\Debug\DesignTimeResolveAssemblyReferencesInput.cache" />
     <None Include="obj\Debug\WindowsFormsApp.csproj.AssemblyReference.cache" />
@@ -155,6 +158,7 @@
     <None Include="App.config" />
   </ItemGroup>
   <ItemGroup>
+    <Content Include="Download\tools\range_server.py" />
     <Content Include="packages\Microsoft.Web.WebView2.1.0.4191.47\build\native\arm64\WebView2Loader.dll" />
     <Content Include="packages\Microsoft.Web.WebView2.1.0.4191.47\build\native\include-winrt\WebView2Interop.h" />
     <Content Include="packages\Microsoft.Web.WebView2.1.0.4191.47\build\native\include-winrt\WebView2Interop.idl" />
