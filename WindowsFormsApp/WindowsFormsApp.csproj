@@ -224,30 +224,9 @@
     <Content Include="packages\Microsoft.Web.WebView2.1.0.4191.47\tools\wv2winrt\zh-Hans\System.CommandLine.resources.dll" />
     <Content Include="packages\Microsoft.Web.WebView2.1.0.4191.47\tools\wv2winrt\zh-Hant\System.CommandLine.resources.dll" />
     <Content Include="packages\Microsoft.Web.WebView2.1.0.4191.47\WebView2.idl" />
-    <Content Include="public\css\style.css">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="public\html\index.html">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="public\images\Logo.ico">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="public\images\Logo.png">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="public\js\download.js">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="public\js\components.js">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="public\js\script.js">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="public\js\ui.js">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
+	<Content Include="public\**\*">
+	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	</Content>
   </ItemGroup>
   <ItemGroup>
     <Folder Include="bin\Debug\" />

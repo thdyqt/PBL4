@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 using System.Text.Json;
 using System.Threading.Tasks;
 using System.Windows.Forms;
@@ -174,6 +175,8 @@ namespace WindowsFormsApp.IPC
 
                 if (folderDialog.ShowDialog() == DialogResult.OK)
                 {
+                    string selectedPath = folderDialog.SelectedPath;
+
                     var responseData = new
                     {
                         action = "FOLDER_SELECTED",
