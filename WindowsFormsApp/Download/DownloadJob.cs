@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -30,6 +30,7 @@ namespace WindowsFormsApp.Download
         private readonly SpeedLimiter _limiter;
         private readonly object _sync = new object();
         private readonly object _metaLock = new object();
+        private readonly Stopwatch _activeStopwatch = new Stopwatch();
 
         private CancellationTokenSource _cts;
         private Task _runTask = Task.CompletedTask;
@@ -57,6 +58,7 @@ namespace WindowsFormsApp.Download
             _http = http;
             _limiter = limiter;
             State = DownloadState.Preparing;
+
             _downloaded = segments.Sum(s => s.Downloaded);
         }
 
@@ -93,6 +95,7 @@ namespace WindowsFormsApp.Download
                 _firstError = null;
                 Error = null;
                 State = DownloadState.Downloading;
+                _activeStopwatch.Start();
                 ResetSpeed();
 
                 _runTask = Task.Run(async () =>
@@ -113,6 +116,7 @@ namespace WindowsFormsApp.Download
                 if (State != DownloadState.Downloading) return;
                 State = DownloadState.Paused;
                 _speed = 0;
+                _activeStopwatch.Stop();
                 _cts.Cancel();
             }
             RaiseChanged();
@@ -127,6 +131,7 @@ namespace WindowsFormsApp.Download
             {
                 wasCompleted = State == DownloadState.Completed;
                 if (!wasCompleted) State = DownloadState.Cancelled;
+                _activeStopwatch.Stop();
                 cts = _cts;
             }
             if (wasCompleted) return;
@@ -161,11 +166,17 @@ namespace WindowsFormsApp.Download
 
                 ct.ThrowIfCancellationRequested();
 
-                lock (_sync) { State = DownloadState.Completed; _speed = 0; }
+                lock (_sync)
+                {
+                    State = DownloadState.Completed;
+                    _speed = 0;
+                    _activeStopwatch.Stop();
+                }
                 lock (_metaLock) { MetaStore.Delete(TargetPath); }
             }
             catch (Exception ex)
             {
+                lock (_sync) { _activeStopwatch.Stop(); }
                 if (ct.IsCancellationRequested)
                 {
                     // Pause hoặc Cancel: trạng thái đã được đặt bởi Pause()/CancelAsync()
@@ -492,6 +503,7 @@ namespace WindowsFormsApp.Download
                 Downloaded = done,
                 Speed = speed,
                 EtaSeconds = eta,
+                ElapsedSeconds = _activeStopwatch.Elapsed.TotalSeconds,
                 Threads = SupportsRanges ? Segments.Count : 1,
                 SupportsRanges = SupportsRanges,
                 Error = Error,

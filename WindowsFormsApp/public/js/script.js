@@ -169,9 +169,22 @@ if (inputForm) {
                     <div class="progress-header">
                         <div class="file-info">
                             <i class="${iconClass}"></i>
-                            <span class="file-name">${fileName}</span>
+                            <span class="file-name" title="${fileName}">${fileName}</span>
                         </div>
-                        <div class="progress-percentage" id="${taskId}-percent">0%</div>
+                        <div class="header-right">
+                            <div class="item-actions">
+                                <button type="button" class="btn-item-action btn-pause-resume" title="Tạm dừng" data-item-action="toggle-pause">
+                                    <i class="fa-solid fa-pause"></i>
+                                </button>
+                                <button type="button" class="btn-item-action btn-cancel" title="Hủy tải" data-item-action="cancel">
+                                    <i class="fa-solid fa-ban"></i>
+                                </button>
+                                <button type="button" class="btn-item-action btn-delete" title="Xóa" data-item-action="delete">
+                                    <i class="fa-solid fa-trash"></i>
+                                </button>
+                            </div>
+                            <div class="progress-percentage" id="${taskId}-percent">0%</div>
+                        </div>
                     </div>
                     
                     <div class="progress-bar-container">

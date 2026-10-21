@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 
@@ -33,6 +33,7 @@ namespace WindowsFormsApp.Download
         public long Downloaded { get; set; }
         public double Speed { get; set; }         // byte/giây
         public long EtaSeconds { get; set; }      // -1 nếu chưa tính được
+        public double ElapsedSeconds { get; set; } // Tổng số giây thực tế tải (loại trừ thời gian tạm dừng)
         public int Threads { get; set; }
         public bool SupportsRanges { get; set; }
         public string Error { get; set; }
