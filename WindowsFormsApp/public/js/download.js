@@ -164,6 +164,14 @@
     }
 
     // ---------- cập nhật giao diện tác vụ ----------
+    // Bảng màu phân biệt cho từng luồng (tối đa 16 luồng)
+    const SEG_PALETTE = [
+        "#1E5173", "#0ea5e9", "#6366f1", "#8b5cf6",
+        "#ec4899", "#f97316", "#eab308", "#22c55e",
+        "#14b8a6", "#06b6d4", "#a855f7", "#f43f5e",
+        "#84cc16", "#f59e0b", "#10b981", "#3b82f6"
+    ];
+
     function ensureExtras(item, segmentCount) {
         let status = item.querySelector(".download-status");
         if (!status) {
@@ -175,7 +183,15 @@
             const wrap = document.createElement("div");
             wrap.className = "segment-bars";
             for (let i = 0; i < segmentCount; i++) {
-                wrap.insertAdjacentHTML("beforeend", '<div class="segment-bar"><div class="segment-fill"></div></div>');
+                const color = SEG_PALETTE[i % SEG_PALETTE.length];
+                const bar = document.createElement("div");
+                bar.className = "segment-bar";
+                bar.title = `Luồng ${i + 1}: 0%`;
+                const fill = document.createElement("div");
+                fill.className = "segment-fill";
+                fill.style.setProperty("--seg-color", color);
+                bar.appendChild(fill);
+                wrap.appendChild(bar);
             }
             item.insertBefore(wrap, status);
         }
@@ -311,10 +327,17 @@
         const bar = document.getElementById(`${d.taskId}-progress`);
         if (bar) bar.style.width = percent + "%";
 
-        // Thanh tiến độ từng luồng
+        // Thanh tiến độ từng luồng + tooltip realtime
+        const bars = item.querySelectorAll(".segment-bar");
         const fills = item.querySelectorAll(".segment-fill");
         (d.segments || []).forEach((seg, i) => {
-            if (fills[i]) fills[i].style.width = (seg.length > 0 ? (seg.downloaded / seg.length) * 100 : 0) + "%";
+            const pct = seg.length > 0 ? Math.floor((seg.downloaded / seg.length) * 100) : 0;
+            if (fills[i]) fills[i].style.width = pct + "%";
+            if (bars[i]) {
+                const doneStr = fmtBytes(seg.downloaded);
+                const totalStr = seg.length > 0 ? fmtBytes(seg.length) : "--";
+                bars[i].title = `Luồng ${i + 1}: ${pct}% (${doneStr} / ${totalStr})`;
+            }
         });
 
         let text = STATE_TEXT[d.state] || d.state;

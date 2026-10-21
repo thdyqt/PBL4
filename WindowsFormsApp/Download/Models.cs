@@ -38,6 +38,7 @@ namespace WindowsFormsApp.Download
         public int Threads { get; set; }
         public bool SupportsRanges { get; set; }
         public string Error { get; set; }
+        public string FileHash { get; set; }      // SHA-256 hex (64 ký tự) sau khi hoàn thành
         public List<SegmentDto> Segments { get; set; }
     }
 

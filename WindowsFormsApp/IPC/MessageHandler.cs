@@ -114,6 +114,10 @@ namespace WindowsFormsApp.IPC
                         case "OPEN_FOLDER":
                             HandleOpenFolder(GetString(root, "taskId"), GetString(root, "path"));
                             break;
+
+                        case "VERIFY_HASH":
+                            _ = HandleVerifyHashAsync(root);
+                            break;
                     }
                 }
             }
@@ -140,6 +144,50 @@ namespace WindowsFormsApp.IPC
                 Send(new { action = "DOWNLOAD_ERROR", taskId = taskId, message = message });
             }
         }
+
+        private async Task HandleVerifyHashAsync(JsonElement root)
+        {
+            string taskId = GetString(root, "taskId");
+            string expectedHash = GetString(root, "hash");
+            string filePath = GetString(root, "path") ?? _manager.GetTargetPath(taskId);
+
+            if (string.IsNullOrWhiteSpace(filePath) || !File.Exists(filePath))
+            {
+                Send(new { action = "HASH_RESULT", taskId = taskId, success = false, match = false,
+                           message = "Không tìm thấy tệp để kiểm tra.", actualHash = (string)null });
+                return;
+            }
+
+            try
+            {
+                // Tự nhận dạng: MD5 = 32 ký tự, SHA-256 = 64 ký tự
+                bool useMd5 = expectedHash != null && expectedHash.Trim().Length == 32;
+                string algoName = useMd5 ? "MD5" : "SHA-256";
+
+                string actualHash = await Task.Run(() =>
+                    useMd5 ? ChecksumHelper.ComputeMd5(filePath)
+                            : ChecksumHelper.ComputeSha256(filePath)
+                ).ConfigureAwait(false);
+
+                bool match = !string.IsNullOrEmpty(expectedHash)
+                    && string.Equals(actualHash, expectedHash.Trim(), StringComparison.OrdinalIgnoreCase);
+
+                string msg = match
+                    ? algoName + " khớp! Tệp toàn vẹn ✔"
+                    : string.IsNullOrWhiteSpace(expectedHash)
+                        ? algoName + " đã tính xong."
+                        : algoName + " KHÔNG khớp! Tệp có thể bị lỗi ✘";
+
+                Send(new { action = "HASH_RESULT", taskId = taskId, success = true, match = match,
+                           message = msg, actualHash = actualHash, algo = algoName });
+            }
+            catch (Exception ex)
+            {
+                Send(new { action = "HASH_RESULT", taskId = taskId, success = false, match = false,
+                           message = "Lỗi khi tính hash: " + ex.Message, actualHash = (string)null });
+            }
+        }
+
 
         private async Task HandleCancelAsync(string taskId)
         {

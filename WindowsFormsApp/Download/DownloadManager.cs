@@ -21,6 +21,7 @@ namespace WindowsFormsApp.Download
         private HttpClient _http;
         private readonly SpeedLimiter _limiter = new SpeedLimiter();
         private readonly ConcurrentDictionary<string, DownloadJob> _jobs = new ConcurrentDictionary<string, DownloadJob>();
+        private readonly ConcurrentDictionary<string, FtpJob>    _ftpJobs = new ConcurrentDictionary<string, FtpJob>();
         private readonly HashSet<string> _activeTargets = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         private readonly object _targetLock = new object();
         private readonly List<string> _queue = new List<string>();
@@ -63,7 +64,11 @@ namespace WindowsFormsApp.Download
 
         public int ActiveDownloadingCount
         {
-            get { return _jobs.Values.Count(j => j.State == DownloadState.Downloading || j.State == DownloadState.Preparing); }
+            get
+            {
+                return _jobs.Values.Count(j => j.State == DownloadState.Downloading || j.State == DownloadState.Preparing)
+                     + _ftpJobs.Values.Count(j => j.State == DownloadState.Downloading || j.State == DownloadState.Preparing);
+            }
         }
 
         public static HttpClient CreateHttpClient(ProxySettings proxy)
@@ -143,8 +148,14 @@ namespace WindowsFormsApp.Download
         {
             Uri uri;
             if (!Uri.TryCreate(url, UriKind.Absolute, out uri) ||
-                (uri.Scheme != Uri.UriSchemeHttp && uri.Scheme != Uri.UriSchemeHttps))
-                throw new DownloadException("Chỉ hỗ trợ liên kết HTTP/HTTPS hợp lệ.");
+                (uri.Scheme != Uri.UriSchemeHttp && uri.Scheme != Uri.UriSchemeHttps && uri.Scheme != Uri.UriSchemeFtp))
+                throw new DownloadException("Chỉ hỗ trợ liên kết HTTP, HTTPS hoặc FTP hợp lệ.");
+
+            if (uri.Scheme == Uri.UriSchemeFtp)
+            {
+                await StartFtpAsync(taskId, url, folder).ConfigureAwait(false);
+                return;
+            }
             if (string.IsNullOrWhiteSpace(folder))
                 throw new DownloadException("Bạn chưa chọn nơi lưu tệp.");
             if (_jobs.ContainsKey(taskId)) return;
@@ -303,6 +314,67 @@ namespace WindowsFormsApp.Download
             }
         }
 
+        // ------------------------------------------------------------------ FTP
+
+        private async Task StartFtpAsync(string taskId, string url, string folder)
+        {
+            if (string.IsNullOrWhiteSpace(folder))
+                throw new DownloadException("Bạn chưa chọn nơi lưu tệp.");
+            if (_ftpJobs.ContainsKey(taskId)) return;
+
+            Directory.CreateDirectory(folder);
+
+            // Dò thông tin file qua FTP
+            RemoteFileInfo info = await FtpProbe.InspectAsync(url, CancellationToken.None).ConfigureAwait(false);
+            string fileName = info.FileName;
+
+            string target;
+            long resumeOffset = 0;
+            lock (_targetLock)
+            {
+                string candidate = Path.Combine(folder, fileName);
+                // Kiểm tra resume
+                if (File.Exists(candidate) && File.Exists(MetaStore.PathFor(candidate)))
+                {
+                    var meta = MetaStore.Load(candidate);
+                    if (meta != null && meta.Segments != null && meta.Segments.Count > 0
+                        && meta.Url == url && meta.TotalBytes == info.Length)
+                    {
+                        resumeOffset = meta.Segments[0].Downloaded;
+                    }
+                }
+                // Đảm bảo tên độc đáo
+                int copy = 0;
+                string baseName = Path.GetFileNameWithoutExtension(fileName);
+                string ext = Path.GetExtension(fileName);
+                target = candidate;
+                while (_activeTargets.Contains(target))
+                {
+                    copy++;
+                    target = Path.Combine(folder, baseName + " (" + copy + ")" + ext);
+                    resumeOffset = 0;
+                }
+                _activeTargets.Add(target);
+            }
+
+            var job = new FtpJob(taskId, url, info.Length, target, _limiter, resumeOffset);
+            job.Changed += OnFtpJobChanged;
+            _ftpJobs[taskId] = job;
+            job.Start();
+        }
+
+        private void OnFtpJobChanged(FtpJob job)
+        {
+            Raise(job.Snapshot());
+            if (job.State == DownloadState.Completed ||
+                job.State == DownloadState.Failed ||
+                job.State == DownloadState.Cancelled ||
+                job.State == DownloadState.Paused)
+            {
+                CheckAndProcessQueue();
+            }
+        }
+
         // ------------------------------------------------------------------ điều khiển
 
         public void Pause(string taskId)
@@ -317,26 +389,37 @@ namespace WindowsFormsApp.Download
             {
                 job.Pause();
             }
+            FtpJob ftpJob;
+            if (_ftpJobs.TryGetValue(taskId, out ftpJob))
+            {
+                ftpJob.Pause();
+            }
             CheckAndProcessQueue();
         }
 
         public void Resume(string taskId)
         {
             DownloadJob job;
-            if (!_jobs.TryGetValue(taskId, out job)) return;
-
-            lock (_queueLock)
+            if (_jobs.TryGetValue(taskId, out job))
             {
-                if (_maxConcurrentDownloads > 0 && ActiveDownloadingCount >= _maxConcurrentDownloads)
+                lock (_queueLock)
                 {
-                    if (!_queue.Contains(taskId)) _queue.Add(taskId);
-                    job.SetQueued();
-                    Raise(job.Snapshot());
-                    return;
+                    if (_maxConcurrentDownloads > 0 && ActiveDownloadingCount >= _maxConcurrentDownloads)
+                    {
+                        if (!_queue.Contains(taskId)) _queue.Add(taskId);
+                        job.SetQueued();
+                        Raise(job.Snapshot());
+                        return;
+                    }
                 }
+                job.Start();
+                return;
             }
-
-            job.Start();
+            FtpJob ftpJob;
+            if (_ftpJobs.TryGetValue(taskId, out ftpJob))
+            {
+                ftpJob.Start();
+            }
         }
 
         /// <summary>Bắt đầu ngay một tác vụ đang chờ trong hàng đợi (bỏ qua giới hạn hàng đợi).</summary>
@@ -376,19 +459,19 @@ namespace WindowsFormsApp.Download
         /// <summary>Hủy tác vụ tải: dừng luồng, xóa file dở dang và .dlmeta.</summary>
         public async Task CancelAsync(string taskId)
         {
-            lock (_queueLock)
-            {
-                _queue.Remove(taskId);
-            }
+            lock (_queueLock) { _queue.Remove(taskId); }
 
             DownloadJob job;
             if (_jobs.TryGetValue(taskId, out job))
             {
-                lock (_targetLock)
-                {
-                    _activeTargets.Remove(job.TargetPath);
-                }
+                lock (_targetLock) { _activeTargets.Remove(job.TargetPath); }
                 await job.CancelAsync().ConfigureAwait(false);
+            }
+            FtpJob ftpJob;
+            if (_ftpJobs.TryGetValue(taskId, out ftpJob))
+            {
+                lock (_targetLock) { _activeTargets.Remove(ftpJob.TargetPath); }
+                await ftpJob.CancelAsync().ConfigureAwait(false);
             }
 
             CheckAndProcessQueue();
@@ -397,29 +480,32 @@ namespace WindowsFormsApp.Download
         /// <summary>Gỡ tác vụ. Chưa xong -> xóa file dở; đã xong -> giữ file.</summary>
         public async Task RemoveAsync(string taskId)
         {
-            lock (_queueLock)
-            {
-                _queue.Remove(taskId);
-            }
+            lock (_queueLock) { _queue.Remove(taskId); }
 
             DownloadJob job;
             if (_jobs.TryRemove(taskId, out job))
             {
-                lock (_targetLock)
-                {
-                    _activeTargets.Remove(job.TargetPath);
-                }
+                lock (_targetLock) { _activeTargets.Remove(job.TargetPath); }
                 await job.CancelAsync().ConfigureAwait(false);
+            }
+            FtpJob ftpJob;
+            if (_ftpJobs.TryRemove(taskId, out ftpJob))
+            {
+                lock (_targetLock) { _activeTargets.Remove(ftpJob.TargetPath); }
+                await ftpJob.CancelAsync().ConfigureAwait(false);
             }
 
             CheckAndProcessQueue();
         }
+
 
         /// <summary>Lấy đường dẫn tệp đích của tác vụ theo taskId.</summary>
         public string GetTargetPath(string taskId)
         {
             DownloadJob job;
             if (_jobs.TryGetValue(taskId, out job)) return job.TargetPath;
+            FtpJob ftpJob;
+            if (_ftpJobs.TryGetValue(taskId, out ftpJob)) return ftpJob.TargetPath;
             return null;
         }
 
@@ -429,6 +515,7 @@ namespace WindowsFormsApp.Download
             _disposed = true;
             _timer.Dispose();
             foreach (DownloadJob job in _jobs.Values) job.Shutdown();
+            foreach (FtpJob job in _ftpJobs.Values) job.Shutdown();
             _http.Dispose();
         }
 
@@ -457,12 +544,18 @@ namespace WindowsFormsApp.Download
             if (Interlocked.Exchange(ref _tickBusy, 1) == 1) return;
             try
             {
-                bool saveMeta = (++_tickCount % 5) == 0; // 400 ms x 5 = 2 giây lưu metadata một lần
+                bool saveMeta = (++_tickCount % 5) == 0;
                 foreach (DownloadJob job in _jobs.Values)
                 {
                     if (job.State != DownloadState.Downloading) continue;
                     job.UpdateSpeed();
                     if (saveMeta) job.SaveMetaSafe();
+                    Raise(job.Snapshot());
+                }
+                foreach (FtpJob job in _ftpJobs.Values)
+                {
+                    if (job.State != DownloadState.Downloading) continue;
+                    job.UpdateSpeed();
                     Raise(job.Snapshot());
                 }
             }

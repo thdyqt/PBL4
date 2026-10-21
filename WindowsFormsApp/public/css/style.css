@@ -981,101 +981,180 @@ a {
     font-weight: 600;
 }
 
+/* ============================================================
+   Segment bars – thanh tiến độ từng luồng tải
+   ============================================================ */
 .segment-bars {
     display: flex;
-    gap: 4px;
-    margin-top: 12px;
+    gap: 3px;
+    margin-top: 10px;
+    margin-bottom: 2px;
+    align-items: center;
 }
 
 .segment-bar {
     flex: 1;
-    height: 4px;
+    height: 5px;
     background-color: #E2E8F0;
-    border-radius: 4px;
+    border-radius: 999px;
     overflow: hidden;
+    position: relative;
+    cursor: default;
+    transition: height 0.2s ease, transform 0.2s ease;
 }
 
+.segment-bar:hover {
+    height: 8px;
+    transform: scaleY(1.1);
+}
+
+/* Mỗi segment-fill nhận màu từ biến CSS --seg-color (gán bởi JS) */
 .segment-fill {
     height: 100%;
     width: 0%;
-    background-color: #2A73A3;
-    transition: width 0.3s ease;
+    background: var(--seg-color, #2A73A3);
+    border-radius: 999px;
+    transition: width 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
 }
 
-/* Nút thao tác khi tải xong */
+/* Shimmer chạy khi đang downloading */
+[data-state="downloading"] .segment-fill::after {
+    content: "";
+    position: absolute;
+    top: 0; left: -100%;
+    width: 60%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.55) 50%, transparent 100%);
+    animation: segShimmer 1.6s infinite;
+    border-radius: 999px;
+}
+
+@keyframes segShimmer {
+    0%   { left: -60%; }
+    100% { left: 120%; }
+}
+
+/* Khi hoàn thành: glow xanh lá */
+[data-state="completed"] .segment-fill {
+    background: var(--seg-color, #10b981);
+    box-shadow: 0 0 4px rgba(16, 185, 129, 0.55);
+}
+
+/* ============================================================
+   Download Actions – banner + nút khi hoàn thành
+   ============================================================ */
 .download-actions {
     display: flex;
     align-items: center;
     gap: 10px;
     margin-top: 14px;
-    padding-top: 12px;
-    border-top: 1px dashed #E2E8F0;
-    animation: slideDownFade 0.3s ease forwards;
+    padding: 12px 14px;
+    border-radius: 10px;
+    background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+    border: 1px solid #bbf7d0;
+    animation: completedBannerIn 0.45s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    flex-wrap: wrap;
+}
+
+@keyframes completedBannerIn {
+    from { opacity: 0; transform: translateY(6px) scale(0.98); }
+    to   { opacity: 1; transform: translateY(0)   scale(1); }
+}
+
+/* Badge "Hoàn thành" bên trái */
+.download-actions::before {
+    content: "✔ Hoàn thành";
+    display: inline-flex;
+    align-items: center;
+    font-size: 11px;
+    font-weight: 700;
+    color: #15803d;
+    background: #dcfce7;
+    border: 1px solid #86efac;
+    border-radius: 999px;
+    padding: 3px 10px;
+    margin-right: 4px;
+    white-space: nowrap;
+    letter-spacing: 0.02em;
 }
 
 .download-actions .btn-action {
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    padding: 7px 14px;
+    padding: 7px 15px;
     border-radius: 8px;
     font-size: 12px;
     font-weight: 600;
     cursor: pointer;
-    border: 1px solid #E2E8F0;
-    background-color: #FFFFFF;
-    color: #334155;
+    border: 1px solid transparent;
     transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    white-space: nowrap;
 }
 
 .download-actions .btn-action:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+    transform: translateY(-2px);
+    box-shadow: 0 5px 14px rgba(0, 0, 0, 0.1);
 }
 
 .download-actions .btn-action i {
-    font-size: 13px;
+    font-size: 12px;
     transition: transform 0.2s ease;
 }
 
 .download-actions .btn-action:hover i {
-    transform: scale(1.15);
+    transform: scale(1.2);
 }
 
+/* Nút "Mở file" – xanh đậm, nổi bật */
 .download-actions .btn-open-file {
-    background-color: #EFF6FF;
-    border-color: #BFDBFE;
-    color: #1E5173;
+    background: linear-gradient(135deg, #1E5173, #1a4563);
+    border-color: #1E5173;
+    color: #FFFFFF;
+    box-shadow: 0 2px 8px rgba(30, 81, 115, 0.3);
+    position: relative;
+    overflow: hidden;
 }
 
-.download-actions .btn-open-file i {
-    color: #1E5173;
+.download-actions .btn-open-file::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.12) 50%, transparent 100%);
+    transform: translateX(-100%);
+    transition: transform 0.4s ease;
+}
+
+.download-actions .btn-open-file:hover::after {
+    transform: translateX(100%);
 }
 
 .download-actions .btn-open-file:hover {
-    background-color: #1E5173;
-    border-color: #1E5173;
+    background: linear-gradient(135deg, #154060, #0f2f47);
+    border-color: #154060;
+    box-shadow: 0 6px 18px rgba(30, 81, 115, 0.4);
+}
+
+.download-actions .btn-open-file i {
     color: #FFFFFF;
 }
 
-.download-actions .btn-open-file:hover i {
-    color: #FFFFFF;
-}
-
+/* Nút "Mở thư mục" – trắng tinh tế */
 .download-actions .btn-open-folder {
-    background-color: #F8FAFC;
-    border-color: #E2E8F0;
-    color: #475569;
+    background-color: #FFFFFF;
+    border-color: #d1fae5;
+    color: #166534;
 }
 
 .download-actions .btn-open-folder i {
-    color: #64748B;
+    color: #16a34a;
 }
 
 .download-actions .btn-open-folder:hover {
-    background-color: #F1F5F9;
-    border-color: #CBD5E1;
-    color: #1E293B;
+    background-color: #f0fdf4;
+    border-color: #86efac;
+    color: #15803d;
 }
 
 /* Modal xác nhận (Confirm Dialog) */

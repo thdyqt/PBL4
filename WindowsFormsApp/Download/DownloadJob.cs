@@ -74,6 +74,7 @@ namespace WindowsFormsApp.Download
         public List<Segment> Segments { get; }
         public DownloadState State { get; private set; }
         public string Error { get; private set; }
+        public string FileHash { get; private set; }  // SHA-256 hex sau khi hoàn thành
         public long Downloaded => Interlocked.Read(ref _downloaded);
 
         public event Action<DownloadJob> Changed;
@@ -181,6 +182,10 @@ namespace WindowsFormsApp.Download
                 else await RunSingleStreamAsync(ct).ConfigureAwait(false);
 
                 ct.ThrowIfCancellationRequested();
+
+                // Tính SHA-256 trong Task.Run để không block luồng giao diện
+                string hash = await Task.Run(() => ChecksumHelper.ComputeSha256(TargetPath), ct).ConfigureAwait(false);
+                FileHash = hash;
 
                 lock (_sync)
                 {
@@ -523,6 +528,7 @@ namespace WindowsFormsApp.Download
                 Threads = SupportsRanges ? Segments.Count : 1,
                 SupportsRanges = SupportsRanges,
                 Error = Error,
+                FileHash = FileHash,
                 Segments = Segments.Select(s => new SegmentDto { Downloaded = s.Downloaded, Length = s.Length }).ToList()
             };
         }

@@ -89,9 +89,12 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Download\AppSettings.cs" />
+    <Compile Include="Download\ChecksumHelper.cs" />
     <Compile Include="Download\DownloadJob.cs" />
     <Compile Include="Download\DownloadManager.cs" />
     <Compile Include="Download\DownloadMeta.cs" />
+    <Compile Include="Download\FtpJob.cs" />
+    <Compile Include="Download\FtpProbe.cs" />
     <Compile Include="Download\Models.cs" />
     <Compile Include="Download\RemoteProbe.cs" />
     <Compile Include="Download\Segment.cs" />
