@@ -88,6 +88,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Download\AppSettings.cs" />
     <Compile Include="Download\DownloadJob.cs" />
     <Compile Include="Download\DownloadManager.cs" />
     <Compile Include="Download\DownloadMeta.cs" />

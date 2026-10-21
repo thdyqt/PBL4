@@ -100,6 +100,9 @@
         confirmBtn.focus();
     }
 
+    window.postIpcMessage = post;
+    window.showAppToast = showToast;
+
     // ---------- định dạng hiển thị ----------
     function fmtBytes(n) {
         if (!(n >= 0)) return "--";
@@ -119,6 +122,7 @@
     }
 
     const STATE_TEXT = {
+        queued: "Chờ tải (Trong hàng đợi)",
         preparing: "Đang chuẩn bị...",
         downloading: "Đang tải",
         paused: "Đã tạm dừng",
@@ -133,7 +137,7 @@
         if (!headerPauseBtn) return;
 
         const items = Array.from(document.querySelectorAll("#download-list .download-item"));
-        const hasDownloading = items.some(el => el.dataset.state === "downloading" || el.dataset.state === "preparing");
+        const hasDownloading = items.some(el => el.dataset.state === "downloading" || el.dataset.state === "preparing" || el.dataset.state === "queued");
         const hasPaused = items.some(el => el.dataset.state === "paused");
 
         if (hasDownloading) {
@@ -198,17 +202,36 @@
             }
         }
 
-        // Cập nhật các nút tác vụ trên item: Pause/Resume, Cancel, Delete
+        // Cập nhật các nút tác vụ trên item: Pause/Resume, Cancel, Delete, Force-start
+        let btnForce = item.querySelector('[data-item-action="force-start"]');
+        if (!btnForce) {
+            btnForce = document.createElement("button");
+            btnForce.type = "button";
+            btnForce.className = "btn-item-action btn-force-start";
+            btnForce.title = "Bắt đầu tải ngay (Bỏ qua hàng đợi)";
+            btnForce.dataset.itemAction = "force-start";
+            btnForce.innerHTML = '<i class="fa-solid fa-bolt"></i>';
+            const actionsWrap = item.querySelector(".item-actions");
+            if (actionsWrap) actionsWrap.insertBefore(btnForce, actionsWrap.firstChild);
+        }
+
         const btnPause = item.querySelector('[data-item-action="toggle-pause"]');
         const btnCancel = item.querySelector('[data-item-action="cancel"]');
         const btnDelete = item.querySelector('[data-item-action="delete"]');
 
         if (d.state === "completed") {
             // Yêu cầu: Khi file hoàn thành thì ẩn Pause và Cancel, chỉ còn được xóa
+            if (btnForce) btnForce.style.display = "none";
             if (btnPause) btnPause.style.display = "none";
             if (btnCancel) btnCancel.style.display = "none";
             if (btnDelete) btnDelete.style.display = "inline-flex";
+        } else if (d.state === "queued") {
+            if (btnForce) btnForce.style.display = "inline-flex";
+            if (btnPause) btnPause.style.display = "none";
+            if (btnCancel) btnCancel.style.display = "inline-flex";
+            if (btnDelete) btnDelete.style.display = "inline-flex";
         } else if (d.state === "paused") {
+            if (btnForce) btnForce.style.display = "inline-flex";
             if (btnPause) {
                 btnPause.style.display = "inline-flex";
                 btnPause.title = "Tiếp tục";
@@ -217,11 +240,13 @@
             if (btnCancel) btnCancel.style.display = "inline-flex";
             if (btnDelete) btnDelete.style.display = "inline-flex";
         } else if (d.state === "cancelled" || d.state === "failed") {
+            if (btnForce) btnForce.style.display = "none";
             if (btnPause) btnPause.style.display = "none";
             if (btnCancel) btnCancel.style.display = "none";
             if (btnDelete) btnDelete.style.display = "inline-flex";
         } else {
             // downloading hoặc preparing
+            if (btnForce) btnForce.style.display = "none";
             if (btnPause) {
                 btnPause.style.display = "inline-flex";
                 btnPause.title = "Tạm dừng";
@@ -240,10 +265,13 @@
             if (el) el.textContent = text;
         };
 
-        set("percent", known || d.state === "completed" ? percent + "%" : "...");
+        set("percent", known || d.state === "completed" ? percent + "%" : (d.state === "queued" ? "Chờ..." : "..."));
         set("downloaded", `${fmtBytes(d.downloaded)} / ${known ? fmtBytes(d.totalBytes) : "--"}`);
 
-        if (d.state === "completed") {
+        if (d.state === "queued") {
+            set("speed", "Chờ đến lượt");
+            set("eta", "--:--");
+        } else if (d.state === "completed") {
             if (!item.dataset.elapsedTime) {
                 let elapsedSec = "0.0";
                 if (typeof d.elapsedSeconds === "number" && d.elapsedSeconds > 0) {
@@ -289,6 +317,8 @@
             text += d.supportsRanges
                 ? ` — ${d.threads} luồng`
                 : " — 1 luồng (server không hỗ trợ Range)";
+        } else if (d.state === "queued") {
+            text += ` — ${d.threads} luồng`;
         } else if (d.state === "completed") {
             const elapsedSec = item.dataset.elapsedTime;
             const avgSpeed = item.dataset.avgSpeed;
@@ -379,8 +409,21 @@
             const item = itemActionBtn.closest(".download-item");
             if (!item) return;
             const taskId = item.id;
-            const action = itemActionBtn.dataset.itemAction;
-            const fileName = item.querySelector(".file-name")?.textContent || "tệp này";
+            if (action === "force-start") {
+                post({ action: "FORCE_START_DOWNLOAD", taskId: taskId });
+                item.dataset.state = "downloading";
+                itemActionBtn.style.display = "none";
+                const btnPause = item.querySelector('[data-item-action="toggle-pause"]');
+                if (btnPause) {
+                    btnPause.style.display = "inline-flex";
+                    btnPause.title = "Tạm dừng";
+                    btnPause.innerHTML = '<i class="fa-solid fa-pause"></i>';
+                }
+                const st = item.querySelector(".download-status");
+                if (st) st.textContent = "Đang bắt đầu tải ngay...";
+                syncHeaderPauseButton();
+                return;
+            }
 
             if (action === "toggle-pause") {
                 const currentState = item.dataset.state;

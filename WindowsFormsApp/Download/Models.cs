@@ -6,6 +6,7 @@ namespace WindowsFormsApp.Download
 {
     public enum DownloadState
     {
+        Queued,
         Preparing,
         Downloading,
         Paused,

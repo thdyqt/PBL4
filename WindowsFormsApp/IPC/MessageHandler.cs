@@ -60,6 +60,14 @@ namespace WindowsFormsApp.IPC
                                 break;
                             }
 
+                        case "START_BATCH_DOWNLOAD":
+                            HandleStartBatchDownload(root);
+                            break;
+
+                        case "FORCE_START_DOWNLOAD":
+                            _manager.ForceStart(GetString(root, "taskId"));
+                            break;
+
                         case "PAUSE_DOWNLOAD":
                             _manager.Pause(GetString(root, "taskId"));
                             break;
@@ -77,8 +85,26 @@ namespace WindowsFormsApp.IPC
                             break;
 
                         case "SET_SPEED_LIMIT":
-                            // kbps = KB/giây, 0 = không giới hạn
-                            _manager.SpeedLimitBytesPerSecond = GetInt(root, "kbps", 0) * 1024L;
+                            {
+                                int kbps = GetInt(root, "kbps", 0);
+                                _manager.SpeedLimitBytesPerSecond = kbps * 1024L;
+                                var currentSettings = SettingsManager.Current;
+                                currentSettings.SpeedLimitKbps = kbps;
+                                SettingsManager.Save(currentSettings);
+                                Send(new { action = "SPEED_LIMIT_UPDATED", kbps = kbps });
+                                break;
+                            }
+
+                        case "GET_SETTINGS":
+                            HandleGetSettings();
+                            break;
+
+                        case "SAVE_SETTINGS":
+                            HandleSaveSettings(root);
+                            break;
+
+                        case "TEST_PROXY":
+                            _ = HandleTestProxyAsync(root);
                             break;
 
                         case "OPEN_FILE":
@@ -139,6 +165,106 @@ namespace WindowsFormsApp.IPC
             }
         }
 
+        private void HandleGetSettings()
+        {
+            var settings = SettingsManager.Current;
+            Send(new
+            {
+                action = "SETTINGS_DATA",
+                data = settings
+            });
+        }
+
+        private void HandleSaveSettings(JsonElement root)
+        {
+            try
+            {
+                if (root.TryGetProperty("settings", out JsonElement settingsEl))
+                {
+                    var settings = JsonSerializer.Deserialize<AppSettings>(settingsEl.GetRawText(), JsonOptions);
+                    if (settings != null)
+                    {
+                        SettingsManager.Save(settings);
+                        _manager.ApplySettings(settings);
+                        Send(new
+                        {
+                            action = "SETTINGS_SAVED",
+                            success = true,
+                            data = settings
+                        });
+                        return;
+                    }
+                }
+                Send(new { action = "SETTINGS_SAVED", success = false, message = "Dữ liệu cài đặt không hợp lệ." });
+            }
+            catch (Exception ex)
+            {
+                Send(new { action = "SETTINGS_SAVED", success = false, message = ex.Message });
+            }
+        }
+
+        private async Task HandleTestProxyAsync(JsonElement root)
+        {
+            try
+            {
+                ProxySettings proxy = null;
+                if (root.TryGetProperty("proxy", out JsonElement proxyEl))
+                {
+                    proxy = JsonSerializer.Deserialize<ProxySettings>(proxyEl.GetRawText(), JsonOptions);
+                }
+
+                if (proxy == null)
+                {
+                    Send(new { action = "PROXY_TEST_RESULT", success = false, latencyMs = 0, message = "Cấu hình proxy không hợp lệ." });
+                    return;
+                }
+
+                var result = await ProxyTester.TestConnectionAsync(proxy).ConfigureAwait(false);
+                Send(new
+                {
+                    action = "PROXY_TEST_RESULT",
+                    success = result.Success,
+                    latencyMs = result.LatencyMs,
+                    message = result.Message
+                });
+            }
+            catch (Exception ex)
+            {
+                Send(new
+                {
+                    action = "PROXY_TEST_RESULT",
+                    success = false,
+                    latencyMs = 0,
+                    message = "Lỗi kiểm tra proxy: " + ex.Message
+                });
+            }
+        }
+
+        private void HandleStartBatchDownload(JsonElement root)
+        {
+            try
+            {
+                if (root.TryGetProperty("tasks", out JsonElement tasksEl) && tasksEl.ValueKind == JsonValueKind.Array)
+                {
+                    foreach (JsonElement item in tasksEl.EnumerateArray())
+                    {
+                        string taskId = GetString(item, "taskId");
+                        string url = GetString(item, "url");
+                        string savePath = GetString(item, "savePath");
+                        int threads = GetInt(item, "threads", GetInt(item, "thread", 4));
+                        if (!string.IsNullOrWhiteSpace(taskId) && !string.IsNullOrWhiteSpace(url))
+                        {
+                            _ = HandleStartDownloadAsync(taskId, url, savePath, threads);
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Send(new { action = "DOWNLOAD_ERROR", taskId = "", message = "Lỗi thêm hàng loạt: " + ex.Message });
+            }
+        }
+
         private void OnProgressChanged(ProgressDto dto)
         {
             Send(new { action = "DOWNLOAD_PROGRESS", data = dto });
@@ -192,26 +318,63 @@ namespace WindowsFormsApp.IPC
 
         private void HandleBrowseFolder()
         {
-            using (FolderBrowserDialog folderDialog = new FolderBrowserDialog())
+            _mainForm.BeginInvoke(new Action(() =>
             {
-                folderDialog.Description = "Chọn thư mục để lưu tệp tải về";
-                folderDialog.ShowNewFolderButton = true; // Cho phép tạo thư mục mới
-
-                if (folderDialog.ShowDialog() == DialogResult.OK)
+                try
                 {
-                    string selectedPath = folderDialog.SelectedPath;
-
-                    var responseData = new
+                    using (FolderBrowserDialog folderDialog = new FolderBrowserDialog())
                     {
-                        action = "FOLDER_SELECTED",
-                        data = selectedPath
-                    };
-                    string responseJson = JsonSerializer.Serialize(responseData);
+                        folderDialog.Description = "Chọn thư mục để lưu tệp tải về:";
+                        folderDialog.ShowNewFolderButton = true;
+                        folderDialog.RootFolder = Environment.SpecialFolder.Desktop;
 
-                    // GỌI HÀM CỦA Form1 ĐỂ BẮN DỮ LIỆU NGƯỢC LÊN GIAO DIỆN
-                    _mainForm.SendToWeb(responseJson);
+                        var settings = SettingsManager.Current;
+                        if (!string.IsNullOrEmpty(settings?.DefaultSavePath) && Directory.Exists(settings.DefaultSavePath))
+                        {
+                            folderDialog.SelectedPath = settings.DefaultSavePath;
+                        }
+                        else
+                        {
+                            string downloads = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Downloads");
+                            if (Directory.Exists(downloads))
+                            {
+                                folderDialog.SelectedPath = downloads;
+                            }
+                        }
+
+                        // Đảm bảo Form1 được đưa lên làm cửa sổ hoạt động chính
+                        _mainForm.Activate();
+
+                        if (folderDialog.ShowDialog(_mainForm) == DialogResult.OK)
+                        {
+                            string selectedPath = folderDialog.SelectedPath;
+                            if (!string.IsNullOrWhiteSpace(selectedPath))
+                            {
+                                // Lưu vào cài đặt mặc định
+                                if (settings != null)
+                                {
+                                    settings.DefaultSavePath = selectedPath;
+                                    SettingsManager.Save(settings);
+                                }
+
+                                var responseData = new
+                                {
+                                    action = "FOLDER_SELECTED",
+                                    data = selectedPath
+                                };
+                                string responseJson = JsonSerializer.Serialize(responseData);
+
+                                // Gửi kết quả lên giao diện Web
+                                _mainForm.SendToWeb(responseJson);
+                            }
+                        }
+                    }
                 }
-            }
+                catch (Exception ex)
+                {
+                    SendError("", "Không thể mở hộp thoại chọn thư mục: " + ex.Message);
+                }
+            }));
         }
         private void HandleStartDownload(JsonElement root)
         {
