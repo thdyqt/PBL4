@@ -19,7 +19,9 @@
     <main class="main-content">
         <!-- Section-1 -->
         <div class="section-1" data-aos="fade-up" data-aos-duration="800">
-            <div class="inner-status"><span></span> Sẵn sàng tải</div>
+            <div class="inner-status" id="download-activity-status" aria-live="polite">
+                <span class="status-dot"></span><span class="status-label">Sẵn sàng tải</span>
+            </div>
         </div>
 
         <!-- Section-2 -->
@@ -304,18 +306,31 @@
                     <textarea id="batch-urls-input" class="form-textarea" rows="6" placeholder="https://example.com/file1.zip&#10;https://example.com/file2.mp4&#10;https://example.com/file3.iso"></textarea>
                 </div>
 
-                <div class="form-row-2">
-                    <div class="form-group" style="flex: 2;">
-                        <label class="form-label">Vị trí lưu tệp:</label>
-                        <div class="save-path-row">
-                            <input type="text" class="inner-input" id="batch-save-path" readonly placeholder="Chưa chọn nơi lưu (Bấm để chọn)">
+                <div class="batch-settings-grid">
+                    <section class="batch-setting-card batch-save-setting" aria-labelledby="batch-save-label">
+                        <div class="batch-setting-heading">
+                            <span class="batch-setting-icon"><i class="fa-regular fa-folder-open"></i></span>
+                            <div>
+                                <label class="form-label" id="batch-save-label" for="batch-save-path">Vị trí lưu tệp</label>
+                                <p class="batch-setting-desc">Chọn thư mục dùng cho toàn bộ liên kết trong danh sách.</p>
+                            </div>
+                        </div>
+                        <div class="batch-save-control">
+                            <input type="text" class="inner-input" id="batch-save-path" readonly placeholder="Chưa chọn thư mục lưu">
                             <button type="button" class="inner-browse-button" id="btn-batch-browse" title="Chọn thư mục lưu tệp">
-                                <i class="fa-regular fa-folder-open"></i> Chọn
+                                <i class="fa-solid fa-folder-plus"></i><span>Chọn thư mục</span>
                             </button>
                         </div>
-                    </div>
-                    <div class="form-group" style="flex: 1;">
-                        <label class="form-label" for="batch-thread-select">Số luồng mỗi tệp:</label>
+                    </section>
+
+                    <section class="batch-setting-card batch-thread-setting" aria-labelledby="batch-thread-label">
+                        <div class="batch-setting-heading">
+                            <span class="batch-setting-icon"><i class="fa-solid fa-diagram-project"></i></span>
+                            <div>
+                                <label class="form-label" id="batch-thread-label" for="batch-thread-select">Số luồng mỗi tệp</label>
+                                <p class="batch-setting-desc">Nhiều luồng hơn có thể tăng tốc độ tải.</p>
+                            </div>
+                        </div>
                         <select id="batch-thread-select" class="form-select">
                             <option value="1">1 luồng</option>
                             <option value="2">2 luồng</option>
@@ -324,7 +339,7 @@
                             <option value="12">12 luồng</option>
                             <option value="16">16 luồng</option>
                         </select>
-                    </div>
+                    </section>
                 </div>
             </div>
 

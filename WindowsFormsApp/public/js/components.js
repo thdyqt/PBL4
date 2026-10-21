@@ -50,6 +50,9 @@ class Header extends HTMLElement {
                         <button type="button" class="inner-button" id="btn-header-pause-all" data-header-action="pause-all" title="Tạm dừng tất cả các tệp">
                             <i class="fa-solid fa-pause"></i> <span>Tạm dừng tất cả</span>
                         </button>
+                        <button type="button" class="inner-button btn-resume-all" id="btn-header-resume-all" data-header-action="resume-all" title="Tiếp tục tất cả các tệp">
+                            <i class="fa-solid fa-play"></i> <span>Tiếp tục tất cả</span>
+                        </button>
                         <button type="button" class="inner-button btn-warning" id="btn-header-cancel-all" data-header-action="cancel-all" title="Hủy tất cả các tệp đang tải">
                             <i class="fa-solid fa-ban"></i> <span>Hủy tất cả</span>
                         </button>

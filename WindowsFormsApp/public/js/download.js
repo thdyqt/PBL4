@@ -131,31 +131,36 @@
         cancelled: "Đã hủy"
     };
 
-    // ---------- Đồng bộ nút Tạm dừng / Tiếp tục trên Header ----------
-    function syncHeaderPauseButton() {
-        const headerPauseBtn = document.getElementById("btn-header-pause-all");
-        if (!headerPauseBtn) return;
-
+    // ---------- Đồng bộ các nút Tạm dừng / Tiếp tục trên Header ----------
+    function syncHeaderPauseButtons() {
         const items = Array.from(document.querySelectorAll("#download-list .download-item"));
-        const hasDownloading = items.some(el => el.dataset.state === "downloading" || el.dataset.state === "preparing" || el.dataset.state === "queued");
+        const activityStatus = document.getElementById("download-activity-status");
+        if (activityStatus) {
+            const hasActiveDownload = items.some(el =>
+                el.dataset.state === "preparing" ||
+                el.dataset.state === "downloading" ||
+                el.dataset.state === "queued");
+            const statusLabel = activityStatus.querySelector(".status-label");
+            activityStatus.classList.toggle("is-downloading", hasActiveDownload);
+            if (statusLabel) statusLabel.textContent = hasActiveDownload ? "Đang tải" : "Sẵn sàng tải";
+        }
+
+        const headerPauseBtn = document.getElementById("btn-header-pause-all");
+        const headerResumeBtn = document.getElementById("btn-header-resume-all");
+        if (!headerPauseBtn || !headerResumeBtn) return;
+
+        const hasPausableDownload = items.some(el => el.dataset.state === "downloading" || el.dataset.state === "queued");
         const hasPaused = items.some(el => el.dataset.state === "paused");
 
-        if (hasDownloading) {
-            headerPauseBtn.dataset.headerAction = "pause-all";
-            headerPauseBtn.title = "Tạm dừng tất cả các tệp";
-            headerPauseBtn.classList.remove("btn-resume");
-            headerPauseBtn.innerHTML = '<i class="fa-solid fa-pause"></i> <span>Tạm dừng tất cả</span>';
-        } else if (hasPaused) {
-            headerPauseBtn.dataset.headerAction = "resume-all";
-            headerPauseBtn.title = "Tiếp tục tất cả các tệp";
-            headerPauseBtn.classList.add("btn-resume");
-            headerPauseBtn.innerHTML = '<i class="fa-solid fa-play"></i> <span>Tiếp tục tất cả</span>';
-        } else {
-            headerPauseBtn.dataset.headerAction = "pause-all";
-            headerPauseBtn.title = "Tạm dừng tất cả các tệp";
-            headerPauseBtn.classList.remove("btn-resume");
-            headerPauseBtn.innerHTML = '<i class="fa-solid fa-pause"></i> <span>Tạm dừng tất cả</span>';
-        }
+        headerPauseBtn.disabled = !hasPausableDownload;
+        headerPauseBtn.title = hasPausableDownload
+            ? "Tạm dừng tất cả các tệp"
+            : "Không có tệp nào đang tải để tạm dừng";
+
+        headerResumeBtn.disabled = !hasPaused;
+        headerResumeBtn.title = hasPaused
+            ? "Tiếp tục tất cả các tệp"
+            : "Không có tệp nào đang tạm dừng để tiếp tục";
     }
 
     // ---------- cập nhật giao diện tác vụ ----------
@@ -341,7 +346,7 @@
         }
 
         if (previousState !== d.state) {
-            syncHeaderPauseButton();
+            syncHeaderPauseButtons();
             if (window.applyFilter) window.applyFilter();
         }
     }
@@ -353,7 +358,7 @@
         item.dataset.state = "failed";
         status.textContent = "Lỗi: " + msg.message;
         status.classList.add("is-error");
-        syncHeaderPauseButton();
+        syncHeaderPauseButtons();
         if (window.applyFilter) window.applyFilter();
     }
 
@@ -380,8 +385,10 @@
             const empty = document.getElementById("empty-state");
             if (empty) empty.style.display = count === 0 ? "" : "none";
         }
-        syncHeaderPauseButton();
+        syncHeaderPauseButtons();
     };
+
+    syncHeaderPauseButtons();
 
     // ---------- Xử lý sự kiện click toàn trang ----------
     document.addEventListener("click", (e) => {
@@ -409,6 +416,9 @@
             const item = itemActionBtn.closest(".download-item");
             if (!item) return;
             const taskId = item.id;
+            const action = itemActionBtn.dataset.itemAction;
+            const fileNameElement = item.querySelector(".file-name");
+            const fileName = fileNameElement ? fileNameElement.textContent : "tệp này";
             if (action === "force-start") {
                 post({ action: "FORCE_START_DOWNLOAD", taskId: taskId });
                 item.dataset.state = "downloading";
@@ -421,7 +431,7 @@
                 }
                 const st = item.querySelector(".download-status");
                 if (st) st.textContent = "Đang bắt đầu tải ngay...";
-                syncHeaderPauseButton();
+                syncHeaderPauseButtons();
                 return;
             }
 
@@ -444,7 +454,7 @@
                     const sp = document.getElementById(`${taskId}-speed`);
                     if (sp) sp.textContent = "—";
                 }
-                syncHeaderPauseButton();
+                syncHeaderPauseButtons();
                 return;
             }
 
@@ -470,7 +480,7 @@
                         if (sp) sp.textContent = "—";
                         const eta = document.getElementById(`${taskId}-eta`);
                         if (eta) eta.textContent = "--:--";
-                        syncHeaderPauseButton();
+                        syncHeaderPauseButtons();
                     }
                 });
                 return;
@@ -490,28 +500,24 @@
                         post({ action: "REMOVE_DOWNLOAD", taskId: taskId });
                         item.remove();
                         window.updateTaskCounter();
-                        syncHeaderPauseButton();
+                        syncHeaderPauseButtons();
                     }
                 });
                 return;
             }
         }
 
-        // 3. Nút điều khiển chung trên Header (Tạm dừng tất cả, Hủy tất cả, Xóa tất cả)
+        // 3. Nút điều khiển chung trên Header (Tạm dừng, Tiếp tục, Hủy, Xóa tất cả)
         const headerBtn = e.target.closest("[data-header-action]");
         if (headerBtn) {
             const headerAction = headerBtn.dataset.headerAction;
 
             if (headerAction === "pause-all") {
                 const items = Array.from(document.querySelectorAll("#download-list .download-item"))
-                    .filter(el => el.dataset.state === "downloading" || el.dataset.state === "preparing");
+                    .filter(el => el.dataset.state === "downloading" || el.dataset.state === "queued");
                 if (items.length === 0) {
-                    const pausedItems = Array.from(document.querySelectorAll("#download-list .download-item"))
-                        .filter(el => el.dataset.state === "paused");
-                    if (pausedItems.length === 0) {
-                        showToast("Không có tệp nào đang tải để tạm dừng.");
-                        return;
-                    }
+                    showToast("Không có tệp nào đang tải để tạm dừng.");
+                    return;
                 }
                 items.forEach(el => {
                     post({ action: "PAUSE_DOWNLOAD", taskId: el.id });
@@ -526,10 +532,7 @@
                     const sp = document.getElementById(`${el.id}-speed`);
                     if (sp) sp.textContent = "—";
                 });
-                headerBtn.dataset.headerAction = "resume-all";
-                headerBtn.title = "Tiếp tục tất cả các tệp";
-                headerBtn.classList.add("btn-resume");
-                headerBtn.innerHTML = '<i class="fa-solid fa-play"></i> <span>Tiếp tục tất cả</span>';
+                syncHeaderPauseButtons();
                 return;
             }
 
@@ -538,10 +541,6 @@
                     .filter(el => el.dataset.state === "paused");
                 if (items.length === 0) {
                     showToast("Không có tệp nào đang tạm dừng để tiếp tục.");
-                    headerBtn.dataset.headerAction = "pause-all";
-                    headerBtn.title = "Tạm dừng tất cả các tệp";
-                    headerBtn.classList.remove("btn-resume");
-                    headerBtn.innerHTML = '<i class="fa-solid fa-pause"></i> <span>Tạm dừng tất cả</span>';
                     return;
                 }
                 items.forEach(el => {
@@ -555,10 +554,7 @@
                     const st = el.querySelector(".download-status");
                     if (st) st.textContent = "Đang tải...";
                 });
-                headerBtn.dataset.headerAction = "pause-all";
-                headerBtn.title = "Tạm dừng tất cả các tệp";
-                headerBtn.classList.remove("btn-resume");
-                headerBtn.innerHTML = '<i class="fa-solid fa-pause"></i> <span>Tạm dừng tất cả</span>';
+                syncHeaderPauseButtons();
                 return;
             }
 
@@ -592,7 +588,7 @@
                             const eta = document.getElementById(`${el.id}-eta`);
                             if (eta) eta.textContent = "--:--";
                         });
-                        syncHeaderPauseButton();
+                        syncHeaderPauseButtons();
                     }
                 });
                 return;
@@ -615,7 +611,7 @@
                             el.remove();
                         });
                         window.updateTaskCounter();
-                        syncHeaderPauseButton();
+                        syncHeaderPauseButtons();
                     }
                 });
                 return;

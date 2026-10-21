@@ -232,8 +232,8 @@ function addDownloadTask(url, savePath, thread) {
         downloadList.insertAdjacentHTML('afterbegin', downloadHTML); 
     }
 
-    if (window.applyFilter) window.applyFilter();
-    else if (window.updateTaskCounter) window.updateTaskCounter();
+    if (window.updateTaskCounter) window.updateTaskCounter();
+    else if (window.applyFilter) window.applyFilter();
 
     const payload = JSON.stringify({
         action: "START_DOWNLOAD", 
