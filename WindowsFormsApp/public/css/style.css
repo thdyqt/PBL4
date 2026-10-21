@@ -552,13 +552,22 @@ a {
     gap: 10px;
 }
 
-.section-2 .save-path-row .inner-input {
+.section-2 .save-path-row .inner-input,
+#batch-save-path {
     outline: none;
     padding: 15px;
     background-color: #fafbfe;
     border: 1px solid #DBE1EC;
     border-radius: 10px;
     flex: 1;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.section-2 .save-path-row .inner-input:hover,
+#batch-save-path:hover {
+    border-color: var(--blue, #3b82f6);
+    background-color: #f0f6ff;
 }
 
 .section-2 .save-path-row .inner-browse-button {
@@ -1211,5 +1220,622 @@ a {
     opacity: 1;
     transform: translateX(-50%) translateY(0);
 }
+
+/* ==========================================================================
+   Advanced Features: Batch URL, Settings Modal, Queue & Bandwidth Limiting
+   ========================================================================== */
+
+/* URL Row Header with Batch Button */
+.section-2 .url-label-wrap {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.section-2 .btn-batch-link {
+    background: rgba(30, 81, 115, 0.08);
+    border: 1px solid rgba(30, 81, 115, 0.18);
+    color: var(--blue);
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 12px;
+    border-radius: 8px;
+    transition: all 0.25s ease;
+}
+
+.section-2 .btn-batch-link:hover {
+    background: rgba(30, 81, 115, 0.16);
+    transform: translateY(-1px);
+    box-shadow: 0 2px 6px rgba(30, 81, 115, 0.15);
+}
+
+.section-2 .btn-batch-link i {
+    color: var(--blue);
+}
+
+/* Header Speed Limit Quick Access */
+#btn-header-speed-limit {
+    border-color: #cbd5e1;
+    background-color: #f8fafc;
+}
+
+#btn-header-speed-limit.is-limited {
+    background: linear-gradient(135deg, #0284c7, #0369a1) !important;
+    color: #ffffff !important;
+    border-color: #0284c7 !important;
+    box-shadow: 0 4px 12px rgba(2, 132, 199, 0.3) !important;
+}
+
+#btn-header-speed-limit.is-limited * {
+    color: #ffffff !important;
+}
+
+/* Modal Overlay & Card (Shared for Settings and Batch) */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(15, 23, 42, 0.65);
+    backdrop-filter: blur(8px);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 999999;
+    padding: 20px;
+    animation: fadeInModal 0.2s ease-out;
+}
+
+.modal-card {
+    background: #ffffff;
+    border-radius: 20px;
+    width: 100%;
+    max-width: 680px;
+    max-height: 90vh;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(226, 232, 240, 0.8);
+    animation: zoomInModal 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    overflow: hidden;
+}
+
+.modal-card.modal-batch {
+    max-width: 600px;
+}
+
+/* Modal Header */
+.modal-header {
+    padding: 20px 28px;
+    border-bottom: 1px solid #f1f5f9;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #fafcff;
+}
+
+.modal-title-wrap {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+
+.modal-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #1e5173, #0f354f);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #ffffff;
+    font-size: 18px;
+    box-shadow: 0 4px 12px rgba(30, 81, 115, 0.25);
+}
+
+.modal-icon i {
+    color: #ffffff;
+}
+
+.modal-title {
+    margin: 0 0 3px 0;
+    font-size: 18px;
+    font-weight: 700;
+    color: #1e293b;
+}
+
+.modal-subtitle {
+    font-size: 12px;
+    color: #64748b;
+}
+
+.btn-modal-close {
+    background: transparent;
+    border: none;
+    font-size: 26px;
+    line-height: 1;
+    color: #94a3b8;
+    cursor: pointer;
+    border-radius: 8px;
+    width: 34px;
+    height: 34px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+}
+
+.btn-modal-close:hover {
+    background: #f1f5f9;
+    color: #1e293b;
+}
+
+/* Settings Tabs */
+.settings-tabs {
+    display: flex;
+    padding: 0 28px;
+    background: #fafcff;
+    border-bottom: 1px solid #e2e8f0;
+    gap: 8px;
+}
+
+.settings-tab-btn {
+    padding: 12px 18px;
+    background: none;
+    border: none;
+    border-bottom: 2px solid transparent;
+    font-size: 13px;
+    font-weight: 600;
+    color: #64748b;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.2s;
+}
+
+.settings-tab-btn i {
+    color: #94a3b8;
+    transition: color 0.2s;
+}
+
+.settings-tab-btn:hover {
+    color: #1e5173;
+}
+
+.settings-tab-btn:hover i {
+    color: #1e5173;
+}
+
+.settings-tab-btn.active {
+    color: #1e5173;
+    border-bottom-color: #1e5173;
+}
+
+.settings-tab-btn.active i {
+    color: #1e5173;
+}
+
+/* Modal Body */
+.modal-body {
+    padding: 24px 28px;
+    overflow-y: auto;
+    flex: 1;
+}
+
+.settings-tab-content {
+    display: none;
+    flex-direction: column;
+    gap: 20px;
+    animation: fadeInModal 0.2s ease-out;
+}
+
+.settings-tab-content.active {
+    display: flex;
+}
+
+/* Form Controls in Modal */
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.form-label {
+    font-size: 13px;
+    font-weight: 600;
+    color: #1e293b;
+}
+
+.form-desc {
+    font-size: 12px;
+    color: #64748b;
+    line-height: 1.45;
+}
+
+.form-select,
+.form-input,
+.form-textarea {
+    width: 100%;
+    padding: 10px 14px;
+    background: #ffffff;
+    border: 1px solid #cbd5e1;
+    border-radius: 10px;
+    font-size: 13px;
+    color: #1e293b;
+    outline: none;
+    transition: all 0.2s;
+}
+
+.form-select:focus,
+.form-input:focus,
+.form-textarea:focus {
+    border-color: #1e5173;
+    box-shadow: 0 0 0 3px rgba(30, 81, 115, 0.12);
+}
+
+.form-textarea {
+    font-family: monospace, sans-serif;
+    line-height: 1.5;
+    resize: vertical;
+}
+
+.form-row-2 {
+    display: flex;
+    gap: 14px;
+}
+
+/* Switch Row */
+.switch-row {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    padding: 14px 18px;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+}
+
+.switch-row .form-label {
+    margin-bottom: 2px;
+}
+
+/* Toggle Switch */
+.toggle-switch {
+    position: relative;
+    display: inline-block;
+    width: 48px;
+    height: 26px;
+    flex-shrink: 0;
+}
+
+.toggle-switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.toggle-slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #cbd5e1;
+    border-radius: 26px;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.toggle-slider:before {
+    position: absolute;
+    content: "";
+    height: 20px;
+    width: 20px;
+    left: 3px;
+    bottom: 3px;
+    background-color: white;
+    border-radius: 50%;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+}
+
+.toggle-switch input:checked + .toggle-slider {
+    background-color: #10b981;
+}
+
+.toggle-switch input:checked + .toggle-slider:before {
+    transform: translateX(22px);
+}
+
+/* Sub-controls container */
+.sub-controls {
+    padding: 16px;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    animation: fadeInModal 0.2s ease-out;
+}
+
+/* Preset Pills */
+.preset-pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.btn-pill {
+    padding: 7px 14px;
+    border-radius: 20px;
+    border: 1px solid #cbd5e1;
+    background: #ffffff;
+    font-size: 12px;
+    font-weight: 600;
+    color: #475569;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-pill:hover {
+    border-color: #1e5173;
+    color: #1e5173;
+    transform: translateY(-1px);
+}
+
+.btn-pill.active {
+    background: #1e5173;
+    border-color: #1e5173;
+    color: #ffffff;
+    box-shadow: 0 2px 6px rgba(30, 81, 115, 0.25);
+}
+
+/* Input Addon */
+.input-addon-wrap {
+    display: flex;
+    align-items: center;
+}
+
+.input-addon-wrap input {
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+}
+
+.input-addon {
+    background: #e2e8f0;
+    border: 1px solid #cbd5e1;
+    border-left: none;
+    padding: 10px 14px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #475569;
+    border-top-right-radius: 10px;
+    border-bottom-right-radius: 10px;
+    white-space: nowrap;
+}
+
+/* Custom Checkbox */
+.custom-checkbox {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 13px;
+    color: #334155;
+    cursor: pointer;
+    user-select: none;
+}
+
+.custom-checkbox input {
+    display: none;
+}
+
+.checkbox-indicator {
+    width: 18px;
+    height: 18px;
+    border-radius: 5px;
+    border: 2px solid #cbd5e1;
+    background: #ffffff;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    flex-shrink: 0;
+}
+
+.custom-checkbox input:checked + .checkbox-indicator {
+    background: #1e5173;
+    border-color: #1e5173;
+}
+
+.custom-checkbox input:checked + .checkbox-indicator:after {
+    content: "✓";
+    font-size: 12px;
+    font-weight: bold;
+    color: #ffffff;
+}
+
+/* Proxy Test Box */
+.proxy-test-container {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 6px;
+    padding-top: 14px;
+    border-top: 1px dashed #cbd5e1;
+}
+
+.btn-test-proxy {
+    align-self: flex-start;
+    padding: 8px 16px;
+    border-radius: 8px;
+    border: 1px solid #cbd5e1;
+    background: #ffffff;
+    font-size: 12px;
+    font-weight: 600;
+    color: #334155;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.2s;
+}
+
+.btn-test-proxy:hover {
+    border-color: #1e5173;
+    color: #1e5173;
+    background: #f1f5f9;
+}
+
+.btn-test-proxy.loading {
+    pointer-events: none;
+    opacity: 0.7;
+}
+
+.proxy-test-status {
+    font-size: 12px;
+    padding: 8px 14px;
+    border-radius: 8px;
+    display: none;
+    line-height: 1.4;
+}
+
+.proxy-test-status.success {
+    display: block;
+    background: #ecfdf5;
+    border: 1px solid #a7f3d0;
+    color: #065f46;
+}
+
+.proxy-test-status.error {
+    display: block;
+    background: #fef2f2;
+    border: 1px solid #fecaca;
+    color: #991b1b;
+}
+
+/* Modal Footer */
+.modal-footer {
+    padding: 16px 28px;
+    border-top: 1px solid #f1f5f9;
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    background: #fafcff;
+}
+
+.btn-modal-cancel {
+    padding: 9px 18px;
+    border-radius: 10px;
+    border: 1px solid #e2e8f0;
+    background: #ffffff;
+    color: #475569;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-modal-cancel:hover {
+    background: #f1f5f9;
+    color: #1e293b;
+}
+
+.btn-modal-save {
+    padding: 9px 22px;
+    border-radius: 10px;
+    border: none;
+    background: linear-gradient(135deg, #1e5173, #153952);
+    color: #ffffff;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    box-shadow: 0 4px 12px rgba(30, 81, 115, 0.25);
+    transition: all 0.2s;
+}
+
+.btn-modal-save * {
+    color: #ffffff !important;
+}
+
+.btn-modal-save:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 16px rgba(30, 81, 115, 0.35);
+}
+
+/* Batch Textarea Head */
+.batch-textarea-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.batch-count-badge {
+    font-size: 11px;
+    font-weight: 700;
+    padding: 3px 8px;
+    border-radius: 20px;
+    background: #e2e8f0;
+    color: #475569;
+}
+
+.batch-count-badge.has-items {
+    background: #ecfdf5;
+    color: #065f46;
+}
+
+/* ==========================================================================
+   Queued Download State Styling
+   ========================================================================== */
+.download-item[data-state="queued"] {
+    border-left: 4px solid #f59e0b;
+    background-color: #fefce8;
+}
+
+.download-item[data-state="queued"] .progress-bar-fill {
+    background: repeating-linear-gradient(
+        45deg,
+        #f59e0b,
+        #f59e0b 10px,
+        #fbbf24 10px,
+        #fbbf24 20px
+    );
+    background-size: 28px 28px;
+    animation: queuedStripe 1.5s linear infinite;
+    opacity: 0.85;
+}
+
+@keyframes queuedStripe {
+    0% { background-position: 0 0; }
+    100% { background-position: 28px 0; }
+}
+
+.download-item[data-state="queued"] .download-status {
+    color: #b45309;
+    font-weight: 500;
+}
+
+/* Force Start Button (Tải ngay) on Queued Item */
+.btn-item-action.btn-force-start {
+    background-color: #fef3c7;
+    color: #b45309;
+    border: 1px solid #fde68a;
+}
+
+.btn-item-action.btn-force-start:hover {
+    background-color: #fde68a;
+    color: #92400e;
+    transform: scale(1.1);
+}
+
 
 

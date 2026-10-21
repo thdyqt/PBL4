@@ -18,11 +18,15 @@ namespace WindowsFormsApp.Download
     /// </summary>
     public sealed class DownloadManager : IDisposable
     {
-        private readonly HttpClient _http;
+        private HttpClient _http;
         private readonly SpeedLimiter _limiter = new SpeedLimiter();
         private readonly ConcurrentDictionary<string, DownloadJob> _jobs = new ConcurrentDictionary<string, DownloadJob>();
         private readonly HashSet<string> _activeTargets = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         private readonly object _targetLock = new object();
+        private readonly List<string> _queue = new List<string>();
+        private readonly object _queueLock = new object();
+        private int _maxConcurrentDownloads = 2; // 0 = Không giới hạn
+        private ProxySettings _currentProxy;
         private readonly System.Threading.Timer _timer;
         private int _tickBusy;
         private int _tickCount;
@@ -32,19 +36,11 @@ namespace WindowsFormsApp.Download
 
         public DownloadManager()
         {
-            var handler = new HttpClientHandler
-            {
-                AllowAutoRedirect = true,
-                MaxAutomaticRedirections = 8,
-                // Phải tắt nén: nếu server nén gzip thì offset byte của Range không còn khớp
-                AutomaticDecompression = DecompressionMethods.None
-            };
-            try { handler.MaxConnectionsPerServer = 64; } catch { }
-
-            _http = new HttpClient(handler);
-            _http.Timeout = Timeout.InfiniteTimeSpan; // timeout được kiểm soát riêng cho từng request/luồng đọc
-            _http.DefaultRequestHeaders.UserAgent.ParseAdd("DUTDownloadAccelerator/1.0 (Windows)");
-            _http.DefaultRequestHeaders.AcceptEncoding.Add(new StringWithQualityHeaderValue("identity"));
+            var settings = SettingsManager.Load();
+            _maxConcurrentDownloads = settings.MaxConcurrentDownloads;
+            _limiter.BytesPerSecond = settings.SpeedLimitKbps * 1024L;
+            _currentProxy = settings.Proxy ?? new ProxySettings();
+            _http = CreateHttpClient(_currentProxy);
 
             _timer = new System.Threading.Timer(OnTick, null, 400, 400);
         }
@@ -55,9 +51,95 @@ namespace WindowsFormsApp.Download
             set { _limiter.BytesPerSecond = value; }
         }
 
+        public int MaxConcurrentDownloads
+        {
+            get { lock (_queueLock) return _maxConcurrentDownloads; }
+            set
+            {
+                lock (_queueLock) _maxConcurrentDownloads = Math.Max(0, value);
+                CheckAndProcessQueue();
+            }
+        }
+
+        public int ActiveDownloadingCount
+        {
+            get { return _jobs.Values.Count(j => j.State == DownloadState.Downloading || j.State == DownloadState.Preparing); }
+        }
+
+        public static HttpClient CreateHttpClient(ProxySettings proxy)
+        {
+            var handler = new HttpClientHandler
+            {
+                AllowAutoRedirect = true,
+                MaxAutomaticRedirections = 8,
+                // Phải tắt nén: nếu server nén gzip thì offset byte của Range không còn khớp
+                AutomaticDecompression = DecompressionMethods.None
+            };
+            try { handler.MaxConnectionsPerServer = 64; } catch { }
+
+            if (proxy != null && proxy.Enabled)
+            {
+                if (string.Equals(proxy.Mode, "system", StringComparison.OrdinalIgnoreCase))
+                {
+                    handler.UseProxy = true;
+                    handler.Proxy = WebRequest.GetSystemWebProxy();
+                }
+                else if (!string.IsNullOrWhiteSpace(proxy.Host))
+                {
+                    try
+                    {
+                        string scheme = string.Equals(proxy.Type, "socks5", StringComparison.OrdinalIgnoreCase) ? "socks5" : "http";
+                        string proxyUri = $"{scheme}://{proxy.Host.Trim()}:{proxy.Port}";
+                        var webProxy = new WebProxy(new Uri(proxyUri), proxy.BypassLocal);
+
+                        if (proxy.AuthRequired && !string.IsNullOrEmpty(proxy.Username))
+                        {
+                            webProxy.Credentials = new NetworkCredential(proxy.Username, proxy.Password ?? "");
+                        }
+
+                        handler.Proxy = webProxy;
+                        handler.UseProxy = true;
+                    }
+                    catch
+                    {
+                        handler.UseProxy = false;
+                    }
+                }
+                else
+                {
+                    handler.UseProxy = false;
+                }
+            }
+            else
+            {
+                handler.UseProxy = false;
+            }
+
+            var client = new HttpClient(handler);
+            client.Timeout = Timeout.InfiniteTimeSpan;
+            client.DefaultRequestHeaders.UserAgent.ParseAdd("DUTDownloadAccelerator/1.0 (Windows)");
+            client.DefaultRequestHeaders.AcceptEncoding.Add(new StringWithQualityHeaderValue("identity"));
+            return client;
+        }
+
+        public void UpdateProxy(ProxySettings proxy)
+        {
+            _currentProxy = proxy ?? new ProxySettings();
+            _http = CreateHttpClient(_currentProxy);
+        }
+
+        public void ApplySettings(AppSettings settings)
+        {
+            if (settings == null) return;
+            MaxConcurrentDownloads = settings.MaxConcurrentDownloads;
+            SpeedLimitBytesPerSecond = settings.SpeedLimitKbps * 1024L;
+            UpdateProxy(settings.Proxy);
+            CheckAndProcessQueue();
+        }
+
         // ------------------------------------------------------------------ tạo tác vụ
 
-        public async Task StartAsync(string taskId, string url, string folder, int threads)
+        public async Task StartAsync(string taskId, string url, string folder, int threads, bool forceStart = false)
         {
             Uri uri;
             if (!Uri.TryCreate(url, UriKind.Absolute, out uri) ||
@@ -116,12 +198,31 @@ namespace WindowsFormsApp.Download
                 segments = SegmentPlanner.Split(info.Length, threads);
             }
 
+            DownloadJob job;
+            bool shouldQueue;
             try
             {
-                var job = new DownloadJob(taskId, url, info, target, threads, ranges, segments, _http, _limiter);
-                job.Changed += OnJobChanged;
-                _jobs[taskId] = job;
-                job.Start();
+                lock (_queueLock)
+                {
+                    shouldQueue = !forceStart && _maxConcurrentDownloads > 0 && ActiveDownloadingCount >= _maxConcurrentDownloads;
+                    job = new DownloadJob(taskId, url, info, target, threads, ranges, segments, _http, _limiter, queued: shouldQueue);
+                    job.Changed += OnJobChanged;
+                    _jobs[taskId] = job;
+
+                    if (shouldQueue)
+                    {
+                        if (!_queue.Contains(taskId)) _queue.Add(taskId);
+                    }
+                }
+
+                if (shouldQueue)
+                {
+                    Raise(job.Snapshot());
+                }
+                else
+                {
+                    job.Start();
+                }
             }
             catch
             {
@@ -206,19 +307,80 @@ namespace WindowsFormsApp.Download
 
         public void Pause(string taskId)
         {
+            lock (_queueLock)
+            {
+                _queue.Remove(taskId);
+            }
+
             DownloadJob job;
-            if (_jobs.TryGetValue(taskId, out job)) job.Pause();
+            if (_jobs.TryGetValue(taskId, out job))
+            {
+                job.Pause();
+            }
+            CheckAndProcessQueue();
         }
 
         public void Resume(string taskId)
         {
             DownloadJob job;
-            if (_jobs.TryGetValue(taskId, out job)) job.Start();
+            if (!_jobs.TryGetValue(taskId, out job)) return;
+
+            lock (_queueLock)
+            {
+                if (_maxConcurrentDownloads > 0 && ActiveDownloadingCount >= _maxConcurrentDownloads)
+                {
+                    if (!_queue.Contains(taskId)) _queue.Add(taskId);
+                    job.SetQueued();
+                    Raise(job.Snapshot());
+                    return;
+                }
+            }
+
+            job.Start();
+        }
+
+        /// <summary>Bắt đầu ngay một tác vụ đang chờ trong hàng đợi (bỏ qua giới hạn hàng đợi).</summary>
+        public void ForceStart(string taskId)
+        {
+            lock (_queueLock)
+            {
+                _queue.Remove(taskId);
+            }
+
+            DownloadJob job;
+            if (_jobs.TryGetValue(taskId, out job))
+            {
+                job.Start();
+            }
+        }
+
+        public void CheckAndProcessQueue()
+        {
+            lock (_queueLock)
+            {
+                while (_maxConcurrentDownloads <= 0 || ActiveDownloadingCount < _maxConcurrentDownloads)
+                {
+                    if (_queue.Count == 0) break;
+                    string nextTaskId = _queue[0];
+                    _queue.RemoveAt(0);
+
+                    DownloadJob nextJob;
+                    if (_jobs.TryGetValue(nextTaskId, out nextJob) && nextJob.State == DownloadState.Queued)
+                    {
+                        nextJob.Start();
+                    }
+                }
+            }
         }
 
         /// <summary>Hủy tác vụ tải: dừng luồng, xóa file dở dang và .dlmeta.</summary>
         public async Task CancelAsync(string taskId)
         {
+            lock (_queueLock)
+            {
+                _queue.Remove(taskId);
+            }
+
             DownloadJob job;
             if (_jobs.TryGetValue(taskId, out job))
             {
@@ -228,11 +390,18 @@ namespace WindowsFormsApp.Download
                 }
                 await job.CancelAsync().ConfigureAwait(false);
             }
+
+            CheckAndProcessQueue();
         }
 
         /// <summary>Gỡ tác vụ. Chưa xong -> xóa file dở; đã xong -> giữ file.</summary>
         public async Task RemoveAsync(string taskId)
         {
+            lock (_queueLock)
+            {
+                _queue.Remove(taskId);
+            }
+
             DownloadJob job;
             if (_jobs.TryRemove(taskId, out job))
             {
@@ -242,6 +411,8 @@ namespace WindowsFormsApp.Download
                 }
                 await job.CancelAsync().ConfigureAwait(false);
             }
+
+            CheckAndProcessQueue();
         }
 
         /// <summary>Lấy đường dẫn tệp đích của tác vụ theo taskId.</summary>
@@ -271,6 +442,14 @@ namespace WindowsFormsApp.Download
         private void OnJobChanged(DownloadJob job)
         {
             Raise(job.Snapshot());
+
+            if (job.State == DownloadState.Completed ||
+                job.State == DownloadState.Failed ||
+                job.State == DownloadState.Cancelled ||
+                job.State == DownloadState.Paused)
+            {
+                CheckAndProcessQueue();
+            }
         }
 
         private void OnTick(object state)

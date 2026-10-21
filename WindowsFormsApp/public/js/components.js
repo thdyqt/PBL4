@@ -44,6 +44,9 @@ class Header extends HTMLElement {
                         </div>
                     </div>
                     <div class="inner-button-list">
+                        <button type="button" class="inner-button" id="btn-header-speed-limit" title="Giới hạn băng thông (Click để chỉnh)">
+                            <i class="fa-solid fa-gauge-high"></i> <span id="header-speed-limit-label">Không giới hạn</span>
+                        </button>
                         <button type="button" class="inner-button" id="btn-header-pause-all" data-header-action="pause-all" title="Tạm dừng tất cả các tệp">
                             <i class="fa-solid fa-pause"></i> <span>Tạm dừng tất cả</span>
                         </button>
@@ -53,7 +56,7 @@ class Header extends HTMLElement {
                         <button type="button" class="inner-button btn-danger" id="btn-header-delete-all" data-header-action="delete-all" title="Xóa tất cả các tác vụ khỏi danh sách">
                             <i class="fa-solid fa-trash"></i> <span>Xóa tất cả</span>
                         </button>
-                        <button type="button" class="inner-button btn-icon" title="Cài đặt"><i class="fa-solid fa-gear"></i></button>
+                        <button type="button" class="inner-button btn-icon" id="btn-header-settings" title="Cài đặt hệ thống"><i class="fa-solid fa-gear"></i></button>
                         <button type="button" class="inner-button-menu" title="Menu"><i class="fa-solid fa-bars"></i></button>
                     </div>
                 </div>

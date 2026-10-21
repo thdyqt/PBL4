@@ -27,18 +27,25 @@
             <form id="input-form">
                 <div class="inner-wrap">
                     <div class="url-row">
-                        <label for="url" class="inner-label">Liên kết tải về</label>
+                        <div class="url-label-wrap">
+                            <label for="url" class="inner-label">Liên kết tải về</label>
+                            <button type="button" class="btn-batch-link" id="btn-open-batch-modal" title="Thêm nhiều liên kết cùng lúc">
+                                <i class="fa-solid fa-list-check"></i> <span>Tải nhiều link (Batch)</span>
+                            </button>
+                        </div>
                         <div class="url-input">
                             <input type="url" class="inner-input" id="url" name="url" inputmode="url" placeholder="https://example.com/tep-can-tai.zip" autocomplete="url">
-                            <i class="fa-regular fa-clipboard btn-paste"></i>
+                            <i class="fa-regular fa-clipboard btn-paste" title="Dán từ Clipboard"></i>
                         </div>
                     </div>
                     <div class="options-row">
                         <div class="save-field">
                             <label for="save-path" class="inner-label">Lưu tại</label>
                             <div class="save-path-row">
-                                <input type="text" class="inner-input" id="save-path" name="save-path" placeholder="Chưa chọn vị trí lưu" readonly>
-                                <button type="button" class="inner-browse-button">Chọn nơi lưu</button>
+                                <input type="text" class="inner-input" id="save-path" name="save-path" placeholder="Chưa chọn vị trí lưu (Bấm để chọn)" readonly>
+                                <button type="button" class="inner-browse-button" id="btn-browse-folder" title="Chọn thư mục lưu tệp">
+                                    <i class="fa-regular fa-folder-open"></i> Chọn nơi lưu
+                                </button>
                             </div>
                         </div>
                         <div class="thread-field">
@@ -80,6 +87,255 @@
             <div id="download-list"></div>
         </div>
     </main>
+
+    <!-- Settings Modal -->
+    <div class="modal-overlay" id="settings-modal" style="display: none;">
+        <div class="modal-card">
+            <div class="modal-header">
+                <div class="modal-title-wrap">
+                    <div class="modal-icon"><i class="fa-solid fa-sliders"></i></div>
+                    <div>
+                        <h3 class="modal-title">Cài đặt nâng cao</h3>
+                        <div class="modal-subtitle">Hàng đợi tải về, Giới hạn băng thông & Cấu hình Proxy</div>
+                    </div>
+                </div>
+                <button type="button" class="btn-modal-close" id="btn-close-settings" title="Đóng">&times;</button>
+            </div>
+
+            <!-- Tabs -->
+            <div class="settings-tabs">
+                <button type="button" class="settings-tab-btn active" data-tab="tab-queue">
+                    <i class="fa-solid fa-layer-group"></i> <span>Hàng đợi (Queue)</span>
+                </button>
+                <button type="button" class="settings-tab-btn" data-tab="tab-bandwidth">
+                    <i class="fa-solid fa-gauge-high"></i> <span>Băng thông (Speed)</span>
+                </button>
+                <button type="button" class="settings-tab-btn" data-tab="tab-proxy">
+                    <i class="fa-solid fa-shield-halved"></i> <span>Proxy</span>
+                </button>
+            </div>
+
+            <div class="modal-body">
+                <!-- Tab 1: Queue -->
+                <div class="settings-tab-content active" id="tab-queue">
+                    <div class="form-group">
+                        <label class="form-label" for="setting-max-concurrent">Số tệp tải đồng thời tối đa (Max Concurrent Downloads)</label>
+                        <div class="form-desc">Kiểm soát số lượng tệp được tải cùng lúc. Các tệp vượt quá sẽ nằm trong hàng đợi và tự động kích hoạt khi có tệp hoàn tất.</div>
+                        <select id="setting-max-concurrent" class="form-select">
+                            <option value="1">1 tệp (Tải tuần tự từng tệp)</option>
+                            <option value="2" selected>2 tệp đồng thời (Khuyên dùng)</option>
+                            <option value="3">3 tệp đồng thời</option>
+                            <option value="5">5 tệp đồng thời</option>
+                            <option value="8">8 tệp đồng thời</option>
+                            <option value="0">0 (Không giới hạn - Tải tất cả)</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group switch-row">
+                        <div>
+                            <div class="form-label">Tự động bắt đầu tệp tiếp theo trong hàng đợi</div>
+                            <div class="form-desc">Kích hoạt tác vụ tiếp theo ngay khi một tệp hoàn thành hoặc bị hủy.</div>
+                        </div>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="setting-auto-start-next" checked>
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="setting-default-threads">Số luồng tải mặc định cho mỗi tệp</label>
+                        <select id="setting-default-threads" class="form-select">
+                            <option value="1">1 luồng</option>
+                            <option value="2">2 luồng</option>
+                            <option value="4" selected>4 luồng (Tối ưu)</option>
+                            <option value="8">8 luồng</option>
+                            <option value="12">12 luồng</option>
+                            <option value="16">16 luồng</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Tab 2: Bandwidth Limit -->
+                <div class="settings-tab-content" id="tab-bandwidth">
+                    <div class="form-group switch-row">
+                        <div>
+                            <div class="form-label">Giới hạn băng thông (Bandwidth Throttling)</div>
+                            <div class="form-desc">Áp dụng thuật toán Virtual Clock Leaky Bucket đa luồng, phân phối mượt mà cho toàn ứng dụng.</div>
+                        </div>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="setting-speed-limit-enable">
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+
+                    <div id="speed-limit-sub-wrap" class="sub-controls" style="display: none;">
+                        <label class="form-label">Chọn mức giới hạn nhanh (Presets):</label>
+                        <div class="preset-pills">
+                            <button type="button" class="btn-pill" data-kbps="512">512 KB/s</button>
+                            <button type="button" class="btn-pill" data-kbps="1024">1 MB/s</button>
+                            <button type="button" class="btn-pill" data-kbps="2048">2 MB/s</button>
+                            <button type="button" class="btn-pill" data-kbps="5120">5 MB/s</button>
+                            <button type="button" class="btn-pill" data-kbps="10240">10 MB/s</button>
+                        </div>
+
+                        <div class="form-group custom-speed-wrap">
+                            <label class="form-label" for="setting-custom-speed">Hoặc nhập tốc độ tuỳ chỉnh (KB/giây):</label>
+                            <div class="input-addon-wrap">
+                                <input type="number" id="setting-custom-speed" class="form-input" min="10" max="1000000" placeholder="vd: 2048">
+                                <span class="input-addon">KB/s</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tab 3: Proxy -->
+                <div class="settings-tab-content" id="tab-proxy">
+                    <div class="form-group switch-row">
+                        <div>
+                            <div class="form-label">Kích hoạt Proxy</div>
+                            <div class="form-desc">Chuyển hướng mọi luồng tải và dò tìm thông tin tệp qua máy chủ Proxy.</div>
+                        </div>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="setting-proxy-enable">
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+
+                    <div id="proxy-sub-wrap" class="sub-controls" style="display: none;">
+                        <div class="form-group">
+                            <label class="form-label" for="setting-proxy-mode">Chế độ Proxy</label>
+                            <select id="setting-proxy-mode" class="form-select">
+                                <option value="manual">Tùy chỉnh máy chủ Proxy thủ công</option>
+                                <option value="system">Sử dụng cấu hình Proxy hệ thống Windows</option>
+                                <option value="direct">Kết nối trực tiếp (Bỏ qua Proxy)</option>
+                            </select>
+                        </div>
+
+                        <div id="proxy-manual-fields">
+                            <div class="form-row-2">
+                                <div class="form-group" style="flex: 1;">
+                                    <label class="form-label" for="setting-proxy-type">Giao thức</label>
+                                    <select id="setting-proxy-type" class="form-select">
+                                        <option value="http">HTTP / HTTPS</option>
+                                        <option value="socks5">SOCKS5</option>
+                                    </select>
+                                </div>
+                                <div class="form-group" style="flex: 2;">
+                                    <label class="form-label" for="setting-proxy-host">Địa chỉ máy chủ (Host / IP)</label>
+                                    <input type="text" id="setting-proxy-host" class="form-input" placeholder="vd: 127.0.0.1 hoặc proxy.example.com">
+                                </div>
+                                <div class="form-group" style="flex: 1;">
+                                    <label class="form-label" for="setting-proxy-port">Cổng (Port)</label>
+                                    <input type="number" id="setting-proxy-port" class="form-input" placeholder="8080" min="1" max="65535">
+                                </div>
+                            </div>
+
+                            <div class="form-group switch-row">
+                                <div>
+                                    <div class="form-label">Yêu cầu xác thực tài khoản (Authentication)</div>
+                                    <div class="form-desc">Bật nếu máy chủ Proxy yêu cầu Tên đăng nhập và Mật khẩu.</div>
+                                </div>
+                                <label class="toggle-switch">
+                                    <input type="checkbox" id="setting-proxy-auth">
+                                    <span class="toggle-slider"></span>
+                                </label>
+                            </div>
+
+                            <div id="proxy-auth-fields" class="form-row-2" style="display: none;">
+                                <div class="form-group">
+                                    <label class="form-label" for="setting-proxy-user">Tên đăng nhập (Username)</label>
+                                    <input type="text" id="setting-proxy-user" class="form-input" placeholder="Username">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label" for="setting-proxy-pass">Mật khẩu (Password)</label>
+                                    <input type="password" id="setting-proxy-pass" class="form-input" placeholder="••••••••">
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="custom-checkbox">
+                                    <input type="checkbox" id="setting-proxy-bypass-local" checked>
+                                    <span class="checkbox-indicator"></span>
+                                    <span>Bỏ qua Proxy đối với các địa chỉ mạng cục bộ (Bypass Local Addresses)</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Test Proxy -->
+                        <div class="proxy-test-container">
+                            <button type="button" class="btn-test-proxy" id="btn-test-proxy">
+                                <i class="fa-solid fa-plug-circle-bolt"></i> <span>Kiểm tra kết nối Proxy</span>
+                            </button>
+                            <div class="proxy-test-status" id="proxy-test-status"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn-modal-cancel" id="btn-cancel-settings">Đóng</button>
+                <button type="button" class="btn-modal-save" id="btn-save-settings">
+                    <i class="fa-solid fa-floppy-disk"></i> <span>Lưu cài đặt</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Batch Download Modal -->
+    <div class="modal-overlay" id="batch-modal" style="display: none;">
+        <div class="modal-card modal-batch">
+            <div class="modal-header">
+                <div class="modal-title-wrap">
+                    <div class="modal-icon"><i class="fa-solid fa-list-check"></i></div>
+                    <div>
+                        <h3 class="modal-title">Tải hàng loạt liên kết (Batch URLs)</h3>
+                        <div class="modal-subtitle">Dán danh sách nhiều URL để tự động thêm tất cả vào hàng đợi tải về</div>
+                    </div>
+                </div>
+                <button type="button" class="btn-modal-close" id="btn-close-batch" title="Đóng">&times;</button>
+            </div>
+
+            <div class="modal-body">
+                <div class="form-group">
+                    <div class="batch-textarea-head">
+                        <label class="form-label" for="batch-urls-input">Danh sách URL (mỗi dòng một liên kết):</label>
+                        <span class="batch-count-badge" id="batch-urls-count">0 liên kết hợp lệ</span>
+                    </div>
+                    <textarea id="batch-urls-input" class="form-textarea" rows="6" placeholder="https://example.com/file1.zip&#10;https://example.com/file2.mp4&#10;https://example.com/file3.iso"></textarea>
+                </div>
+
+                <div class="form-row-2">
+                    <div class="form-group" style="flex: 2;">
+                        <label class="form-label">Vị trí lưu tệp:</label>
+                        <div class="save-path-row">
+                            <input type="text" class="inner-input" id="batch-save-path" readonly placeholder="Chưa chọn nơi lưu (Bấm để chọn)">
+                            <button type="button" class="inner-browse-button" id="btn-batch-browse" title="Chọn thư mục lưu tệp">
+                                <i class="fa-regular fa-folder-open"></i> Chọn
+                            </button>
+                        </div>
+                    </div>
+                    <div class="form-group" style="flex: 1;">
+                        <label class="form-label" for="batch-thread-select">Số luồng mỗi tệp:</label>
+                        <select id="batch-thread-select" class="form-select">
+                            <option value="1">1 luồng</option>
+                            <option value="2">2 luồng</option>
+                            <option value="4" selected>4 luồng</option>
+                            <option value="8">8 luồng</option>
+                            <option value="12">12 luồng</option>
+                            <option value="16">16 luồng</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn-modal-cancel" id="btn-cancel-batch">Hủy bỏ</button>
+                <button type="button" class="btn-modal-save" id="btn-submit-batch">
+                    <i class="fa-solid fa-cloud-arrow-down"></i> <span id="btn-submit-batch-text">Thêm vào hàng đợi</span>
+                </button>
+            </div>
+        </div>
+    </div>
 
     <!-- Social Contact -->
     <social-contact></social-contact>

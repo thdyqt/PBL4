@@ -119,7 +119,7 @@ function applyFilter(filterName) {
                 isMatch = true;
                 break;
             case "downloading":
-                isMatch = (state === "downloading" || state === "preparing");
+                isMatch = (state === "downloading" || state === "preparing" || state === "queued");
                 break;
             case "completed":
                 isMatch = (state === "completed");

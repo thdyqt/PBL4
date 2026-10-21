@@ -43,7 +43,7 @@ namespace WindowsFormsApp.Download
 
         public DownloadJob(string id, string sourceUrl, RemoteFileInfo info, string targetPath,
                            int requestedThreads, bool supportsRanges, List<Segment> segments,
-                           HttpClient http, SpeedLimiter limiter)
+                           HttpClient http, SpeedLimiter limiter, bool queued = false)
         {
             Id = id;
             SourceUrl = sourceUrl;
@@ -57,7 +57,7 @@ namespace WindowsFormsApp.Download
             Segments = segments;
             _http = http;
             _limiter = limiter;
-            State = DownloadState.Preparing;
+            State = queued ? DownloadState.Queued : DownloadState.Preparing;
 
             _downloaded = segments.Sum(s => s.Downloaded);
         }
@@ -80,7 +80,7 @@ namespace WindowsFormsApp.Download
 
         // ------------------------------------------------------------------ điều khiển
 
-        /// <summary>Bắt đầu hoặc tiếp tục (từ Paused/Failed/Preparing).</summary>
+        /// <summary>Bắt đầu hoặc tiếp tục (từ Paused/Failed/Preparing/Queued).</summary>
         public void Start()
         {
             lock (_sync)
@@ -113,11 +113,27 @@ namespace WindowsFormsApp.Download
         {
             lock (_sync)
             {
-                if (State != DownloadState.Downloading) return;
+                if (State != DownloadState.Downloading && State != DownloadState.Queued) return;
                 State = DownloadState.Paused;
                 _speed = 0;
                 _activeStopwatch.Stop();
-                _cts.Cancel();
+                if (_cts != null) _cts.Cancel();
+            }
+            RaiseChanged();
+        }
+
+        public void SetQueued()
+        {
+            lock (_sync)
+            {
+                if (State == DownloadState.Completed || State == DownloadState.Cancelled) return;
+                State = DownloadState.Queued;
+                _speed = 0;
+                _activeStopwatch.Stop();
+                if (_cts != null)
+                {
+                    try { _cts.Cancel(); } catch { }
+                }
             }
             RaiseChanged();
         }
