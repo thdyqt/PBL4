@@ -40,6 +40,13 @@ namespace WindowsFormsApp.Download
         public string Error { get; set; }
         public string FileHash { get; set; }      // SHA-256 hex (64 ký tự) sau khi hoàn thành
         public List<SegmentDto> Segments { get; set; }
+
+        /// <summary>
+        /// JSON đầy đủ của List&lt;SegmentMeta&gt; (Index, Start, End, Downloaded, Finished).
+        /// Dùng để lưu vào SQLite — đủ thông tin để resume sau crash.
+        /// Không gửi lên giao diện (chỉ dùng nội bộ C#).
+        /// </summary>
+        public string SegmentsMetaJson { get; set; }
     }
 
     public sealed class SegmentDto

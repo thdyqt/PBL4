@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Headers;
+using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -514,22 +515,42 @@ namespace WindowsFormsApp.Download
             double speed = state == DownloadState.Downloading ? _speed : 0;
             long eta = (speed > 1 && TotalBytes > 0) ? (long)((TotalBytes - done) / speed) : -1;
 
+            // Serialize đầy đủ SegmentMeta để DB có đủ thông tin resume sau crash
+            string segsMeta = null;
+            if (SupportsRanges && Segments != null && Segments.Count > 0)
+            {
+                try
+                {
+                    var metas = Segments.Select(s => new SegmentMeta
+                    {
+                        Index      = s.Index,
+                        Start      = s.Start,
+                        End        = s.End,
+                        Downloaded = s.Downloaded,
+                        Finished   = s.Finished
+                    }).ToList();
+                    segsMeta = JsonSerializer.Serialize(metas);
+                }
+                catch { }
+            }
+
             return new ProgressDto
             {
-                TaskId = Id,
-                State = state.ToString().ToLowerInvariant(),
-                FileName = Path.GetFileName(TargetPath),
-                TargetPath = TargetPath,
-                TotalBytes = TotalBytes,
-                Downloaded = done,
-                Speed = speed,
-                EtaSeconds = eta,
-                ElapsedSeconds = _activeStopwatch.Elapsed.TotalSeconds,
-                Threads = SupportsRanges ? Segments.Count : 1,
-                SupportsRanges = SupportsRanges,
-                Error = Error,
-                FileHash = FileHash,
-                Segments = Segments.Select(s => new SegmentDto { Downloaded = s.Downloaded, Length = s.Length }).ToList()
+                TaskId          = Id,
+                State           = state.ToString().ToLowerInvariant(),
+                FileName        = Path.GetFileName(TargetPath),
+                TargetPath      = TargetPath,
+                TotalBytes      = TotalBytes,
+                Downloaded      = done,
+                Speed           = speed,
+                EtaSeconds      = eta,
+                ElapsedSeconds  = _activeStopwatch.Elapsed.TotalSeconds,
+                Threads         = SupportsRanges ? Segments.Count : 1,
+                SupportsRanges  = SupportsRanges,
+                Error           = Error,
+                FileHash        = FileHash,
+                Segments        = Segments.Select(s => new SegmentDto { Downloaded = s.Downloaded, Length = s.Length }).ToList(),
+                SegmentsMetaJson = segsMeta
             };
         }
 

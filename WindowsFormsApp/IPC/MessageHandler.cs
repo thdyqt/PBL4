@@ -17,9 +17,18 @@ namespace WindowsFormsApp.IPC
         private readonly Form1 _mainForm;
         private readonly DownloadManager _manager;
 
+        // Cache local để tránh query DB mỗi 400ms: taskId -> DownloadRecord
+        // Chỉ đọc/ghi từ luồng event ProgressChanged (single-threaded qua message pump)
+        private readonly System.Collections.Generic.Dictionary<string, DownloadRecord> _dbCache
+            = new System.Collections.Generic.Dictionary<string, DownloadRecord>(StringComparer.Ordinal);
+
         public MessageHandler(Form1 mainForm)
         {
             _mainForm = mainForm;
+
+            // Khởi tạo CSDL SQLite ngay khi app mở
+            DatabaseHelper.Initialize();
+
             _manager = new DownloadManager();
             _manager.ProgressChanged += OnProgressChanged;
         }
@@ -29,6 +38,34 @@ namespace WindowsFormsApp.IPC
         {
             _manager.ProgressChanged -= OnProgressChanged;
             _manager.Shutdown();
+        }
+
+        /// <summary>
+        /// Gọi ngay sau khi trang HTML load xong (NavigationCompleted).
+        /// Gửi toàn bộ lịch sử từ SQLite xuống frontend để hiển thị lại.
+        /// Các tác vụ đang dở (downloading/preparing/queued) được đánh dấu thành paused
+        /// vì app vừa khởi động lại — chúng chưa thực sự đang chạy.
+        /// </summary>
+        public void SendHistoryOnStartup()
+        {
+            try
+            {
+                var history = DatabaseHelper.GetAll();
+                foreach (var rec in history)
+                {
+                    // Nếu app crash khi đang tải -> đổi state về paused để user có thể resume
+                    if (rec.State == "downloading" || rec.State == "preparing" || rec.State == "queued")
+                    {
+                        rec.State = "paused";
+                        DatabaseHelper.UpdateProgress(rec);
+                    }
+                }
+                Send(new { action = "HISTORY_DATA", data = history });
+            }
+            catch (Exception ex)
+            {
+                Send(new { action = "HISTORY_DATA", data = new object[0], error = ex.Message });
+            }
         }
 
         public void ProcessMessage(string jsonMessage)
@@ -118,6 +155,20 @@ namespace WindowsFormsApp.IPC
                         case "VERIFY_HASH":
                             _ = HandleVerifyHashAsync(root);
                             break;
+
+                        // ---- Lịch sử tải (SQLite) ----
+
+                        case "GET_HISTORY":
+                            HandleGetHistory();
+                            break;
+
+                        case "CLEAR_HISTORY":
+                            HandleClearHistory();
+                            break;
+
+                        case "DELETE_HISTORY_ITEM":
+                            HandleDeleteHistoryItem(GetString(root, "taskId"));
+                            break;
                     }
                 }
             }
@@ -131,6 +182,27 @@ namespace WindowsFormsApp.IPC
 
         private async Task HandleStartDownloadAsync(string taskId, string url, string folder, int threads)
         {
+            // Ghi trước vào DB để không mất task khi crash (ngay cả khi chưa biết tên file thật)
+            try
+            {
+                string fileName = Path.GetFileName(url.Split('?')[0]);
+                if (string.IsNullOrWhiteSpace(fileName)) fileName = taskId;
+
+                var rec = new DownloadRecord
+                {
+                    Id         = taskId,
+                    SourceUrl  = url,
+                    RemoteUrl  = url,
+                    FileName   = fileName,
+                    TargetPath = folder,   // sẽ được cập nhật thành đường dẫn thật khi nhận progress đầu tiên
+                    State      = "preparing",
+                    Threads    = threads
+                };
+                DatabaseHelper.Insert(rec);
+                _dbCache[taskId] = rec;    // đưa vào cache
+            }
+            catch { }
+
             try
             {
                 await _manager.StartAsync(taskId, url, folder, threads).ConfigureAwait(false);
@@ -140,6 +212,22 @@ namespace WindowsFormsApp.IPC
                 string message = ex is TimeoutException || ex is DownloadException
                     ? ex.Message
                     : (ex.InnerException != null ? ex.InnerException.Message : ex.Message);
+
+                // Cập nhật trạng thái lỗi vào DB
+                try
+                {
+                    DownloadRecord rec;
+                    if (!_dbCache.TryGetValue(taskId, out rec))
+                        rec = DatabaseHelper.GetById(taskId);
+                    if (rec != null)
+                    {
+                        rec.State = "failed";
+                        rec.ErrorMessage = message;
+                        DatabaseHelper.UpdateProgress(rec);
+                        _dbCache[taskId] = rec;
+                    }
+                }
+                catch { }
 
                 Send(new { action = "DOWNLOAD_ERROR", taskId = taskId, message = message });
             }
@@ -194,6 +282,21 @@ namespace WindowsFormsApp.IPC
             try
             {
                 await _manager.CancelAsync(taskId).ConfigureAwait(false);
+
+                // Cập nhật trạng thái = cancelled trong DB (giữ lịch sử, không xóa)
+                try
+                {
+                    DownloadRecord rec;
+                    if (!_dbCache.TryGetValue(taskId, out rec))
+                        rec = DatabaseHelper.GetById(taskId);
+                    if (rec != null)
+                    {
+                        rec.State = "cancelled";
+                        DatabaseHelper.UpdateProgress(rec);
+                    }
+                    _dbCache.Remove(taskId);
+                }
+                catch { }
             }
             catch (Exception ex)
             {
@@ -206,6 +309,50 @@ namespace WindowsFormsApp.IPC
             try
             {
                 await _manager.RemoveAsync(taskId).ConfigureAwait(false);
+
+                // Xóa khỏi cache; bản ghi DB giữ lại với state hiện tại
+                _dbCache.Remove(taskId);
+            }
+            catch (Exception ex)
+            {
+                Send(new { action = "DOWNLOAD_ERROR", taskId = taskId, message = ex.Message });
+            }
+        }
+
+        // ------------------------------------------------------------------ lịch sử (SQLite)
+
+        private void HandleGetHistory()
+        {
+            try
+            {
+                var history = DatabaseHelper.GetAll();
+                Send(new { action = "HISTORY_DATA", data = history });
+            }
+            catch (Exception ex)
+            {
+                Send(new { action = "HISTORY_DATA", data = new object[0], error = ex.Message });
+            }
+        }
+
+        private void HandleClearHistory()
+        {
+            try
+            {
+                int count = DatabaseHelper.ClearCompleted();
+                Send(new { action = "HISTORY_CLEARED", count = count });
+            }
+            catch (Exception ex)
+            {
+                Send(new { action = "HISTORY_CLEARED", count = 0, error = ex.Message });
+            }
+        }
+
+        private void HandleDeleteHistoryItem(string taskId)
+        {
+            try
+            {
+                DatabaseHelper.Delete(taskId);
+                Send(new { action = "HISTORY_ITEM_DELETED", taskId = taskId });
             }
             catch (Exception ex)
             {
@@ -315,6 +462,46 @@ namespace WindowsFormsApp.IPC
 
         private void OnProgressChanged(ProgressDto dto)
         {
+            // Đồng bộ tiến độ và segments vào SQLite
+            // Dùng cache để tránh GetById() mỗi 400ms
+            try
+            {
+                DownloadRecord rec;
+                if (!_dbCache.TryGetValue(dto.TaskId, out rec))
+                {
+                    rec = DatabaseHelper.GetById(dto.TaskId);
+                    if (rec != null) _dbCache[dto.TaskId] = rec;
+                }
+
+                if (rec != null)
+                {
+                    bool changed = rec.State != dto.State
+                                || rec.Downloaded != dto.Downloaded
+                                || rec.FileHash != dto.FileHash;
+
+                    rec.Downloaded     = dto.Downloaded;
+                    rec.TotalBytes     = dto.TotalBytes;
+                    rec.State          = dto.State;
+                    rec.FileHash       = dto.FileHash;
+                    rec.ErrorMessage   = dto.Error;
+                    rec.FileName       = dto.FileName  ?? rec.FileName;
+                    rec.TargetPath     = dto.TargetPath ?? rec.TargetPath;
+                    rec.SupportsRanges = dto.SupportsRanges;
+                    rec.Threads        = dto.Threads;
+
+                    // Lưu đầy đủ thông tin segment để có thể resume sau crash
+                    if (!string.IsNullOrEmpty(dto.SegmentsMetaJson))
+                        rec.SegmentsJson = dto.SegmentsMetaJson;
+
+                    if (dto.State == "completed" && !rec.CompletedAt.HasValue)
+                        rec.CompletedAt = DateTime.UtcNow;
+
+                    // Luôn ghi (UpdateProgress đã set UpdatedAt mới)
+                    DatabaseHelper.UpdateProgress(rec);
+                }
+            }
+            catch { /* DB lỗi không được làm gián đoạn giao diện */ }
+
             Send(new { action = "DOWNLOAD_PROGRESS", data = dto });
         }
 

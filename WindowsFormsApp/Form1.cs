@@ -40,7 +40,11 @@ namespace WindowsFormsApp
                 // 4. Lắng nghe các thông điệp (messages) được gửi từ mã JavaScript ở Frontend
                 webView.CoreWebView2.WebMessageReceived += CoreWebView2_WebMessageReceived;
 
-                // 5. Yêu cầu lõi WebView2 mở file giao diện cục bộ này lên
+                // 5. Sau khi trang HTML load xong -> tự động gửi lịch sử tải từ DB xuống giao diện
+                //    Đây là cách duy nhất để restore danh sách file khi khởi động lại app.
+                webView.CoreWebView2.NavigationCompleted += CoreWebView2_NavigationCompleted;
+
+                // 6. Yêu cầu lõi WebView2 mở file giao diện cục bộ này lên
                 webView.CoreWebView2.Navigate(htmlFilePath);
             }
             catch (Exception ex)
@@ -48,6 +52,13 @@ namespace WindowsFormsApp
                 MessageBox.Show("Không khởi tạo được WebView2: " + ex.Message +
                                 "\nHãy cài WebView2 Runtime của Microsoft.", "Lỗi");
             }
+        }
+
+        private void CoreWebView2_NavigationCompleted(object sender,
+            Microsoft.Web.WebView2.Core.CoreWebView2NavigationCompletedEventArgs e)
+        {
+            // Trang đã load xong -> gửi lịch sử tải từ DB để frontend hiển thị
+            _messageHandler.SendHistoryOnStartup();
         }
 
         private void Form1_Load(object sender, EventArgs e)

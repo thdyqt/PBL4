@@ -647,4 +647,128 @@
             item.classList.toggle("selected");
         }
     });
+
+    // ------------------------------------------------------------------ Restore lịch sử từ DB
+
+    /**
+     * Render một bản ghi DownloadRecord từ SQLite thành DOM item.
+     * Gọi khi app khởi động để hiển thị lại lịch sử tải từ lần trước.
+     * @param {Object} rec - DownloadRecord (camelCase từ JSON C#)
+     */
+    function restoreHistoryItem(rec) {
+        // Bỏ qua nếu đã có item này trong DOM (tránh duplicate)
+        if (document.getElementById(rec.id)) return;
+
+        const fileName = rec.fileName || rec.id;
+        const category = window.getFileCategory ? window.getFileCategory(fileName) : "other";
+        let iconClass = "fa-solid fa-file";
+        if (category === "audio") iconClass = "fa-solid fa-music";
+        else if (category === "video") iconClass = "fa-solid fa-video";
+        else if (category === "document") iconClass = "fa-solid fa-file-zipper";
+
+        const state = rec.state || "failed";
+
+        // Ẩn nút tùy theo trạng thái khôi phục
+        const showPause   = state === "paused";
+        const showCancel  = state === "paused";
+        const showForce   = state === "paused" || state === "queued";
+        const showActions = state === "completed";
+
+        const pct = (rec.totalBytes > 0 && rec.downloaded >= 0)
+            ? Math.min(100, Math.floor(rec.downloaded / rec.totalBytes * 100))
+            : (state === "completed" ? 100 : 0);
+
+        const fmtB = (n) => {
+            if (!(n > 0)) return "--";
+            const u = ["B","KB","MB","GB"]; let i = 0;
+            while (n >= 1024 && i < u.length-1) { n /= 1024; i++; }
+            return n.toFixed(i === 0 ? 0 : 2) + " " + u[i];
+        };
+
+        const STATE_LABEL = {
+            queued: "Chờ tải (Trong hàng đợi)", preparing: "Đang chuẩn bị...",
+            downloading: "Đang tải", paused: "Đã tạm dừng",
+            completed: "Hoàn thành", failed: "Lỗi", cancelled: "Đã hủy"
+        };
+        const stateText = STATE_LABEL[state] || state;
+
+        const openFileBtn = state === "completed" ? `
+            <div class="download-actions">
+                <button type="button" class="btn-action btn-open-file" data-action="open-file">
+                    <i class="fa-solid fa-arrow-up-right-from-square"></i> Mở file
+                </button>
+                <button type="button" class="btn-action btn-open-folder" data-action="open-folder">
+                    <i class="fa-regular fa-folder-open"></i> Mở thư mục
+                </button>
+            </div>` : "";
+
+        const html = `
+            <div class="download-item" id="${rec.id}"
+                 data-state="${state}"
+                 data-category="${category}"
+                 data-target-path="${(rec.targetPath || "").replace(/"/g, "&quot;")}">
+                <div class="progress-header">
+                    <div class="file-info">
+                        <i class="${iconClass}"></i>
+                        <span class="file-name" title="${fileName}">${fileName}</span>
+                    </div>
+                    <div class="header-right">
+                        <div class="item-actions">
+                            <button type="button" class="btn-item-action btn-force-start"
+                                    title="Bắt đầu tải ngay (Bỏ qua hàng đợi)"
+                                    data-item-action="force-start"
+                                    style="display:${showForce ? "inline-flex" : "none"};">
+                                <i class="fa-solid fa-bolt"></i>
+                            </button>
+                            <button type="button" class="btn-item-action btn-pause-resume"
+                                    title="${showPause ? "Tiếp tục" : "Tạm dừng"}"
+                                    data-item-action="toggle-pause"
+                                    style="display:${showPause ? "inline-flex" : "none"};">
+                                <i class="fa-solid ${showPause ? "fa-play" : "fa-pause"}"></i>
+                            </button>
+                            <button type="button" class="btn-item-action btn-cancel"
+                                    title="Hủy tải" data-item-action="cancel"
+                                    style="display:${showCancel ? "inline-flex" : "none"};">
+                                <i class="fa-solid fa-ban"></i>
+                            </button>
+                            <button type="button" class="btn-item-action btn-delete"
+                                    title="Xóa" data-item-action="delete"
+                                    style="display:inline-flex;">
+                                <i class="fa-solid fa-trash"></i>
+                            </button>
+                        </div>
+                        <div class="progress-percentage" id="${rec.id}-percent">
+                            ${pct}%
+                        </div>
+                    </div>
+                </div>
+
+                <div class="progress-bar-container">
+                    <div class="progress-bar-fill" id="${rec.id}-progress" style="width:${pct}%"></div>
+                </div>
+
+                <div class="progress-stats">
+                    <span class="stat-item">Tốc độ: <b id="${rec.id}-speed">—</b></span>
+                    <span class="stat-item">Đã tải: <b id="${rec.id}-downloaded">
+                        ${fmtB(rec.downloaded)} / ${fmtB(rec.totalBytes)}
+                    </b></span>
+                    <span class="stat-item">
+                        <span id="${rec.id}-eta-label">${state === "completed" ? "Thời gian tải:" : "Còn lại:"}</span>
+                        <b id="${rec.id}-eta">--:--</b>
+                    </span>
+                </div>
+
+                <div class="download-status ${state === "failed" || state === "cancelled" ? "is-error" : ""} ${state === "completed" ? "is-done" : ""}">
+                    ${stateText}${rec.errorMessage ? ": " + rec.errorMessage : ""}
+                </div>
+
+                ${openFileBtn}
+            </div>`;
+
+        const list = document.getElementById("download-list");
+        if (list) list.insertAdjacentHTML("beforeend", html);
+    }
+
+    window.restoreHistoryItem = restoreHistoryItem;
+
 })();
