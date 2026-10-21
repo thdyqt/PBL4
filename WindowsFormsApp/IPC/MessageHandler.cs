@@ -68,6 +68,10 @@ namespace WindowsFormsApp.IPC
                             _manager.Resume(GetString(root, "taskId"));
                             break;
 
+                        case "CANCEL_DOWNLOAD":
+                            _ = HandleCancelAsync(GetString(root, "taskId"));
+                            break;
+
                         case "REMOVE_DOWNLOAD":
                             _ = HandleRemoveAsync(GetString(root, "taskId"));
                             break;
@@ -108,6 +112,18 @@ namespace WindowsFormsApp.IPC
                     : (ex.InnerException != null ? ex.InnerException.Message : ex.Message);
 
                 Send(new { action = "DOWNLOAD_ERROR", taskId = taskId, message = message });
+            }
+        }
+
+        private async Task HandleCancelAsync(string taskId)
+        {
+            try
+            {
+                await _manager.CancelAsync(taskId).ConfigureAwait(false);
+            }
+            catch (Exception ex)
+            {
+                Send(new { action = "DOWNLOAD_ERROR", taskId = taskId, message = ex.Message });
             }
         }
 

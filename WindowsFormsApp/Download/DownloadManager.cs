@@ -21,6 +21,7 @@ namespace WindowsFormsApp.Download
         private readonly HttpClient _http;
         private readonly SpeedLimiter _limiter = new SpeedLimiter();
         private readonly ConcurrentDictionary<string, DownloadJob> _jobs = new ConcurrentDictionary<string, DownloadJob>();
+        private readonly HashSet<string> _activeTargets = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         private readonly object _targetLock = new object();
         private readonly System.Threading.Timer _timer;
         private int _tickBusy;
@@ -79,6 +80,7 @@ namespace WindowsFormsApp.Download
             lock (_targetLock)
             {
                 target = ResolveTarget(folder, info, url, ranges, out resume);
+                _activeTargets.Add(target);
                 if (!File.Exists(target))
                 {
                     try
@@ -88,6 +90,7 @@ namespace WindowsFormsApp.Download
                     }
                     catch
                     {
+                        _activeTargets.Remove(target);
                         try { if (File.Exists(target)) File.Delete(target); } catch { }
                         throw;
                     }
@@ -113,13 +116,24 @@ namespace WindowsFormsApp.Download
                 segments = SegmentPlanner.Split(info.Length, threads);
             }
 
-            var job = new DownloadJob(taskId, url, info, target, threads, ranges, segments, _http, _limiter);
-            job.Changed += OnJobChanged;
-            _jobs[taskId] = job;
-            job.Start();
+            try
+            {
+                var job = new DownloadJob(taskId, url, info, target, threads, ranges, segments, _http, _limiter);
+                job.Changed += OnJobChanged;
+                _jobs[taskId] = job;
+                job.Start();
+            }
+            catch
+            {
+                lock (_targetLock)
+                {
+                    _activeTargets.Remove(target);
+                }
+                throw;
+            }
         }
 
-        private static string ResolveTarget(string folder, RemoteFileInfo info, string url, bool ranges, out List<SegmentMeta> resume)
+        private string ResolveTarget(string folder, RemoteFileInfo info, string url, bool ranges, out List<SegmentMeta> resume)
         {
             resume = null;
             string name = info.FileName;
@@ -130,20 +144,33 @@ namespace WindowsFormsApp.Download
             {
                 string candidate = Path.Combine(folder, i == 0 ? name : baseName + " (" + i + ")" + ext);
 
-                // Có meta khớp URL + kích thước + ETag + file đúng độ dài -> tiếp tục tải dở
-                if (ranges && File.Exists(candidate) && File.Exists(MetaStore.PathFor(candidate)))
+                // 1. Nếu candidate đang được xử lý bởi tác vụ khác trong phiên hiện tại -> bỏ qua để lấy bản sao (1), (2)...
+                if (_activeTargets.Contains(candidate) ||
+                    _jobs.Values.Any(j => string.Equals(j.TargetPath, candidate, StringComparison.OrdinalIgnoreCase)))
                 {
-                    DownloadMeta meta = MetaStore.Load(candidate);
-                    if (meta != null && meta.Segments != null && meta.Segments.Count > 0
-                        && MetaMatches(meta, url, info)
-                        && new FileInfo(candidate).Length == info.Length)
-                    {
-                        resume = meta.Segments;
-                        return candidate;
-                    }
+                    continue;
                 }
 
-                if (!File.Exists(candidate) && !File.Exists(MetaStore.PathFor(candidate)))
+                // 2. Nếu file trên đĩa đã tồn tại: không ghi đè, tạo bản sao (trừ trường hợp khôi phục file dở dang có .dlmeta hợp lệ)
+                if (File.Exists(candidate))
+                {
+                    if (ranges && File.Exists(MetaStore.PathFor(candidate)))
+                    {
+                        DownloadMeta meta = MetaStore.Load(candidate);
+                        if (meta != null && meta.Segments != null && meta.Segments.Count > 0
+                            && MetaMatches(meta, url, info)
+                            && new FileInfo(candidate).Length == info.Length)
+                        {
+                            resume = meta.Segments;
+                            return candidate;
+                        }
+                    }
+                    // Tệp đã tồn tại (hoàn thành hoặc không thể resume) -> tạo bản sao mới
+                    continue;
+                }
+
+                // 3. Nếu file chưa tồn tại cả dữ liệu lẫn meta -> chọn candidate này
+                if (!File.Exists(MetaStore.PathFor(candidate)))
                     return candidate;
             }
         }
@@ -189,11 +216,32 @@ namespace WindowsFormsApp.Download
             if (_jobs.TryGetValue(taskId, out job)) job.Start();
         }
 
+        /// <summary>Hủy tác vụ tải: dừng luồng, xóa file dở dang và .dlmeta.</summary>
+        public async Task CancelAsync(string taskId)
+        {
+            DownloadJob job;
+            if (_jobs.TryGetValue(taskId, out job))
+            {
+                lock (_targetLock)
+                {
+                    _activeTargets.Remove(job.TargetPath);
+                }
+                await job.CancelAsync().ConfigureAwait(false);
+            }
+        }
+
         /// <summary>Gỡ tác vụ. Chưa xong -> xóa file dở; đã xong -> giữ file.</summary>
         public async Task RemoveAsync(string taskId)
         {
             DownloadJob job;
-            if (_jobs.TryRemove(taskId, out job)) await job.CancelAsync().ConfigureAwait(false);
+            if (_jobs.TryRemove(taskId, out job))
+            {
+                lock (_targetLock)
+                {
+                    _activeTargets.Remove(job.TargetPath);
+                }
+                await job.CancelAsync().ConfigureAwait(false);
+            }
         }
 
         /// <summary>Lấy đường dẫn tệp đích của tác vụ theo taskId.</summary>
