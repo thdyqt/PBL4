@@ -39,6 +39,8 @@ namespace WindowsFormsApp.Download
         public bool SupportsRanges { get; set; }
         public string Error { get; set; }
         public string FileHash { get; set; }      // SHA-256 hex (64 ký tự) sau khi hoàn thành
+        public string AvgSpeed { get; set; }       // Tốc độ trung bình (chuỗi hiển thị)
+        public string CompletedAt { get; set; }    // Thời điểm hoàn thành theo giờ VN
         public List<SegmentDto> Segments { get; set; }
 
         /// <summary>

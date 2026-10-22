@@ -1281,6 +1281,126 @@ a {
     box-shadow: 0 4px 12px rgba(239, 68, 68, 0.35);
 }
 
+/* Delete Options in Confirm Modal */
+.delete-all-prompt {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.delete-all-desc {
+    font-size: 13.5px;
+    color: #475569;
+    font-weight: 500;
+}
+
+.delete-options-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.delete-option-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 11px 14px;
+    border: 1.5px solid #E2E8F0;
+    border-radius: 10px;
+    cursor: pointer;
+    background: #F8FAFC;
+    transition: all 0.2s ease;
+}
+
+.delete-option-item:hover:not(.disabled) {
+    border-color: #CBD5E1;
+    background: #F1F5F9;
+}
+
+.delete-option-item:has(input:checked) {
+    border-color: #EF4444;
+    background: #FEF2F2;
+}
+
+.delete-option-item.disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    background: #F1F5F9;
+}
+
+.delete-option-item input[type="radio"] {
+    accent-color: #EF4444;
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+}
+
+.delete-option-text {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+}
+
+.delete-option-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: #1E293B;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.delete-option-badge {
+    font-size: 11.5px;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 6px;
+    background: #E2E8F0;
+    color: #475569;
+}
+
+.delete-option-item:has(input:checked) .delete-option-badge {
+    background: #FEE2E2;
+    color: #DC2626;
+}
+
+.delete-warning-note {
+    font-size: 12px;
+    color: #94A3B8;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 4px;
+}
+
+.confirm-modal-checkbox-row {
+    margin-top: 14px;
+    padding-top: 12px;
+    border-top: 1px dashed #E2E8F0;
+}
+
+.confirm-checkbox-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12.5px;
+    color: #64748B;
+    cursor: pointer;
+    user-select: none;
+}
+
+.confirm-checkbox-label:hover {
+    color: #334155;
+}
+
+.confirm-checkbox-label input[type="checkbox"] {
+    accent-color: #1E5173;
+    width: 15px;
+    height: 15px;
+    cursor: pointer;
+}
+
 @keyframes fadeInModal {
     from { opacity: 0; }
     to { opacity: 1; }

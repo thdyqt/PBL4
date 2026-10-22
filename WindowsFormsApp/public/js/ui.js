@@ -41,10 +41,12 @@ function getFileCategory(fileName) {
 }
 window.getFileCategory = getFileCategory;
 
+const HOME_RECENT_LIMIT = 10;
+
 const FILTER_CONFIG = {
     home: {
-        label: "HÀNG ĐỢI",
-        title: "Tệp đang tải",
+        label: "GẦN ĐÂY",
+        title: "Tệp gần đây",
         emptyTitle: "Chưa có tệp nào",
         emptyDesc: "Dán liên kết tải về, chọn vị trí lưu rồi bắt đầu."
     },
@@ -105,8 +107,30 @@ function applyFilter(filterName) {
     if (downloadTitle) downloadTitle.textContent = config.title;
 
     // Lọc danh sách tác vụ
-    const items = document.querySelectorAll("#download-list .download-item");
+    const items = Array.from(document.querySelectorAll("#download-list .download-item"));
     let visibleCount = 0;
+
+    // Ở trang chủ: ưu tiên các tác vụ đang tải lên trước, sau đó là gần nhất, giới hạn 10
+    let homeVisible = new Set();
+    if (currentFilter === "home") {
+        // Các tác vụ active luôn hiển thị (đang tải, hàng đợi, chuẩn bị)
+        const activeItems = items.filter(el =>
+            el.dataset.state === "downloading" ||
+            el.dataset.state === "preparing" ||
+            el.dataset.state === "queued"
+        );
+        activeItems.forEach(el => homeVisible.add(el));
+
+        // Bổ sung thêm từ các item còn lại (mới nhất trước) đến khi đủ 10
+        if (homeVisible.size < HOME_RECENT_LIMIT) {
+            const rest = items.filter(el => !homeVisible.has(el));
+            // items trong DOM đã theo thứ tự: mới tải (afterbegin) đứng đầu, cũ (append) đứng cuối
+            for (const el of rest) {
+                if (homeVisible.size >= HOME_RECENT_LIMIT) break;
+                homeVisible.add(el);
+            }
+        }
+    }
 
     items.forEach((item) => {
         const state = item.dataset.state || "preparing";
@@ -115,6 +139,8 @@ function applyFilter(filterName) {
         let isMatch = false;
         switch (currentFilter) {
             case "home":
+                isMatch = homeVisible.has(item);
+                break;
             case "all":
                 isMatch = true;
                 break;

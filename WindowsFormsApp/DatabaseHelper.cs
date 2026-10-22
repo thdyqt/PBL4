@@ -54,6 +54,8 @@ namespace WindowsFormsApp.Download
                         state           TEXT NOT NULL DEFAULT 'preparing',
                         supports_ranges INTEGER NOT NULL DEFAULT 0, -- 0/1
                         threads         INTEGER NOT NULL DEFAULT 1,
+                        elapsed_seconds REAL NOT NULL DEFAULT 0,    -- thời gian tải thực tế
+                        avg_speed       TEXT,                      -- tốc độ trung bình
                         etag            TEXT,
                         last_modified   TEXT,
                         file_hash       TEXT,                      -- SHA-256 khi hoàn thành
@@ -61,13 +63,46 @@ namespace WindowsFormsApp.Download
                         segments_json   TEXT,                      -- JSON mảng SegmentMeta
                         created_at      TEXT NOT NULL,
                         updated_at      TEXT NOT NULL,
-                        completed_at    TEXT
+                        completed_at    TEXT                       -- Thời điểm hoàn thành theo giờ VN
                     );
                 ");
+
+                // Đảm bảo các cột mới tồn tại cho CSDL cũ đã tạo từ trước
+                EnsureColumn(conn, "download_history", "elapsed_seconds", "REAL NOT NULL DEFAULT 0");
+                EnsureColumn(conn, "download_history", "avg_speed", "TEXT");
 
                 // Index tìm nhanh theo trạng thái (ví dụ: tải tất cả bản ghi đang dở)
                 Execute(conn, "CREATE INDEX IF NOT EXISTS idx_state ON download_history(state);");
                 Execute(conn, "CREATE INDEX IF NOT EXISTS idx_created ON download_history(created_at DESC);");
+            }
+        }
+
+        private static void EnsureColumn(SqliteConnection conn, string table, string column, string typeDef)
+        {
+            try
+            {
+                using (var cmd = conn.CreateCommand())
+                {
+                    cmd.CommandText = $"ALTER TABLE {table} ADD COLUMN {column} {typeDef};";
+                    cmd.ExecuteNonQuery();
+                }
+            }
+            catch { /* Cột đã tồn tại */ }
+        }
+
+        /// <summary>Lấy chuỗi ngày giờ theo múi giờ Việt Nam (UTC+7) chuẩn dd/MM/yyyy HH:mm:ss.</summary>
+        public static string GetVietnamTimeString(DateTime? utc = null)
+        {
+            DateTime u = utc ?? DateTime.UtcNow;
+            try
+            {
+                TimeZoneInfo tz = TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time");
+                DateTime vnTime = TimeZoneInfo.ConvertTimeFromUtc(u, tz);
+                return vnTime.ToString("dd/MM/yyyy HH:mm:ss");
+            }
+            catch
+            {
+                return u.AddHours(7).ToString("dd/MM/yyyy HH:mm:ss");
             }
         }
 
@@ -89,11 +124,13 @@ namespace WindowsFormsApp.Download
                     INSERT OR REPLACE INTO download_history
                         (id, source_url, remote_url, file_name, target_path,
                          total_bytes, downloaded, state, supports_ranges, threads,
+                         elapsed_seconds, avg_speed,
                          etag, last_modified, file_hash, error_message, segments_json,
                          created_at, updated_at, completed_at)
                     VALUES
                         (@id, @src, @remote, @name, @path,
                          @total, @dl, @state, @ranges, @threads,
+                         @elapsed, @avgspeed,
                          @etag, @lm, @hash, @err, @segs,
                          @created, @updated, @completed);
                 ";
@@ -116,25 +153,49 @@ namespace WindowsFormsApp.Download
             {
                 cmd.CommandText = @"
                     UPDATE download_history SET
-                        downloaded    = @dl,
-                        state         = @state,
-                        file_hash     = @hash,
-                        error_message = @err,
-                        segments_json = @segs,
-                        updated_at    = @updated,
-                        completed_at  = @completed
+                        file_name       = @name,
+                        target_path     = @path,
+                        total_bytes     = @total,
+                        downloaded      = @dl,
+                        state           = @state,
+                        supports_ranges = @ranges,
+                        threads         = @threads,
+                        elapsed_seconds = @elapsed,
+                        avg_speed       = @avgspeed,
+                        file_hash       = @hash,
+                        error_message   = @err,
+                        segments_json   = @segs,
+                        updated_at      = @updated,
+                        completed_at    = @completed
                     WHERE id = @id;
                 ";
+                cmd.Parameters.AddWithValue("@name", (object)record.FileName ?? DBNull.Value);
+                cmd.Parameters.AddWithValue("@path", (object)record.TargetPath ?? DBNull.Value);
+                cmd.Parameters.AddWithValue("@total", record.TotalBytes);
                 cmd.Parameters.AddWithValue("@dl", record.Downloaded);
-                cmd.Parameters.AddWithValue("@state", record.State);
+                cmd.Parameters.AddWithValue("@state", record.State ?? "preparing");
+                cmd.Parameters.AddWithValue("@ranges", record.SupportsRanges ? 1 : 0);
+                cmd.Parameters.AddWithValue("@threads", record.Threads);
+                cmd.Parameters.AddWithValue("@elapsed", record.ElapsedSeconds);
+                cmd.Parameters.AddWithValue("@avgspeed", (object)record.AvgSpeed ?? DBNull.Value);
                 cmd.Parameters.AddWithValue("@hash", (object)record.FileHash ?? DBNull.Value);
                 cmd.Parameters.AddWithValue("@err", (object)record.ErrorMessage ?? DBNull.Value);
                 cmd.Parameters.AddWithValue("@segs", (object)record.SegmentsJson ?? DBNull.Value);
                 cmd.Parameters.AddWithValue("@updated", Iso(record.UpdatedAt));
-                cmd.Parameters.AddWithValue("@completed",
-                    record.CompletedAt.HasValue ? (object)Iso(record.CompletedAt.Value) : DBNull.Value);
+                cmd.Parameters.AddWithValue("@completed", (object)record.CompletedAt ?? DBNull.Value);
                 cmd.Parameters.AddWithValue("@id", record.Id);
                 cmd.ExecuteNonQuery();
+            }
+        }
+
+        /// <summary>Xóa toàn bộ bản ghi khỏi CSDL.</summary>
+        public static int DeleteAll()
+        {
+            using (var conn = Open())
+            using (var cmd = conn.CreateCommand())
+            {
+                cmd.CommandText = "DELETE FROM download_history;";
+                return cmd.ExecuteNonQuery();
             }
         }
 
@@ -242,6 +303,8 @@ namespace WindowsFormsApp.Download
             cmd.Parameters.AddWithValue("@state",    r.State ?? "preparing");
             cmd.Parameters.AddWithValue("@ranges",   r.SupportsRanges ? 1 : 0);
             cmd.Parameters.AddWithValue("@threads",  r.Threads);
+            cmd.Parameters.AddWithValue("@elapsed",  r.ElapsedSeconds);
+            cmd.Parameters.AddWithValue("@avgspeed", (object)r.AvgSpeed ?? DBNull.Value);
             cmd.Parameters.AddWithValue("@etag",     (object)r.ETag         ?? DBNull.Value);
             cmd.Parameters.AddWithValue("@lm",       (object)r.LastModified ?? DBNull.Value);
             cmd.Parameters.AddWithValue("@hash",     (object)r.FileHash     ?? DBNull.Value);
@@ -249,12 +312,26 @@ namespace WindowsFormsApp.Download
             cmd.Parameters.AddWithValue("@segs",     (object)r.SegmentsJson ?? DBNull.Value);
             cmd.Parameters.AddWithValue("@created",  Iso(r.CreatedAt));
             cmd.Parameters.AddWithValue("@updated",  Iso(r.UpdatedAt));
-            cmd.Parameters.AddWithValue("@completed",
-                r.CompletedAt.HasValue ? (object)Iso(r.CompletedAt.Value) : DBNull.Value);
+            cmd.Parameters.AddWithValue("@completed",(object)r.CompletedAt  ?? DBNull.Value);
         }
 
         private static DownloadRecord ReadRecord(SqliteDataReader r)
         {
+            string rawCompleted = r["completed_at"] as string;
+            string completedVn = null;
+            if (!string.IsNullOrEmpty(rawCompleted))
+            {
+                // Nếu bản ghi cũ lưu ISO date thì chuyển sang định dạng ngày giờ VN dd/MM/yyyy HH:mm:ss
+                if (DateTime.TryParse(rawCompleted, null, System.Globalization.DateTimeStyles.RoundtripKind, out DateTime dtUtc))
+                {
+                    completedVn = GetVietnamTimeString(dtUtc.Kind == DateTimeKind.Utc ? dtUtc : dtUtc.ToUniversalTime());
+                }
+                else
+                {
+                    completedVn = rawCompleted;
+                }
+            }
+
             return new DownloadRecord
             {
                 Id             = r["id"]            as string,
@@ -267,6 +344,8 @@ namespace WindowsFormsApp.Download
                 State          = r["state"]          as string,
                 SupportsRanges = Convert.ToInt64(r["supports_ranges"]) == 1,
                 Threads        = Convert.ToInt32(r["threads"]),
+                ElapsedSeconds = r["elapsed_seconds"] != DBNull.Value ? Convert.ToDouble(r["elapsed_seconds"]) : 0,
+                AvgSpeed       = r["avg_speed"]      as string,
                 ETag           = r["etag"]           as string,
                 LastModified   = r["last_modified"]  as string,
                 FileHash       = r["file_hash"]      as string,
@@ -274,7 +353,7 @@ namespace WindowsFormsApp.Download
                 SegmentsJson   = r["segments_json"]  as string,
                 CreatedAt      = ParseIso(r["created_at"]   as string),
                 UpdatedAt      = ParseIso(r["updated_at"]   as string),
-                CompletedAt    = ParseIsoNullable(r["completed_at"] as string)
+                CompletedAt    = completedVn
             };
         }
 
@@ -284,9 +363,6 @@ namespace WindowsFormsApp.Download
             string.IsNullOrEmpty(s)
                 ? DateTime.UtcNow
                 : DateTime.Parse(s, null, System.Globalization.DateTimeStyles.RoundtripKind);
-
-        private static DateTime? ParseIsoNullable(string s) =>
-            string.IsNullOrEmpty(s) ? (DateTime?)null : ParseIso(s);
     }
 
     // ------------------------------------------------------------------ model
@@ -308,6 +384,8 @@ namespace WindowsFormsApp.Download
         public string    State          { get; set; } = "preparing";
         public bool      SupportsRanges { get; set; }
         public int       Threads        { get; set; } = 1;
+        public double    ElapsedSeconds { get; set; }
+        public string    AvgSpeed       { get; set; }
         public string    ETag           { get; set; }
         public string    LastModified   { get; set; }
         public string    FileHash       { get; set; }
@@ -316,7 +394,7 @@ namespace WindowsFormsApp.Download
         public string    SegmentsJson   { get; set; }
         public DateTime  CreatedAt      { get; set; }
         public DateTime  UpdatedAt      { get; set; }
-        public DateTime? CompletedAt    { get; set; }
+        public string    CompletedAt    { get; set; }
 
         /// <summary>Helper: parse SegmentsJson về List&lt;SegmentMeta&gt;.</summary>
         public List<SegmentMeta> GetSegments()

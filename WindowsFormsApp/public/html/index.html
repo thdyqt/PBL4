@@ -73,8 +73,8 @@
         <div class="section-3" data-aos="fade-up" data-aos-duration="800" data-aos-delay="300">
             <div class="inner-head">
                 <div>
-                    <div class="inner-queue-label">HÀNG ĐỢI</div>
-                    <h2 class="inner-download-title">Tệp đang tải</h2>
+                    <div class="inner-queue-label">GẦN ĐÂY</div>
+                    <h2 class="inner-download-title">Tệp gần đây</h2>
                 </div>
                 <div>
                     <div class="inner-count-badge">0 tác vụ</div>
@@ -114,6 +114,9 @@
                 </button>
                 <button type="button" class="settings-tab-btn" data-tab="tab-proxy">
                     <i class="fa-solid fa-shield-halved"></i> <span>Proxy</span>
+                </button>
+                <button type="button" class="settings-tab-btn" data-tab="tab-other">
+                    <i class="fa-solid fa-gear"></i> <span>Cài đặt khác</span>
                 </button>
             </div>
 
@@ -270,6 +273,20 @@
                             </button>
                             <div class="proxy-test-status" id="proxy-test-status"></div>
                         </div>
+                    </div>
+                </div>
+
+                <!-- Tab 4: Other Settings -->
+                <div class="settings-tab-content" id="tab-other">
+                    <div class="form-group switch-row">
+                        <div>
+                            <div class="form-label">Xác nhận trước khi xóa tệp</div>
+                            <div class="form-desc">Hiển thị hộp thoại xác nhận khi bạn xóa tệp hoặc xóa tất cả tệp khỏi danh sách. Bỏ chọn nếu bạn muốn xóa ngay mà không cần xác nhận lại.</div>
+                        </div>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="setting-confirm-delete" checked>
+                            <span class="toggle-slider"></span>
+                        </label>
                     </div>
                 </div>
             </div>

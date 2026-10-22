@@ -422,8 +422,39 @@ function populateSettingsForm(s) {
     if (threadInput && s.defaultThreads) {
         threadInput.value = String(s.defaultThreads);
     }
+
+    const confirmDelete = document.getElementById("setting-confirm-delete");
+    const isConfirm = s.confirmBeforeDelete !== false;
+    if (confirmDelete) confirmDelete.checked = isConfirm;
+    window.confirmBeforeDelete = isConfirm;
+    try { localStorage.setItem("confirmBeforeDelete", isConfirm ? "true" : "false"); } catch (e) {}
 }
 window.populateSettingsForm = populateSettingsForm;
+
+window.shouldConfirmDelete = function () {
+    if (typeof window.confirmBeforeDelete === "boolean") {
+        return window.confirmBeforeDelete;
+    }
+    try {
+        const local = localStorage.getItem("confirmBeforeDelete");
+        if (local !== null) return local !== "false";
+    } catch (e) {}
+    return true;
+};
+
+window.setConfirmBeforeDelete = function (val) {
+    const isConfirm = !!val;
+    window.confirmBeforeDelete = isConfirm;
+    try { localStorage.setItem("confirmBeforeDelete", isConfirm ? "true" : "false"); } catch (e) {}
+    const chk = document.getElementById("setting-confirm-delete");
+    if (chk) chk.checked = isConfirm;
+    if (window.chrome && window.chrome.webview) {
+        window.chrome.webview.postMessage(JSON.stringify({
+            action: "UPDATE_CONFIRM_DELETE",
+            confirmBeforeDelete: isConfirm
+        }));
+    }
+};
 
 // Mở modal cài đặt
 function openSettingsModal(defaultTab = "tab-queue") {
@@ -624,13 +655,18 @@ if (btnSaveSettings) {
 
         const proxy = collectProxyFromForm();
 
+        const confirmBeforeDelete = document.getElementById("setting-confirm-delete")?.checked ?? true;
+        window.confirmBeforeDelete = confirmBeforeDelete;
+        try { localStorage.setItem("confirmBeforeDelete", confirmBeforeDelete ? "true" : "false"); } catch (e) {}
+
         const newSettings = {
             maxConcurrentDownloads: isNaN(maxConcurrent) ? 2 : maxConcurrent,
             speedLimitKbps: speedKbps,
             proxy: proxy,
             defaultSavePath: document.getElementById("save-path")?.value || currentSettings.defaultSavePath || "",
             defaultThreads: defaultThreads,
-            autoStartNextInQueue: autoNext
+            autoStartNextInQueue: autoNext,
+            confirmBeforeDelete: confirmBeforeDelete
         };
 
         if (window.chrome && window.chrome.webview) {

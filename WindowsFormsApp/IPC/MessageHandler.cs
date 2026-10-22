@@ -110,8 +110,25 @@ namespace WindowsFormsApp.IPC
                             break;
 
                         case "RESUME_DOWNLOAD":
-                            _manager.Resume(GetString(root, "taskId"));
-                            break;
+                            {
+                                string resId = GetString(root, "taskId");
+                                if (_manager.HasJob(resId))
+                                {
+                                    _manager.Resume(resId);
+                                }
+                                else
+                                {
+                                    var rec = DatabaseHelper.GetById(resId);
+                                    if (rec != null)
+                                    {
+                                        string folder = !string.IsNullOrWhiteSpace(rec.TargetPath)
+                                            ? (Directory.Exists(rec.TargetPath) ? rec.TargetPath : Path.GetDirectoryName(rec.TargetPath))
+                                            : Application.StartupPath;
+                                        _ = HandleStartDownloadAsync(rec.Id, rec.SourceUrl, folder, rec.Threads > 0 ? rec.Threads : 4);
+                                    }
+                                }
+                                break;
+                            }
 
                         case "CANCEL_DOWNLOAD":
                             _ = HandleCancelAsync(GetString(root, "taskId"));
@@ -139,6 +156,15 @@ namespace WindowsFormsApp.IPC
                         case "SAVE_SETTINGS":
                             HandleSaveSettings(root);
                             break;
+
+                        case "UPDATE_CONFIRM_DELETE":
+                            {
+                                bool confirm = GetBool(root, "confirmBeforeDelete", true);
+                                var currentSettings = SettingsManager.Current;
+                                currentSettings.ConfirmBeforeDelete = confirm;
+                                SettingsManager.Save(currentSettings);
+                                break;
+                            }
 
                         case "TEST_PROXY":
                             _ = HandleTestProxyAsync(root);
@@ -310,8 +336,9 @@ namespace WindowsFormsApp.IPC
             {
                 await _manager.RemoveAsync(taskId).ConfigureAwait(false);
 
-                // Xóa khỏi cache; bản ghi DB giữ lại với state hiện tại
+                // Xóa khỏi cache và xóa khỏi CSDL
                 _dbCache.Remove(taskId);
+                DatabaseHelper.Delete(taskId);
             }
             catch (Exception ex)
             {
@@ -493,8 +520,30 @@ namespace WindowsFormsApp.IPC
                     if (!string.IsNullOrEmpty(dto.SegmentsMetaJson))
                         rec.SegmentsJson = dto.SegmentsMetaJson;
 
-                    if (dto.State == "completed" && !rec.CompletedAt.HasValue)
-                        rec.CompletedAt = DateTime.UtcNow;
+                    if (dto.ElapsedSeconds > 0)
+                        rec.ElapsedSeconds = dto.ElapsedSeconds;
+
+                    if (dto.State == "completed")
+                    {
+                        if (string.IsNullOrEmpty(rec.CompletedAt))
+                            rec.CompletedAt = DatabaseHelper.GetVietnamTimeString(DateTime.UtcNow);
+
+                        if (string.IsNullOrEmpty(rec.AvgSpeed))
+                        {
+                            if (rec.ElapsedSeconds > 0 && rec.TotalBytes > 0)
+                            {
+                                double avgBytes = (double)rec.TotalBytes / rec.ElapsedSeconds;
+                                rec.AvgSpeed = FormatSpeed(avgBytes);
+                            }
+                            else if (dto.Speed > 0)
+                            {
+                                rec.AvgSpeed = FormatSpeed(dto.Speed);
+                            }
+                        }
+
+                        dto.AvgSpeed = rec.AvgSpeed;
+                        dto.CompletedAt = rec.CompletedAt;
+                    }
 
                     // Luôn ghi (UpdateProgress đã set UpdatedAt mới)
                     DatabaseHelper.UpdateProgress(rec);
@@ -503,6 +552,19 @@ namespace WindowsFormsApp.IPC
             catch { /* DB lỗi không được làm gián đoạn giao diện */ }
 
             Send(new { action = "DOWNLOAD_PROGRESS", data = dto });
+        }
+
+        private static string FormatSpeed(double bytesPerSec)
+        {
+            if (bytesPerSec <= 0) return "—";
+            string[] units = { "B/s", "KB/s", "MB/s", "GB/s" };
+            int i = 0;
+            while (bytesPerSec >= 1024 && i < units.Length - 1)
+            {
+                bytesPerSec /= 1024;
+                i++;
+            }
+            return $"{bytesPerSec:0.##} {units[i]}";
         }
 
         private void Send(object payload)
@@ -528,6 +590,16 @@ namespace WindowsFormsApp.IPC
             int number;
             if (value.ValueKind == JsonValueKind.Number && value.TryGetInt32(out number)) return number;
             if (value.ValueKind == JsonValueKind.String && int.TryParse(value.GetString(), out number)) return number;
+            return fallback;
+        }
+
+        private static bool GetBool(JsonElement root, string name, bool fallback)
+        {
+            JsonElement value;
+            if (!root.TryGetProperty(name, out value)) return fallback;
+            if (value.ValueKind == JsonValueKind.True) return true;
+            if (value.ValueKind == JsonValueKind.False) return false;
+            if (value.ValueKind == JsonValueKind.String && bool.TryParse(value.GetString(), out bool b)) return b;
             return fallback;
         }
 

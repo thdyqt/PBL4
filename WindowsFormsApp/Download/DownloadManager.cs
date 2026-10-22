@@ -499,6 +499,13 @@ namespace WindowsFormsApp.Download
         }
 
 
+        /// <summary>Kiểm tra xem tác vụ có đang tồn tại trong bộ nhớ không.</summary>
+        public bool HasJob(string taskId)
+        {
+            if (string.IsNullOrEmpty(taskId)) return false;
+            return _jobs.ContainsKey(taskId) || _ftpJobs.ContainsKey(taskId);
+        }
+
         /// <summary>Lấy đường dẫn tệp đích của tác vụ theo taskId.</summary>
         public string GetTargetPath(string taskId)
         {

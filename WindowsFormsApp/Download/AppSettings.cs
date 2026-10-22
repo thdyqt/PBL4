@@ -30,6 +30,7 @@ namespace WindowsFormsApp.Download
         public string DefaultSavePath { get; set; } = "";
         public int DefaultThreads { get; set; } = 4;
         public bool AutoStartNextInQueue { get; set; } = true;
+        public bool ConfirmBeforeDelete { get; set; } = true;
     }
 
     public class ProxyTestResult

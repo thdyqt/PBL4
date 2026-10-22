@@ -25,7 +25,7 @@
     }
 
     // ---------- Modal hộp thoại xác nhận (Confirm Dialog) ----------
-    function showConfirmModal({ title, message, confirmText = "Đồng ý", cancelText = "Hủy bỏ", danger = false, onConfirm }) {
+    function showConfirmModal({ title, message, htmlContent = null, confirmText = "Đồng ý", cancelText = "Hủy bỏ", danger = false, showDontAskAgain = false, onConfirm }) {
         let overlay = document.getElementById("confirm-modal");
         if (!overlay) {
             overlay = document.createElement("div");
@@ -41,6 +41,12 @@
                     </div>
                     <div class="confirm-modal-body" id="confirm-modal-body">
                         Nội dung xác nhận
+                    </div>
+                    <div class="confirm-modal-checkbox-row" id="confirm-modal-checkbox-wrap" style="display: none;">
+                        <label class="confirm-checkbox-label">
+                            <input type="checkbox" id="confirm-modal-dont-ask">
+                            <span>Không hiển thị yêu cầu xác nhận xóa nữa</span>
+                        </label>
                     </div>
                     <div class="confirm-modal-footer">
                         <button type="button" class="btn-modal-cancel" id="confirm-modal-btn-cancel">Hủy bỏ</button>
@@ -68,9 +74,17 @@
         const iconEl = document.getElementById("confirm-modal-icon");
         const confirmBtn = document.getElementById("confirm-modal-btn-confirm");
         const cancelBtn = document.getElementById("confirm-modal-btn-cancel");
+        const chkWrap = document.getElementById("confirm-modal-checkbox-wrap");
+        const dontAskChk = document.getElementById("confirm-modal-dont-ask");
 
         if (titleEl) titleEl.textContent = title || "Xác nhận";
-        if (bodyEl) bodyEl.textContent = message || "Bạn có chắc chắn muốn thực hiện thao tác này?";
+        if (bodyEl) {
+            if (htmlContent) {
+                bodyEl.innerHTML = htmlContent;
+            } else {
+                bodyEl.textContent = message || "Bạn có chắc chắn muốn thực hiện thao tác này?";
+            }
+        }
         if (confirmBtn) {
             confirmBtn.textContent = confirmText;
             confirmBtn.className = "btn-modal-confirm" + (danger ? " danger" : "");
@@ -84,6 +98,13 @@
                 : '<i class="fa-solid fa-circle-question"></i>';
         }
 
+        if (chkWrap) {
+            chkWrap.style.display = showDontAskAgain ? "block" : "none";
+        }
+        if (dontAskChk) {
+            dontAskChk.checked = false;
+        }
+
         function closeConfirmModal() {
             overlay.style.display = "none";
             confirmBtn.onclick = null;
@@ -92,8 +113,9 @@
 
         cancelBtn.onclick = closeConfirmModal;
         confirmBtn.onclick = () => {
+            const dontAsk = !!(dontAskChk && dontAskChk.checked);
             closeConfirmModal();
-            if (typeof onConfirm === "function") onConfirm();
+            if (typeof onConfirm === "function") onConfirm(dontAsk);
         };
 
         overlay.style.display = "flex";
@@ -136,13 +158,18 @@
         const items = Array.from(document.querySelectorAll("#download-list .download-item"));
         const activityStatus = document.getElementById("download-activity-status");
         if (activityStatus) {
-            const hasActiveDownload = items.some(el =>
+            const activeItems = items.filter(el =>
                 el.dataset.state === "preparing" ||
                 el.dataset.state === "downloading" ||
                 el.dataset.state === "queued");
+            const hasActiveDownload = activeItems.length > 0;
             const statusLabel = activityStatus.querySelector(".status-label");
             activityStatus.classList.toggle("is-downloading", hasActiveDownload);
-            if (statusLabel) statusLabel.textContent = hasActiveDownload ? "Đang tải" : "Sẵn sàng tải";
+            if (statusLabel) {
+                statusLabel.textContent = hasActiveDownload
+                    ? `Đang tải ${activeItems.length} tệp`
+                    : "Sẵn sàng tải";
+            }
         }
 
         const headerPauseBtn = document.getElementById("btn-header-pause-all");
@@ -348,10 +375,13 @@
         } else if (d.state === "queued") {
             text += ` — ${d.threads} luồng`;
         } else if (d.state === "completed") {
-            const elapsedSec = item.dataset.elapsedTime;
-            const avgSpeed = item.dataset.avgSpeed;
-            text = `Hoàn thành — ${d.threads} luồng` +
-                   (elapsedSec ? ` (Thời gian: ${elapsedSec}s${avgSpeed ? ` — Tốc độ TB: ${avgSpeed}` : ""})` : "");
+            const elapsedSec = d.elapsedSeconds > 0 ? d.elapsedSeconds.toFixed(1) : item.dataset.elapsedTime;
+            const avgSpeed = d.avgSpeed || item.dataset.avgSpeed;
+            const completedAt = d.completedAt || item.dataset.completedAt || "";
+            if (completedAt) item.dataset.completedAt = completedAt;
+            text = `Hoàn thành — ${d.threads || 1} luồng` +
+                   (elapsedSec ? ` (Thời gian: ${elapsedSec}s${avgSpeed ? ` — Tốc độ TB: ${avgSpeed}` : ""})` : "") +
+                   (completedAt ? ` • ${completedAt}` : "");
         }
         if (d.state === "failed" && d.error) text += ": " + d.error;
         status.textContent = text;
@@ -391,10 +421,22 @@
                 const msg = JSON.parse(event.data);
                 if (msg.action === "DOWNLOAD_PROGRESS") applyProgress(msg.data);
                 else if (msg.action === "DOWNLOAD_ERROR") applyError(msg);
+                else if (msg.action === "HISTORY_DATA") {
+                    if (Array.isArray(msg.data)) {
+                        msg.data.forEach(rec => restoreHistoryItem(rec));
+                        window.updateTaskCounter();
+                        if (window.applyFilter) window.applyFilter();
+                    }
+                }
             } catch (e) {
                 console.error("Lỗi xử lý thông điệp tiến độ:", e);
             }
         });
+
+        // Chủ động yêu cầu C# nạp lịch sử từ CSDL SQLite
+        setTimeout(() => {
+            post({ action: "GET_HISTORY" });
+        }, 150);
     }
 
     // ---------- số tác vụ + trạng thái rỗng ----------
@@ -412,6 +454,19 @@
     };
 
     syncHeaderPauseButtons();
+
+    function removeDownloadItems(itemsToDelete, successMsg) {
+        if (!itemsToDelete || itemsToDelete.length === 0) return;
+        const count = itemsToDelete.length;
+        itemsToDelete.forEach(el => {
+            post({ action: "REMOVE_DOWNLOAD", taskId: el.id });
+            el.remove();
+        });
+        window.updateTaskCounter();
+        syncHeaderPauseButtons();
+        if (window.applyFilter) window.applyFilter();
+        showToast(successMsg || `Đã xóa ${count} tệp.`);
+    }
 
     // ---------- Xử lý sự kiện click toàn trang ----------
     document.addEventListener("click", (e) => {
@@ -510,6 +565,18 @@
             }
 
             if (action === "delete") {
+                const doDelete = () => {
+                    post({ action: "REMOVE_DOWNLOAD", taskId: taskId });
+                    item.remove();
+                    window.updateTaskCounter();
+                    syncHeaderPauseButtons();
+                };
+
+                if (window.shouldConfirmDelete && !window.shouldConfirmDelete()) {
+                    doDelete();
+                    return;
+                }
+
                 const isCompleted = item.dataset.state === "completed";
                 const msg = isCompleted
                     ? `Bạn có chắc chắn muốn xóa "${fileName}" khỏi danh sách tải về?`
@@ -519,11 +586,12 @@
                     message: msg,
                     confirmText: "Xóa",
                     danger: true,
-                    onConfirm: () => {
-                        post({ action: "REMOVE_DOWNLOAD", taskId: taskId });
-                        item.remove();
-                        window.updateTaskCounter();
-                        syncHeaderPauseButtons();
+                    showDontAskAgain: true,
+                    onConfirm: (dontAsk) => {
+                        if (dontAsk && window.setConfirmBeforeDelete) {
+                            window.setConfirmBeforeDelete(false);
+                        }
+                        doDelete();
                     }
                 });
                 return;
@@ -618,23 +686,139 @@
             }
 
             if (headerAction === "delete-all") {
-                const items = Array.from(document.querySelectorAll("#download-list .download-item"));
-                if (items.length === 0) {
-                    showToast("Danh sách tải về hiện đang trống.");
+                const FILTER_NAMES = {
+                    home: "Tệp gần đây",
+                    all: "Tất cả",
+                    downloading: "Đang tải",
+                    completed: "Đã hoàn thành",
+                    audio: "Âm thanh",
+                    video: "Video",
+                    document: "Tài liệu & Nén"
+                };
+                const currentFilter = (window.getCurrentFilter && window.getCurrentFilter()) || "all";
+                const categoryLabel = FILTER_NAMES[currentFilter] || "Mục hiện tại";
+
+                // Chỉ lấy các file đang hiển thị trong mục hiện tại
+                const visibleItems = Array.from(document.querySelectorAll("#download-list .download-item"))
+                    .filter(el => el.style.display !== "none");
+
+                if (visibleItems.length === 0) {
+                    showToast("Không có tệp nào trong mục này để xóa.");
                     return;
                 }
+
+                // Kiểm tra xem có file nào được click chọn (selected) trong danh sách hiển thị không
+                const selectedItems = visibleItems.filter(el => el.classList.contains("selected"));
+
+                if (selectedItems.length > 0) {
+                    // Nếu có lựa chọn 1 hay nhiều file -> chỉ xóa những file được lựa chọn
+                    const doDeleteSelected = () => {
+                        removeDownloadItems(selectedItems, `Đã xóa ${selectedItems.length} tệp đã chọn.`);
+                    };
+
+                    if (window.shouldConfirmDelete && !window.shouldConfirmDelete()) {
+                        doDeleteSelected();
+                        return;
+                    }
+
+                    showConfirmModal({
+                        title: "Xác nhận xóa tệp đã chọn",
+                        message: `Bạn có chắc chắn muốn xóa ${selectedItems.length} tệp đã chọn trong mục "${categoryLabel}" khỏi danh sách không? Các tệp đang tải dở dang sẽ bị dừng và xóa khỏi đĩa.`,
+                        confirmText: `Xóa (${selectedItems.length})`,
+                        danger: true,
+                        showDontAskAgain: true,
+                        onConfirm: (dontAsk) => {
+                            if (dontAsk && window.setConfirmBeforeDelete) {
+                                window.setConfirmBeforeDelete(false);
+                            }
+                            doDeleteSelected();
+                        }
+                    });
+                    return;
+                }
+
+                // Nếu không có file nào được chọn -> hiển thị hộp thoại chọn phạm vi xóa
+                const completedItems = visibleItems.filter(el => el.dataset.state === "completed");
+                const activeItems = visibleItems.filter(el => el.dataset.state !== "completed");
+                const totalCount = visibleItems.length;
+
+                const defaultChoice = completedItems.length > 0 ? "completed" : (activeItems.length > 0 ? "active" : "all");
+
+                const modalHtml = `
+                    <div class="delete-all-prompt">
+                        <div class="delete-all-desc">
+                            Bạn đang ở mục <strong>${categoryLabel}</strong>. Vui lòng chọn loại tệp muốn xóa:
+                        </div>
+                        <div class="delete-options-list">
+                            <label class="delete-option-item ${completedItems.length === 0 ? "disabled" : ""}">
+                                <input type="radio" name="deleteScope" value="completed" ${defaultChoice === "completed" ? "checked" : ""} ${completedItems.length === 0 ? "disabled" : ""}>
+                                <div class="delete-option-text">
+                                    <span class="delete-option-title">
+                                        <i class="fa-solid fa-circle-check" style="color: #10B981;"></i>
+                                        Xóa tất cả các file đã tải
+                                    </span>
+                                    <span class="delete-option-badge">${completedItems.length} tệp</span>
+                                </div>
+                            </label>
+                            <label class="delete-option-item ${activeItems.length === 0 ? "disabled" : ""}">
+                                <input type="radio" name="deleteScope" value="active" ${defaultChoice === "active" ? "checked" : ""} ${activeItems.length === 0 ? "disabled" : ""}>
+                                <div class="delete-option-text">
+                                    <span class="delete-option-title">
+                                        <i class="fa-solid fa-arrows-rotate" style="color: #0EA5E9;"></i>
+                                        Xóa tất cả các file đang tải
+                                    </span>
+                                    <span class="delete-option-badge">${activeItems.length} tệp</span>
+                                </div>
+                            </label>
+                            <label class="delete-option-item">
+                                <input type="radio" name="deleteScope" value="all" ${defaultChoice === "all" ? "checked" : ""}>
+                                <div class="delete-option-text">
+                                    <span class="delete-option-title">
+                                        <i class="fa-solid fa-trash-can" style="color: #EF4444;"></i>
+                                        Xóa toàn bộ file
+                                    </span>
+                                    <span class="delete-option-badge">${totalCount} tệp</span>
+                                </div>
+                            </label>
+                        </div>
+                        <div class="delete-warning-note">
+                            <i class="fa-solid fa-circle-exclamation"></i>
+                            <span>Các tệp đang tải dở dang sẽ bị dừng và xóa khỏi đĩa.</span>
+                        </div>
+                    </div>
+                `;
+
                 showConfirmModal({
-                    title: "Xác nhận xóa tất cả",
-                    message: `Bạn có chắc chắn muốn xóa tất cả (${items.length}) tác vụ khỏi danh sách không? Các tệp đang tải dở dang sẽ bị dừng và xóa khỏi đĩa.`,
-                    confirmText: "Xóa tất cả",
+                    title: `Tùy chọn xóa tệp (${categoryLabel})`,
+                    htmlContent: modalHtml,
+                    confirmText: "Xóa",
                     danger: true,
-                    onConfirm: () => {
-                        items.forEach(el => {
-                            post({ action: "REMOVE_DOWNLOAD", taskId: el.id });
-                            el.remove();
-                        });
-                        window.updateTaskCounter();
-                        syncHeaderPauseButtons();
+                    showDontAskAgain: true,
+                    onConfirm: (dontAsk) => {
+                        const selectedScope = document.querySelector('input[name="deleteScope"]:checked')?.value || "all";
+                        let targetItems = [];
+                        let labelMsg = "";
+                        if (selectedScope === "completed") {
+                            targetItems = completedItems;
+                            labelMsg = `Đã xóa ${targetItems.length} tệp đã tải trong mục ${categoryLabel}.`;
+                        } else if (selectedScope === "active") {
+                            targetItems = activeItems;
+                            labelMsg = `Đã xóa ${targetItems.length} tệp đang tải trong mục ${categoryLabel}.`;
+                        } else {
+                            targetItems = visibleItems;
+                            labelMsg = `Đã xóa toàn bộ ${targetItems.length} tệp trong mục ${categoryLabel}.`;
+                        }
+
+                        if (targetItems.length === 0) {
+                            showToast("Không có tệp nào phù hợp để xóa.");
+                            return;
+                        }
+
+                        if (dontAsk && window.setConfirmBeforeDelete) {
+                            window.setConfirmBeforeDelete(false);
+                        }
+
+                        removeDownloadItems(targetItems, labelMsg);
                     }
                 });
                 return;
@@ -692,6 +876,39 @@
         };
         const stateText = STATE_LABEL[state] || state;
 
+        const threadCount = rec.threads || 1;
+        const elapsedSec = rec.elapsedSeconds > 0 ? rec.elapsedSeconds.toFixed(1) : "";
+        const avgSpeed = rec.avgSpeed || ((rec.totalBytes > 0 && parseFloat(elapsedSec) > 0)
+            ? fmtB(rec.totalBytes / parseFloat(elapsedSec)) + "/s"
+            : "");
+        const completedAt = rec.completedAt || "";
+
+        let statusText = stateText;
+        if (state === "completed") {
+            statusText = `Hoàn thành — ${threadCount} luồng`;
+            if (elapsedSec) {
+                statusText += ` (Thời gian: ${elapsedSec}s${avgSpeed ? ` — Tốc độ TB: ${avgSpeed}` : ""})`;
+            }
+            if (completedAt) {
+                statusText += ` • ${completedAt}`;
+            }
+        } else if (rec.errorMessage) {
+            statusText += ": " + rec.errorMessage;
+        }
+
+        let segmentBarsHtml = "";
+        if (state === "completed" && threadCount >= 1) {
+            segmentBarsHtml = `<div class="segment-bars">`;
+            for (let i = 0; i < threadCount; i++) {
+                const color = SEG_PALETTE[i % SEG_PALETTE.length];
+                segmentBarsHtml += `
+                    <div class="segment-bar" title="Luồng ${i + 1}: 100%">
+                        <div class="segment-fill" style="width: 100%; --seg-color: ${color};"></div>
+                    </div>`;
+            }
+            segmentBarsHtml += `</div>`;
+        }
+
         const openFileBtn = state === "completed" ? `
             <div class="download-actions">
                 <button type="button" class="btn-action btn-open-file" data-action="open-file">
@@ -706,6 +923,9 @@
             <div class="download-item" id="${rec.id}"
                  data-state="${state}"
                  data-category="${category}"
+                 data-elapsed-time="${elapsedSec}"
+                 data-avg-speed="${avgSpeed}"
+                 data-completed-at="${completedAt}"
                  data-target-path="${(rec.targetPath || "").replace(/"/g, "&quot;")}">
                 <div class="progress-header">
                     <div class="file-info">
@@ -748,25 +968,31 @@
                 </div>
 
                 <div class="progress-stats">
-                    <span class="stat-item">Tốc độ: <b id="${rec.id}-speed">—</b></span>
+                    <span class="stat-item">Tốc độ: <b id="${rec.id}-speed">${state === "completed" ? (avgSpeed || "—") : "—"}</b></span>
                     <span class="stat-item">Đã tải: <b id="${rec.id}-downloaded">
-                        ${fmtB(rec.downloaded)} / ${fmtB(rec.totalBytes)}
+                        ${fmtB(rec.downloaded)} / ${rec.totalBytes > 0 ? fmtB(rec.totalBytes) : fmtB(rec.downloaded)}
                     </b></span>
                     <span class="stat-item">
                         <span id="${rec.id}-eta-label">${state === "completed" ? "Thời gian tải:" : "Còn lại:"}</span>
-                        <b id="${rec.id}-eta">--:--</b>
+                        <b id="${rec.id}-eta">${state === "completed" ? (elapsedSec ? elapsedSec + "s" : "Hoàn tất") : "--:--"}</b>
                     </span>
                 </div>
 
+                ${segmentBarsHtml}
+
                 <div class="download-status ${state === "failed" || state === "cancelled" ? "is-error" : ""} ${state === "completed" ? "is-done" : ""}">
-                    ${stateText}${rec.errorMessage ? ": " + rec.errorMessage : ""}
+                    ${statusText}
                 </div>
 
                 ${openFileBtn}
             </div>`;
 
         const list = document.getElementById("download-list");
-        if (list) list.insertAdjacentHTML("beforeend", html);
+        if (list) {
+            const emptyState = document.getElementById("empty-state");
+            if (emptyState) emptyState.style.display = "none";
+            list.insertAdjacentHTML("beforeend", html);
+        }
     }
 
     window.restoreHistoryItem = restoreHistoryItem;
