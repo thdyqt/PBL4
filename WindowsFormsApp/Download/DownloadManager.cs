@@ -144,7 +144,7 @@ namespace WindowsFormsApp.Download
 
         // ------------------------------------------------------------------ tạo tác vụ
 
-        public async Task StartAsync(string taskId, string url, string folder, int threads, bool forceStart = false)
+        public async Task StartAsync(string taskId, string url, string folder, int threads, bool forceStart = false, string customFileName = null)
         {
             Uri uri;
             if (!Uri.TryCreate(url, UriKind.Absolute, out uri) ||
@@ -153,7 +153,7 @@ namespace WindowsFormsApp.Download
 
             if (uri.Scheme == Uri.UriSchemeFtp)
             {
-                await StartFtpAsync(taskId, url, folder).ConfigureAwait(false);
+                await StartFtpAsync(taskId, url, folder, customFileName).ConfigureAwait(false);
                 return;
             }
             if (string.IsNullOrWhiteSpace(folder))
@@ -165,6 +165,23 @@ namespace WindowsFormsApp.Download
 
             // Khâu 1: dò thông tin file
             RemoteFileInfo info = await RemoteProbe.InspectAsync(_http, url, CancellationToken.None).ConfigureAwait(false);
+
+            // Đổi tên tệp nếu người dùng chỉ định trước khi tải
+            if (!string.IsNullOrWhiteSpace(customFileName))
+            {
+                string sanitized = SanitizeFileName(customFileName.Trim());
+                if (!string.IsNullOrWhiteSpace(sanitized))
+                {
+                    string userExt = Path.GetExtension(sanitized);
+                    string originalExt = Path.GetExtension(info.FileName);
+                    if (string.IsNullOrEmpty(userExt) && !string.IsNullOrEmpty(originalExt))
+                    {
+                        sanitized += originalExt;
+                    }
+                    info.FileName = sanitized;
+                }
+            }
+
             bool ranges = info.SupportsRanges && info.Length > 1;
 
             // Khâu 2: chọn tên file đích, phát hiện tác vụ dở dang để Resume, chia segment
@@ -295,28 +312,115 @@ namespace WindowsFormsApp.Download
                 && Nullable.Equals(meta.LastModified, info.LastModified);
         }
 
-        private static void CheckDiskSpace(string folder, long needed)
+        private static string FormatBytes(long bytes)
+        {
+            if (bytes <= 0) return "0 B";
+            string[] units = { "B", "KB", "MB", "GB", "TB" };
+            int i = 0;
+            double val = bytes;
+            while (val >= 1024 && i < units.Length - 1)
+            {
+                val /= 1024;
+                i++;
+            }
+            return $"{val:0.##} {units[i]}";
+        }
+
+        public static void CheckDiskSpace(string folder, long needed)
         {
             try
             {
-                string root = Path.GetPathRoot(Path.GetFullPath(folder));
-                var drive = new DriveInfo(root);
-                if (drive.AvailableFreeSpace < needed)
-                    throw new DownloadException("Ổ đĩa không đủ dung lượng trống cho tệp này.");
+                string fullPath = Path.GetFullPath(folder);
+                string root = Path.GetPathRoot(fullPath);
+                if (string.IsNullOrEmpty(root)) return;
+
+                var targetDrive = new DriveInfo(root);
+                if (!targetDrive.IsReady) return;
+
+                long targetFree = targetDrive.AvailableFreeSpace;
+
+                // Nếu ổ đích đủ dung lượng cho tệp -> OK
+                if (targetFree >= needed)
+                {
+                    return;
+                }
+
+                // Ổ đích không đủ dung lượng! Kiểm tra tất cả các ổ đĩa khác trên máy
+                DriveInfo[] allDrives = DriveInfo.GetDrives();
+                var readyDrives = allDrives
+                    .Where(d => d.IsReady && (d.DriveType == DriveType.Fixed || d.DriveType == DriveType.Removable))
+                    .ToList();
+
+                // Tìm các ổ đĩa khác có đủ dung lượng chứa tệp
+                var suitableOtherDrives = readyDrives
+                    .Where(d => !string.Equals(d.Name, targetDrive.Name, StringComparison.OrdinalIgnoreCase)
+                                && d.AvailableFreeSpace >= needed)
+                    .OrderByDescending(d => d.AvailableFreeSpace)
+                    .ToList();
+
+                string targetName = targetDrive.Name.TrimEnd('\\');
+
+                // Nếu không có ổ nào đủ dung lượng hoặc tất cả các ổ đều gần đầy
+                if (suitableOtherDrives.Count == 0)
+                {
+                    long totalFreeAll = readyDrives.Sum(d => d.AvailableFreeSpace);
+                    string msg = $"Tất cả các ổ đĩa trên thiết bị đều gần đầy hoặc không đủ dung lượng ({FormatBytes(totalFreeAll)} khả dụng toàn máy, tệp cần {FormatBytes(needed)}). Quá trình tải đã tự động bị huỷ để bảo vệ hệ thống!";
+
+                    throw new DiskSpaceException(
+                        isAllDrivesFull: true,
+                        message: msg,
+                        targetDrive: targetName,
+                        suggestedDrive: null,
+                        targetFreeBytes: targetFree,
+                        suggestedFreeBytes: 0,
+                        neededBytes: needed
+                    );
+                }
+                else
+                {
+                    // Ổ hiện tại không đủ, nhưng có ổ khác đủ dung lượng -> Đề xuất đổi sang ổ khác
+                    var bestDrive = suitableOtherDrives.First();
+                    string bestName = bestDrive.Name.TrimEnd('\\');
+                    string bestLabel = string.IsNullOrWhiteSpace(bestDrive.VolumeLabel) ? "" : $" ({bestDrive.VolumeLabel})";
+
+                    string msg = $"Ổ đĩa {targetName} không đủ dung lượng trống ({FormatBytes(targetFree)} còn trống, tệp cần {FormatBytes(needed)}). " +
+                                 $"Bạn nên đổi thư mục lưu sang ổ đĩa khác (Đề xuất: Ổ {bestName}{bestLabel} còn trống {FormatBytes(bestDrive.AvailableFreeSpace)})!";
+
+                    throw new DiskSpaceException(
+                        isAllDrivesFull: false,
+                        message: msg,
+                        targetDrive: targetName,
+                        suggestedDrive: bestName,
+                        targetFreeBytes: targetFree,
+                        suggestedFreeBytes: bestDrive.AvailableFreeSpace,
+                        neededBytes: needed
+                    );
+                }
             }
-            catch (DownloadException)
+            catch (DiskSpaceException)
             {
                 throw;
             }
-            catch
+            catch (Exception ex)
             {
                 // Không kiểm tra được (ví dụ ổ mạng UNC) thì bỏ qua
+                System.Diagnostics.Debug.WriteLine("CheckDiskSpace: " + ex.Message);
             }
         }
 
         // ------------------------------------------------------------------ FTP
 
-        private async Task StartFtpAsync(string taskId, string url, string folder)
+        public static string SanitizeFileName(string name)
+        {
+            if (string.IsNullOrWhiteSpace(name)) return name;
+            foreach (char c in Path.GetInvalidFileNameChars())
+            {
+                name = name.Replace(c, '_');
+            }
+            return name.Trim();
+        }
+
+        private async Task StartFtpAsync(string taskId, string url, string folder, string customFileName = null)
         {
             if (string.IsNullOrWhiteSpace(folder))
                 throw new DownloadException("Bạn chưa chọn nơi lưu tệp.");
@@ -326,6 +430,22 @@ namespace WindowsFormsApp.Download
 
             // Dò thông tin file qua FTP
             RemoteFileInfo info = await FtpProbe.InspectAsync(url, CancellationToken.None).ConfigureAwait(false);
+
+            if (!string.IsNullOrWhiteSpace(customFileName))
+            {
+                string sanitized = SanitizeFileName(customFileName.Trim());
+                if (!string.IsNullOrWhiteSpace(sanitized))
+                {
+                    string userExt = Path.GetExtension(sanitized);
+                    string originalExt = Path.GetExtension(info.FileName);
+                    if (string.IsNullOrEmpty(userExt) && !string.IsNullOrEmpty(originalExt))
+                    {
+                        sanitized += originalExt;
+                    }
+                    info.FileName = sanitized;
+                }
+            }
+
             string fileName = info.FileName;
 
             string target;
@@ -353,6 +473,10 @@ namespace WindowsFormsApp.Download
                     copy++;
                     target = Path.Combine(folder, baseName + " (" + copy + ")" + ext);
                     resumeOffset = 0;
+                }
+                if (resumeOffset == 0 && info.Length > 0)
+                {
+                    CheckDiskSpace(folder, info.Length);
                 }
                 _activeTargets.Add(target);
             }

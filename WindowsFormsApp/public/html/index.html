@@ -40,6 +40,20 @@
                             <i class="fa-regular fa-clipboard btn-paste" title="Dán từ Clipboard"></i>
                         </div>
                     </div>
+                    <div class="filename-row">
+                        <div class="filename-label-wrap">
+                            <label for="custom-file-name" class="inner-label">
+                                <i class="fa-solid fa-pen-to-square"></i> Tên tệp lưu <span class="label-hint">(Tùy chọn đổi tên trước khi tải)</span>
+                            </label>
+                            <button type="button" class="btn-reset-filename" id="btn-reset-filename" title="Khôi phục lại tên tệp gốc từ đường link" style="display: none;">
+                                <i class="fa-solid fa-rotate-left"></i> <span>Tên gốc</span>
+                            </button>
+                        </div>
+                        <div class="filename-input">
+                            <input type="text" class="inner-input" id="custom-file-name" name="custom-file-name" placeholder="Tự động nhận diện từ liên kết (hoặc nhập tên bạn muốn đổi)" autocomplete="off" spellcheck="false">
+                            <i class="fa-solid fa-file-pen filename-icon" title="Tùy chỉnh tên tệp tải về"></i>
+                        </div>
+                    </div>
                     <div class="options-row">
                         <div class="save-field">
                             <label for="save-path" class="inner-label">Lưu tại</label>
@@ -80,13 +94,103 @@
                     <div class="inner-count-badge">0 tác vụ</div>
                 </div>
             </div>
+
+            <!-- Toolbar Tìm kiếm & Sắp xếp file -->
+            <div class="file-toolbar" id="file-toolbar">
+                <div class="toolbar-search-wrap">
+                    <i class="fa-solid fa-magnifying-glass search-icon"></i>
+                    <input type="text" id="search-file-input" class="search-input" placeholder="Tìm kiếm tên file, đuôi mở rộng (.mp4, .zip...), link..." autocomplete="off" spellcheck="false" title="Tìm kiếm tệp (Phím tắt: Ctrl + F hoặc /)">
+                    <span class="search-count-pill" id="search-count-pill" style="display: none;">0 kết quả</span>
+                    <button type="button" class="btn-clear-search" id="btn-clear-search" title="Xóa nội dung tìm kiếm (Esc)" style="display: none;">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+
+                <div class="toolbar-sort-wrap">
+                    <div class="sort-select-group">
+                        <label for="sort-select" class="sort-label">
+                            <i class="fa-solid fa-arrow-down-short-wide"></i>
+                            <span>Sắp xếp:</span>
+                        </label>
+                        <select id="sort-select" class="sort-select" title="Chọn tiêu chí sắp xếp tệp">
+                            <option value="date">Thời điểm tải (Mới / Cũ)</option>
+                            <option value="name">Tên file (A - Z / Z - A)</option>
+                            <option value="size">Độ lớn file (Dung lượng)</option>
+                            <option value="duration">Thời gian tải về (Nhanh / Lâu)</option>
+                            <option value="speed">Tốc độ tải</option>
+                            <option value="status">Trạng thái (Tiến độ)</option>
+                        </select>
+                    </div>
+
+                    <button type="button" class="btn-sort-order" id="btn-sort-order" title="Đảo chiều sắp xếp">
+                        <i class="fa-solid fa-arrow-down-wide-short" id="sort-order-icon"></i>
+                        <span class="sort-order-text" id="sort-order-text">Mới nhất</span>
+                    </button>
+
+                    <button type="button" class="btn-reset-toolbar" id="btn-reset-toolbar" title="Đặt lại tìm kiếm & sắp xếp mặc định" style="display: none;">
+                        <i class="fa-solid fa-rotate-left"></i>
+                        <span>Đặt lại</span>
+                    </button>
+                </div>
+            </div>
+
             <div class="inner-state" id="empty-state">
                 <i class="fa-solid fa-circle-down"></i>
                 <h3>Chưa có tệp nào</h3>
                 <div>Dán liên kết tải về, chọn vị trí lưu rồi bắt đầu.</div>
             </div>
 
+            <!-- Empty state khi tìm kiếm không có kết quả -->
+            <div class="inner-state search-empty-state" id="search-empty-state" style="display: none;">
+                <div class="search-empty-icon"><i class="fa-solid fa-magnifying-glass"></i></div>
+                <h3>Không tìm thấy tệp phù hợp</h3>
+                <div class="search-empty-desc">Không có tệp nào khớp với từ khóa "<strong id="search-keyword-display"></strong>" trong danh mục này.</div>
+                <button type="button" class="btn-clear-search-action" id="btn-empty-clear">
+                    <i class="fa-solid fa-xmark"></i> <span>Xóa tìm kiếm</span>
+                </button>
+            </div>
+
             <div id="download-list"></div>
+        </div>
+
+        <!-- Section-Device: Frame giữa trang cho Thông tin thiết bị -->
+        <div class="section-device" id="section-device" style="display: none;">
+            <div class="device-frame-header">
+                <div class="device-frame-title-wrap">
+                    <div class="device-frame-badge"><i class="fa-solid fa-microchip"></i> HỆ THỐNG</div>
+                    <h2 class="device-frame-title">Thông tin thiết bị & Bộ nhớ</h2>
+                    <p class="device-frame-desc">Theo dõi thông số phần cứng, dung lượng các ổ đĩa và khả năng lưu trữ tệp tin trên máy tính của bạn.</p>
+                </div>
+                <div class="device-frame-actions">
+                    <button type="button" class="btn-device-action" id="btn-refresh-device-main" title="Cập nhật lại thông tin mới nhất">
+                        <i class="fa-solid fa-arrows-rotate"></i> <span>Làm mới</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Loading State -->
+            <div class="device-loading-state" id="device-loading-state">
+                <div class="device-spinner"><i class="fa-solid fa-circle-notch fa-spin"></i></div>
+                <p>Đang đọc thông số thiết bị từ hệ thống...</p>
+            </div>
+
+            <!-- Content Container -->
+            <div class="device-content-container" id="device-content-container" style="display: none;">
+                <!-- System Info Cards Grid -->
+                <div class="device-sys-grid" id="device-sys-grid"></div>
+
+                <!-- Overall Storage Capacity Meter -->
+                <div class="device-overall-card" id="device-overall-card"></div>
+
+                <!-- Drives Section -->
+                <div class="device-drives-section">
+                    <div class="device-section-subtitle">
+                        <i class="fa-solid fa-hard-drive"></i>
+                        <span>Chi tiết các ổ đĩa lưu trữ</span>
+                    </div>
+                    <div class="device-drives-grid" id="device-drives-grid"></div>
+                </div>
+            </div>
         </div>
     </main>
 
@@ -364,6 +468,42 @@
                 <button type="button" class="btn-modal-cancel" id="btn-cancel-batch">Hủy bỏ</button>
                 <button type="button" class="btn-modal-save" id="btn-submit-batch">
                     <i class="fa-solid fa-cloud-arrow-down"></i> <span id="btn-submit-batch-text">Thêm vào hàng đợi</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Disk Space Warning Modal -->
+    <div class="modal-overlay" id="disk-space-modal" style="display: none;">
+        <div class="modal-card disk-space-card">
+            <div class="disk-space-header">
+                <div class="disk-space-icon-wrap" id="disk-space-icon-wrap">
+                    <i class="fa-solid fa-triangle-exclamation" id="disk-space-icon"></i>
+                </div>
+                <div class="disk-space-title-info">
+                    <h3 class="modal-title" id="disk-space-title">Cảnh báo dung lượng ổ đĩa</h3>
+                    <div class="disk-space-subtitle" id="disk-space-subtitle">Kiểm tra không gian lưu trữ hệ thống</div>
+                </div>
+                <button type="button" class="btn-modal-close" id="btn-close-disk-modal" title="Đóng">&times;</button>
+            </div>
+            <div class="disk-space-body">
+                <div class="disk-space-message" id="disk-space-message"></div>
+                <div class="disk-space-comparison" id="disk-space-comparison" style="display: none;">
+                    <div class="disk-compare-item current-drive">
+                        <span class="compare-label"><i class="fa-solid fa-database"></i> Ổ đĩa hiện tại</span>
+                        <span class="compare-val" id="compare-current-val">-</span>
+                    </div>
+                    <div class="disk-compare-arrow"><i class="fa-solid fa-arrow-right-long"></i></div>
+                    <div class="disk-compare-item suggested-drive">
+                        <span class="compare-label"><i class="fa-solid fa-circle-check"></i> Đề xuất đổi sang</span>
+                        <span class="compare-val" id="compare-suggested-val">-</span>
+                    </div>
+                </div>
+            </div>
+            <div class="disk-space-footer">
+                <button type="button" class="btn-disk-action secondary" id="btn-disk-close">Đã hiểu</button>
+                <button type="button" class="btn-disk-action primary" id="btn-disk-switch-folder" style="display: none;">
+                    <i class="fa-regular fa-folder-open"></i> Đổi thư mục lưu ngay
                 </button>
             </div>
         </div>

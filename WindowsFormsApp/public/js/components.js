@@ -111,6 +111,12 @@ class Sider extends HTMLElement {
                             <i class="fa-solid fa-file-zipper"></i> Nén / Tài liệu
                         </a>
                     </li>
+                    <li class="menu-divider-item"></li>
+                    <li>
+                        <a href="#" data-filter="device" class="menu-device-link">
+                            <i class="fa-solid fa-laptop"></i> Thông tin thiết bị
+                        </a>
+                    </li>
                 </ul>
             </nav>
             <div class="sider-overlay"></div>

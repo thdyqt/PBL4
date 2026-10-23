@@ -18,6 +18,59 @@ const showSuccessIcon = (btn) => {
     }, 2000);
 };
 
+let detectedUrlFileName = "";
+let isFileNameManuallyEdited = false;
+
+function extractFileNameFromUrl(rawUrl) {
+    if (!rawUrl || typeof rawUrl !== "string") return "";
+    try {
+        const u = new URL(rawUrl.trim());
+        const pathname = u.pathname;
+        let lastSegment = pathname.split("/").filter(Boolean).pop() || "";
+        lastSegment = decodeURIComponent(lastSegment);
+        lastSegment = lastSegment.replace(/[\\/:*?"<>|]/g, "_").trim();
+        return lastSegment;
+    } catch (e) {
+        try {
+            const clean = rawUrl.split("?")[0].split("#")[0];
+            const parts = clean.split("/").filter(Boolean);
+            if (parts.length > 0) {
+                return decodeURIComponent(parts[parts.length - 1]).replace(/[\\/:*?"<>|]/g, "_").trim();
+            }
+        } catch (e2) {}
+    }
+    return "";
+}
+
+function updateFileNameFromUrl(url) {
+    const fileNameInput = document.getElementById("custom-file-name");
+    const btnResetName = document.getElementById("btn-reset-filename");
+    if (!fileNameInput) return;
+
+    const extracted = extractFileNameFromUrl(url);
+    detectedUrlFileName = extracted;
+
+    if (!isFileNameManuallyEdited) {
+        if (extracted) {
+            fileNameInput.value = extracted;
+            fileNameInput.placeholder = extracted;
+        } else {
+            fileNameInput.value = "";
+            fileNameInput.placeholder = "Tự động nhận diện từ liên kết (hoặc nhập tên bạn muốn đổi)";
+        }
+    } else {
+        if (extracted) {
+            fileNameInput.placeholder = extracted;
+        }
+    }
+
+    if (btnResetName) {
+        const isDifferent = fileNameInput.value.trim() !== detectedUrlFileName;
+        btnResetName.style.display = (isFileNameManuallyEdited && isDifferent && detectedUrlFileName) ? "inline-flex" : "none";
+    }
+}
+window.updateFileNameFromUrl = updateFileNameFromUrl;
+
 if (pasteButton && urlInput) {
     pasteButton.addEventListener('click', () => {
         if (window.chrome && window.chrome.webview) {
@@ -31,6 +84,7 @@ if (pasteButton && urlInput) {
                 navigator.clipboard.readText().then(text => {
                     if (text && text.trim() !== "") {
                         urlInput.value = text.trim();
+                        updateFileNameFromUrl(urlInput.value);
                         urlInput.focus();
                         showSuccessIcon(pasteButton); 
                     } else {
@@ -44,6 +98,37 @@ if (pasteButton && urlInput) {
                 alert("Không thể dán tự động. Hãy nhấn Ctrl+V!");
             }
         }
+    });
+
+    urlInput.addEventListener("input", (e) => {
+        updateFileNameFromUrl(e.target.value);
+    });
+    urlInput.addEventListener("change", (e) => {
+        updateFileNameFromUrl(e.target.value);
+    });
+}
+
+const customFileNameInput = document.getElementById("custom-file-name");
+const btnResetFilename = document.getElementById("btn-reset-filename");
+
+if (customFileNameInput) {
+    customFileNameInput.addEventListener("input", () => {
+        isFileNameManuallyEdited = true;
+        if (btnResetFilename) {
+            const isDifferent = customFileNameInput.value.trim() !== detectedUrlFileName;
+            btnResetFilename.style.display = (isDifferent && detectedUrlFileName) ? "inline-flex" : "none";
+        }
+    });
+}
+
+if (btnResetFilename) {
+    btnResetFilename.addEventListener("click", () => {
+        isFileNameManuallyEdited = false;
+        if (customFileNameInput) {
+            customFileNameInput.value = detectedUrlFileName;
+            customFileNameInput.focus();
+        }
+        btnResetFilename.style.display = "none";
     });
 }
 
@@ -91,6 +176,7 @@ if (window.chrome && window.chrome.webview) {
                 
                 if (copiedText && copiedText.trim() !== "") {
                     urlInput.value = copiedText.trim();
+                    updateFileNameFromUrl(urlInput.value);
                     urlInput.focus();   
                     showSuccessIcon(pasteBtn);
                 } else {
@@ -158,6 +244,18 @@ if (window.chrome && window.chrome.webview) {
                 if (window.updateHeaderSpeedLabel) window.updateHeaderSpeedLabel(response.kbps);
             }
 
+            // Xử lý thông tin hệ thống (ổ đĩa, RAM, CPU...)
+            if (response.action === "SYSTEM_INFO_DATA") {
+                if (window.renderDeviceInfo) window.renderDeviceInfo(response.data);
+            }
+
+            // Xử lý cảnh báo dung lượng ổ đĩa (ổ đích không đủ hoặc tất cả ổ gần đầy)
+            if (response.action === "DISK_SPACE_WARNING") {
+                if (window.showDiskSpaceWarningModal) {
+                    window.showDiskSpaceWarningModal(response);
+                }
+            }
+
         } catch (error) {
             console.error("Lỗi đọc dữ liệu từ C#: ", error);
         }
@@ -170,13 +268,15 @@ if (window.chrome && window.chrome.webview) {
 }
 
 // Hàm dùng chung để tạo task và gửi lệnh tải xuống C#
-function addDownloadTask(url, savePath, thread) {
+function addDownloadTask(url, savePath, thread, customFileName = "") {
     if (!url || !savePath) return null;
 
-    let fileName = "unknown_file";
-    try {
-        fileName = decodeURIComponent(new URL(url).pathname.split("/").pop()) || fileName;
-    } catch (e) { }
+    let fileName = (customFileName && customFileName.trim()) ? customFileName.trim() : "unknown_file";
+    if (!customFileName || !customFileName.trim()) {
+        try {
+            fileName = decodeURIComponent(new URL(url).pathname.split("/").pop()) || fileName;
+        } catch (e) { }
+    }
 
     const category = window.getFileCategory ? window.getFileCategory(fileName) : "other";
     let iconClass = "fa-solid fa-file";
@@ -189,12 +289,26 @@ function addDownloadTask(url, savePath, thread) {
     const emptyState = document.getElementById("empty-state");
     if (emptyState) emptyState.style.display = "none";
 
+    const now = Date.now();
+    const safeFileName = fileName.replace(/"/g, '&quot;');
+    const safeUrl = url.replace(/"/g, '&quot;');
+
     const downloadHTML = `
-        <div class="download-item" id="${taskId}" data-state="preparing" data-category="${category}" data-start-time="${Date.now()}">
+        <div class="download-item" id="${taskId}"
+             data-state="preparing"
+             data-category="${category}"
+             data-file-name="${safeFileName}"
+             data-created-at="${now}"
+             data-start-time="${now}"
+             data-total-bytes="0"
+             data-downloaded-bytes="0"
+             data-elapsed-time="0"
+             data-speed="0"
+             data-source-url="${safeUrl}">
             <div class="progress-header">
                 <div class="file-info">
                     <i class="${iconClass}"></i>
-                    <span class="file-name" title="${fileName}">${fileName}</span>
+                    <span class="file-name" title="${safeFileName}">${safeFileName}</span>
                 </div>
                 <div class="header-right">
                     <div class="item-actions">
@@ -232,8 +346,8 @@ function addDownloadTask(url, savePath, thread) {
         downloadList.insertAdjacentHTML('afterbegin', downloadHTML); 
     }
 
-    if (window.updateTaskCounter) window.updateTaskCounter();
-    else if (window.applyFilter) window.applyFilter();
+    if (window.applyFilter) window.applyFilter();
+    else if (window.updateTaskCounter) window.updateTaskCounter();
 
     const payload = JSON.stringify({
         action: "START_DOWNLOAD", 
@@ -241,7 +355,8 @@ function addDownloadTask(url, savePath, thread) {
         url: url, 
         savePath: savePath, 
         thread: thread, 
-        threads: thread 
+        threads: thread,
+        customFileName: (customFileName && customFileName.trim()) ? customFileName.trim() : ""
     });
 
     if (window.chrome && window.chrome.webview) {
@@ -288,10 +403,20 @@ if (inputForm) {
             const threadEl = document.getElementById("thread");
             const threadNum = threadEl ? parseInt(threadEl.value, 10) : 4;
             const thread = (!isNaN(threadNum) && threadNum >= 1) ? threadNum : 4;
+            const customNameEl = document.getElementById("custom-file-name");
+            const customFileName = customNameEl ? customNameEl.value.trim() : "";
 
-            addDownloadTask(url, savePath, thread);
+            addDownloadTask(url, savePath, thread, customFileName);
 
             if (urlInput) urlInput.value = '';
+            if (customNameEl) {
+                customNameEl.value = '';
+                customNameEl.placeholder = "Tự động nhận diện từ liên kết (hoặc nhập tên bạn muốn đổi)";
+            }
+            detectedUrlFileName = "";
+            isFileNameManuallyEdited = false;
+            const btnResetFileName = document.getElementById("btn-reset-filename");
+            if (btnResetFileName) btnResetFileName.style.display = "none";
         });
 }
 
@@ -814,3 +939,132 @@ if (btnSubmitBatch) {
         closeBatchModal();
     });
 }
+
+// =============================================
+// Hộp thoại Cảnh báo Dung lượng Ổ đĩa (Disk Space Modal)
+// =============================================
+
+function formatBytesCompact(bytes) {
+    if (!bytes || bytes <= 0) return "0 B";
+    const units = ["B", "KB", "MB", "GB", "TB"];
+    let i = 0;
+    let val = Number(bytes);
+    while (val >= 1024 && i < units.length - 1) {
+        val /= 1024;
+        i++;
+    }
+    return val.toFixed(i === 0 ? 0 : 2) + " " + units[i];
+}
+
+window.showDiskSpaceWarningModal = function (data) {
+    const modal = document.getElementById("disk-space-modal");
+    if (!modal) return;
+
+    const iconWrap = document.getElementById("disk-space-icon-wrap");
+    const icon = document.getElementById("disk-space-icon");
+    const titleEl = document.getElementById("disk-space-title");
+    const subtitleEl = document.getElementById("disk-space-subtitle");
+    const msgEl = document.getElementById("disk-space-message");
+    const comparisonEl = document.getElementById("disk-space-comparison");
+    const currentValEl = document.getElementById("compare-current-val");
+    const suggestedValEl = document.getElementById("compare-suggested-val");
+    const btnSwitch = document.getElementById("btn-disk-switch-folder");
+    const btnClose = document.getElementById("btn-disk-close");
+
+    if (data.isAllDrivesFull) {
+        // Test case 2: Tất cả các ổ đều gần đầy hoặc không đủ -> Huỷ tải & Cảnh báo an toàn
+        if (iconWrap) {
+            iconWrap.className = "disk-space-icon-wrap danger";
+        }
+        if (icon) {
+            icon.className = "fa-solid fa-triangle-exclamation";
+        }
+        if (titleEl) {
+            titleEl.textContent = "Không đủ bộ nhớ toàn hệ thống!";
+        }
+        if (subtitleEl) {
+            subtitleEl.textContent = "Tất cả các ổ đĩa trên máy đều gần đầy hoặc không đủ dung lượng";
+        }
+        if (msgEl) {
+            msgEl.textContent = data.message || "Tất cả các ổ đĩa trên thiết bị đều gần đầy hoặc không đủ chỗ trống để chứa tệp này. Quá trình tải đã được tự động huỷ để tránh lỗi hệ thống!";
+        }
+        if (comparisonEl) {
+            comparisonEl.style.display = "none";
+        }
+        if (btnSwitch) {
+            btnSwitch.style.display = "none";
+        }
+        if (btnClose) {
+            btnClose.textContent = "Đã hiểu";
+        }
+    } else {
+        // Test case 1: Ổ đích không đủ nhưng có ổ khác đủ -> Đề xuất đổi sang ổ khác
+        if (iconWrap) {
+            iconWrap.className = "disk-space-icon-wrap warning";
+        }
+        if (icon) {
+            icon.className = "fa-solid fa-hard-drive";
+        }
+        if (titleEl) {
+            titleEl.textContent = "Ổ đĩa đích không đủ dung lượng!";
+        }
+        if (subtitleEl) {
+            subtitleEl.textContent = "Đề xuất đổi vị trí lưu tệp sang ổ đĩa khác còn trống";
+        }
+        if (msgEl) {
+            msgEl.textContent = data.message || "Ổ đĩa hiện tại không đủ dung lượng trống để lưu tệp. Hãy đổi thư mục lưu sang ổ đĩa khác có đủ chỗ trống.";
+        }
+        if (comparisonEl) {
+            comparisonEl.style.display = "flex";
+            if (currentValEl) {
+                currentValEl.textContent = `Ổ ${data.targetDrive || 'C:'} (Còn ${formatBytesCompact(data.targetFreeBytes)})`;
+            }
+            if (suggestedValEl) {
+                suggestedValEl.textContent = `Ổ ${data.suggestedDrive || 'D:'} (Còn ${formatBytesCompact(data.suggestedFreeBytes)})`;
+            }
+        }
+        if (btnSwitch) {
+            btnSwitch.style.display = "inline-flex";
+        }
+        if (btnClose) {
+            btnClose.textContent = "Để sau";
+        }
+    }
+
+    modal.style.display = "flex";
+
+    if (window.showAppToast) {
+        window.showAppToast(data.message, 5000);
+    }
+};
+
+function closeDiskSpaceModal() {
+    const modal = document.getElementById("disk-space-modal");
+    if (modal) modal.style.display = "none";
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+    const btnCloseModal = document.getElementById("btn-close-disk-modal");
+    const btnClose = document.getElementById("btn-disk-close");
+    const btnSwitch = document.getElementById("btn-disk-switch-folder");
+
+    if (btnCloseModal) btnCloseModal.addEventListener("click", closeDiskSpaceModal);
+    if (btnClose) btnClose.addEventListener("click", closeDiskSpaceModal);
+
+    if (btnSwitch) {
+        btnSwitch.addEventListener("click", () => {
+            closeDiskSpaceModal();
+            // Kích hoạt nút chọn thư mục để người dùng chọn ổ đĩa khác
+            const browseBtn = document.getElementById("btn-browse-folder");
+            if (browseBtn) browseBtn.click();
+        });
+    }
+
+    // Đóng khi click ngoài modal
+    const modal = document.getElementById("disk-space-modal");
+    if (modal) {
+        modal.addEventListener("click", (e) => {
+            if (e.target === modal) closeDiskSpaceModal();
+        });
+    }
+});

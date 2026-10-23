@@ -23,6 +23,30 @@ namespace WindowsFormsApp.Download
         public DownloadException(string message) : base(message) { }
     }
 
+    /// <summary>
+    /// Lỗi dung lượng ổ đĩa: ổ đích không đủ chỗ (kèm đề xuất đổi ổ khác) hoặc tất cả ổ đều gần đầy (huỷ tải).
+    /// </summary>
+    public class DiskSpaceException : DownloadException
+    {
+        public bool IsAllDrivesFull { get; }
+        public string TargetDrive { get; }
+        public string SuggestedDrive { get; }
+        public long TargetFreeBytes { get; }
+        public long SuggestedFreeBytes { get; }
+        public long NeededBytes { get; }
+
+        public DiskSpaceException(bool isAllDrivesFull, string message, string targetDrive, string suggestedDrive, long targetFreeBytes, long suggestedFreeBytes, long neededBytes)
+            : base(message)
+        {
+            IsAllDrivesFull = isAllDrivesFull;
+            TargetDrive = targetDrive;
+            SuggestedDrive = suggestedDrive;
+            TargetFreeBytes = targetFreeBytes;
+            SuggestedFreeBytes = suggestedFreeBytes;
+            NeededBytes = neededBytes;
+        }
+    }
+
     /// <summary>Dữ liệu tiến độ gửi lên giao diện (JSON, camelCase).</summary>
     public sealed class ProgressDto
     {

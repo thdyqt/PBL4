@@ -233,11 +233,21 @@
         const previousState = item.dataset.state;
         item.dataset.state = d.state;
         if (d.targetPath) item.dataset.targetPath = d.targetPath;
+        if (d.fileName) item.dataset.fileName = d.fileName;
+        if (typeof d.totalBytes === "number" && d.totalBytes > 0) item.dataset.totalBytes = d.totalBytes;
+        if (typeof d.downloaded === "number") item.dataset.downloadedBytes = d.downloaded;
+        if (typeof d.speed === "number") item.dataset.speed = d.speed;
+        if (typeof d.elapsedSeconds === "number" && d.elapsedSeconds > 0) item.dataset.elapsedTime = d.elapsedSeconds;
+        if (d.completedAt) item.dataset.completedAt = d.completedAt;
 
         const nameEl = item.querySelector(".file-name");
         if (nameEl && d.fileName) {
-            nameEl.textContent = d.fileName;
             nameEl.title = d.fileName;
+            if (window.highlightFilename && window.getCurrentSearchQuery) {
+                window.highlightFilename(nameEl, d.fileName, window.getCurrentSearchQuery());
+            } else {
+                nameEl.textContent = d.fileName;
+            }
             if (window.getFileCategory) {
                 const cat = window.getFileCategory(d.fileName);
                 item.dataset.category = cat;
@@ -919,18 +929,29 @@
                 </button>
             </div>` : "";
 
+        const createdAtTs = rec.createdAt ? new Date(rec.createdAt).getTime() : Date.now();
+        const safeFileName = (fileName || "").replace(/"/g, "&quot;");
+        const safeTargetPath = (rec.targetPath || "").replace(/"/g, "&quot;");
+        const safeSourceUrl = (rec.sourceUrl || "").replace(/"/g, "&quot;");
+
         const html = `
             <div class="download-item" id="${rec.id}"
                  data-state="${state}"
                  data-category="${category}"
-                 data-elapsed-time="${elapsedSec}"
+                 data-file-name="${safeFileName}"
+                 data-created-at="${createdAtTs}"
+                 data-total-bytes="${rec.totalBytes || 0}"
+                 data-downloaded-bytes="${rec.downloaded || 0}"
+                 data-elapsed-time="${elapsedSec || 0}"
                  data-avg-speed="${avgSpeed}"
+                 data-speed="0"
                  data-completed-at="${completedAt}"
-                 data-target-path="${(rec.targetPath || "").replace(/"/g, "&quot;")}">
+                 data-source-url="${safeSourceUrl}"
+                 data-target-path="${safeTargetPath}">
                 <div class="progress-header">
                     <div class="file-info">
                         <i class="${iconClass}"></i>
-                        <span class="file-name" title="${fileName}">${fileName}</span>
+                        <span class="file-name" title="${safeFileName}">${safeFileName}</span>
                     </div>
                     <div class="header-right">
                         <div class="item-actions">

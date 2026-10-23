@@ -92,8 +92,9 @@ namespace WindowsFormsApp.IPC
                                 string taskId = GetString(root, "taskId");
                                 string url = GetString(root, "url");
                                 string savePath = GetString(root, "savePath");
+                                string customFileName = GetString(root, "customFileName") ?? GetString(root, "fileName");
                                 int threads = GetInt(root, "thread", GetInt(root, "threads", 4));
-                                _ = HandleStartDownloadAsync(taskId, url, savePath, threads);
+                                _ = HandleStartDownloadAsync(taskId, url, savePath, threads, customFileName);
                                 break;
                             }
 
@@ -124,7 +125,7 @@ namespace WindowsFormsApp.IPC
                                         string folder = !string.IsNullOrWhiteSpace(rec.TargetPath)
                                             ? (Directory.Exists(rec.TargetPath) ? rec.TargetPath : Path.GetDirectoryName(rec.TargetPath))
                                             : Application.StartupPath;
-                                        _ = HandleStartDownloadAsync(rec.Id, rec.SourceUrl, folder, rec.Threads > 0 ? rec.Threads : 4);
+                                        _ = HandleStartDownloadAsync(rec.Id, rec.SourceUrl, folder, rec.Threads > 0 ? rec.Threads : 4, rec.FileName);
                                     }
                                 }
                                 break;
@@ -195,6 +196,10 @@ namespace WindowsFormsApp.IPC
                         case "DELETE_HISTORY_ITEM":
                             HandleDeleteHistoryItem(GetString(root, "taskId"));
                             break;
+
+                        case "GET_SYSTEM_INFO":
+                            HandleGetSystemInfo();
+                            break;
                     }
                 }
             }
@@ -206,12 +211,14 @@ namespace WindowsFormsApp.IPC
 
         // ------------------------------------------------------------------ tải xuống
 
-        private async Task HandleStartDownloadAsync(string taskId, string url, string folder, int threads)
+        private async Task HandleStartDownloadAsync(string taskId, string url, string folder, int threads, string customFileName = null)
         {
             // Ghi trước vào DB để không mất task khi crash (ngay cả khi chưa biết tên file thật)
             try
             {
-                string fileName = Path.GetFileName(url.Split('?')[0]);
+                string fileName = !string.IsNullOrWhiteSpace(customFileName)
+                    ? customFileName.Trim()
+                    : Path.GetFileName(url.Split('?')[0]);
                 if (string.IsNullOrWhiteSpace(fileName)) fileName = taskId;
 
                 var rec = new DownloadRecord
@@ -231,7 +238,40 @@ namespace WindowsFormsApp.IPC
 
             try
             {
-                await _manager.StartAsync(taskId, url, folder, threads).ConfigureAwait(false);
+                await _manager.StartAsync(taskId, url, folder, threads, false, customFileName).ConfigureAwait(false);
+            }
+            catch (DiskSpaceException ex)
+            {
+                // Cập nhật trạng thái vào DB
+                try
+                {
+                    DownloadRecord rec;
+                    if (!_dbCache.TryGetValue(taskId, out rec))
+                        rec = DatabaseHelper.GetById(taskId);
+                    if (rec != null)
+                    {
+                        rec.State = ex.IsAllDrivesFull ? "cancelled" : "failed";
+                        rec.ErrorMessage = ex.Message;
+                        DatabaseHelper.UpdateProgress(rec);
+                        _dbCache[taskId] = rec;
+                    }
+                }
+                catch { }
+
+                Send(new
+                {
+                    action = "DISK_SPACE_WARNING",
+                    taskId = taskId,
+                    isAllDrivesFull = ex.IsAllDrivesFull,
+                    message = ex.Message,
+                    targetDrive = ex.TargetDrive,
+                    suggestedDrive = ex.SuggestedDrive,
+                    targetFreeBytes = ex.TargetFreeBytes,
+                    suggestedFreeBytes = ex.SuggestedFreeBytes,
+                    neededBytes = ex.NeededBytes
+                });
+
+                Send(new { action = "DOWNLOAD_ERROR", taskId = taskId, message = ex.Message });
             }
             catch (Exception ex)
             {
@@ -387,6 +427,61 @@ namespace WindowsFormsApp.IPC
             }
         }
 
+        private void HandleGetSystemInfo()
+        {
+            try
+            {
+                var drives = new System.Collections.Generic.List<object>();
+                foreach (var d in DriveInfo.GetDrives())
+                {
+                    if (!d.IsReady) continue;
+                    if (d.DriveType != DriveType.Fixed && d.DriveType != DriveType.Removable) continue;
+
+                    drives.Add(new
+                    {
+                        name = d.Name,
+                        label = string.IsNullOrWhiteSpace(d.VolumeLabel) ? "Local Disk" : d.VolumeLabel,
+                        driveType = d.DriveType.ToString(),
+                        format = d.DriveFormat,
+                        totalBytes = d.TotalSize,
+                        freeBytes = d.AvailableFreeSpace,
+                        usedBytes = d.TotalSize - d.AvailableFreeSpace
+                    });
+                }
+
+                long totalRamBytes = 0;
+                try
+                {
+                    // Sử dụng WMI để lấy tổng RAM vật lý
+                    using (var searcher = new System.Management.ManagementObjectSearcher("SELECT TotalVisibleMemorySize FROM Win32_OperatingSystem"))
+                    {
+                        foreach (var obj in searcher.Get())
+                        {
+                            totalRamBytes = Convert.ToInt64(obj["TotalVisibleMemorySize"]) * 1024; // KB -> Bytes
+                        }
+                    }
+                }
+                catch { }
+
+                Send(new
+                {
+                    action = "SYSTEM_INFO_DATA",
+                    data = new
+                    {
+                        machineName = Environment.MachineName,
+                        osVersion = Environment.OSVersion.VersionString,
+                        processorCount = Environment.ProcessorCount,
+                        totalRamBytes = totalRamBytes,
+                        drives = drives
+                    }
+                });
+            }
+            catch (Exception ex)
+            {
+                Send(new { action = "SYSTEM_INFO_DATA", data = (object)null, error = ex.Message });
+            }
+        }
+
         private void HandleGetSettings()
         {
             var settings = SettingsManager.Current;
@@ -473,10 +568,11 @@ namespace WindowsFormsApp.IPC
                         string taskId = GetString(item, "taskId");
                         string url = GetString(item, "url");
                         string savePath = GetString(item, "savePath");
+                        string customFileName = GetString(item, "customFileName") ?? GetString(item, "fileName");
                         int threads = GetInt(item, "threads", GetInt(item, "thread", 4));
                         if (!string.IsNullOrWhiteSpace(taskId) && !string.IsNullOrWhiteSpace(url))
                         {
-                            _ = HandleStartDownloadAsync(taskId, url, savePath, threads);
+                            _ = HandleStartDownloadAsync(taskId, url, savePath, threads, customFileName);
                         }
                     }
                 }
