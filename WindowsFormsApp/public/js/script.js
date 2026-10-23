@@ -334,7 +334,7 @@ function addDownloadTask(url, savePath, thread, customFileName = "") {
             </div>
             
             <div class="progress-stats">
-                <span class="stat-item">Tốc độ: <b id="${taskId}-speed">Đang tính...</b></span>
+                <span class="stat-item"><span id="${taskId}-speed-label">Tốc độ:</span> <b id="${taskId}-speed">Đang tính...</b></span>
                 <span class="stat-item">Đã tải: <b id="${taskId}-downloaded">0 MB / -- MB</b></span>
                 <span class="stat-item"><span id="${taskId}-eta-label">Còn lại:</span> <b id="${taskId}-eta">--:--</b></span>
             </div>

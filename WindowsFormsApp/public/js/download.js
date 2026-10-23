@@ -237,7 +237,10 @@
         if (typeof d.totalBytes === "number" && d.totalBytes > 0) item.dataset.totalBytes = d.totalBytes;
         if (typeof d.downloaded === "number") item.dataset.downloadedBytes = d.downloaded;
         if (typeof d.speed === "number") item.dataset.speed = d.speed;
-        if (typeof d.elapsedSeconds === "number" && d.elapsedSeconds > 0) item.dataset.elapsedTime = d.elapsedSeconds;
+        if (typeof d.elapsedSeconds === "number" && d.elapsedSeconds > 0) {
+            item.dataset.elapsedTime = d.elapsedSeconds.toFixed(1);
+        }
+        if (d.avgSpeed) item.dataset.avgSpeed = d.avgSpeed;
         if (d.completedAt) item.dataset.completedAt = d.completedAt;
 
         const nameEl = item.querySelector(".file-name");
@@ -327,36 +330,48 @@
         set("downloaded", `${fmtBytes(d.downloaded)} / ${known ? fmtBytes(d.totalBytes) : "--"}`);
 
         if (d.state === "queued") {
+            const speedLabel = document.getElementById(`${d.taskId}-speed-label`);
+            if (speedLabel) speedLabel.textContent = "Tốc độ:";
+            const etaLabel = document.getElementById(`${d.taskId}-eta-label`);
+            if (etaLabel) etaLabel.textContent = "Còn lại:";
             set("speed", "Chờ đến lượt");
             set("eta", "--:--");
         } else if (d.state === "completed") {
-            if (!item.dataset.elapsedTime) {
-                let elapsedSec = "0.0";
-                if (typeof d.elapsedSeconds === "number" && d.elapsedSeconds > 0) {
-                    elapsedSec = d.elapsedSeconds.toFixed(1);
-                } else {
-                    const startTime = parseInt(item.dataset.startTime || Date.now(), 10);
-                    elapsedSec = Math.max(0.1, (Date.now() - startTime) / 1000).toFixed(1);
-                }
+            let elapsedSec = "";
+            if (typeof d.elapsedSeconds === "number" && d.elapsedSeconds > 0) {
+                elapsedSec = d.elapsedSeconds.toFixed(1);
+            } else if (item.dataset.elapsedTime) {
+                const parsed = parseFloat(item.dataset.elapsedTime);
+                elapsedSec = !isNaN(parsed) && parsed > 0 ? parsed.toFixed(1) : "";
+            } else {
+                const startTime = parseInt(item.dataset.startTime || Date.now(), 10);
+                elapsedSec = Math.max(0.1, (Date.now() - startTime) / 1000).toFixed(1);
+            }
+            if (elapsedSec) {
                 item.dataset.elapsedTime = elapsedSec;
-
-                const avgSpeedStr = (d.totalBytes > 0 && parseFloat(elapsedSec) > 0)
-                    ? fmtBytes(d.totalBytes / parseFloat(elapsedSec)) + "/s"
-                    : "";
-                item.dataset.avgSpeed = avgSpeedStr;
-
-                console.log(`[KẾT QUẢ TẢI] Tệp: ${d.fileName || "unknown"} | Số luồng: ${d.threads} | Dung lượng: ${fmtBytes(d.totalBytes)} | Thời gian: ${elapsedSec}s${avgSpeedStr ? ` | Tốc độ TB: ${avgSpeedStr}` : ""}`);
             }
 
-            const elapsedSec = item.dataset.elapsedTime;
-            const avgSpeed = item.dataset.avgSpeed;
+            let avgSpeed = d.avgSpeed || item.dataset.avgSpeed;
+            if (!avgSpeed && d.totalBytes > 0 && parseFloat(elapsedSec) > 0) {
+                avgSpeed = fmtBytes(d.totalBytes / parseFloat(elapsedSec)) + "/s";
+            }
+            if (avgSpeed) {
+                item.dataset.avgSpeed = avgSpeed;
+            }
+
+            const speedLabel = document.getElementById(`${d.taskId}-speed-label`);
+            if (speedLabel) speedLabel.textContent = "Tốc độ TB:";
 
             const etaLabel = document.getElementById(`${d.taskId}-eta-label`);
             if (etaLabel) etaLabel.textContent = "Thời gian tải:";
 
-            set("eta", elapsedSec ? elapsedSec + "s" : "--:--");
+            set("eta", elapsedSec ? elapsedSec + "s" : "Hoàn tất");
             set("speed", avgSpeed ? avgSpeed : "—");
         } else {
+            const speedLabel = document.getElementById(`${d.taskId}-speed-label`);
+            if (speedLabel) speedLabel.textContent = "Tốc độ:";
+            const etaLabel = document.getElementById(`${d.taskId}-eta-label`);
+            if (etaLabel) etaLabel.textContent = "Còn lại:";
             set("speed", d.state === "downloading" ? fmtBytes(d.speed) + "/s" : "—");
             set("eta", d.state === "downloading" ? fmtEta(d.etaSeconds) : "--:--");
         }
@@ -368,10 +383,12 @@
         const bars = item.querySelectorAll(".segment-bar");
         const fills = item.querySelectorAll(".segment-fill");
         (d.segments || []).forEach((seg, i) => {
-            const pct = seg.length > 0 ? Math.floor((seg.downloaded / seg.length) * 100) : 0;
+            const isDone = d.state === "completed";
+            const pct = isDone ? 100 : (seg.length > 0 ? Math.floor((seg.downloaded / seg.length) * 100) : 0);
             if (fills[i]) fills[i].style.width = pct + "%";
             if (bars[i]) {
-                const doneStr = fmtBytes(seg.downloaded);
+                const doneBytes = isDone && seg.length > 0 ? seg.length : seg.downloaded;
+                const doneStr = fmtBytes(doneBytes);
                 const totalStr = seg.length > 0 ? fmtBytes(seg.length) : "--";
                 bars[i].title = `Luồng ${i + 1}: ${pct}% (${doneStr} / ${totalStr})`;
             }
@@ -385,7 +402,9 @@
         } else if (d.state === "queued") {
             text += ` — ${d.threads} luồng`;
         } else if (d.state === "completed") {
-            const elapsedSec = d.elapsedSeconds > 0 ? d.elapsedSeconds.toFixed(1) : item.dataset.elapsedTime;
+            const elapsedSec = (typeof d.elapsedSeconds === "number" && d.elapsedSeconds > 0)
+                ? d.elapsedSeconds.toFixed(1)
+                : item.dataset.elapsedTime;
             const avgSpeed = d.avgSpeed || item.dataset.avgSpeed;
             const completedAt = d.completedAt || item.dataset.completedAt || "";
             if (completedAt) item.dataset.completedAt = completedAt;
@@ -989,7 +1008,7 @@
                 </div>
 
                 <div class="progress-stats">
-                    <span class="stat-item">Tốc độ: <b id="${rec.id}-speed">${state === "completed" ? (avgSpeed || "—") : "—"}</b></span>
+                    <span class="stat-item"><span id="${rec.id}-speed-label">${state === "completed" ? "Tốc độ TB:" : "Tốc độ:"}</span> <b id="${rec.id}-speed">${state === "completed" ? (avgSpeed || "—") : "—"}</b></span>
                     <span class="stat-item">Đã tải: <b id="${rec.id}-downloaded">
                         ${fmtB(rec.downloaded)} / ${rec.totalBytes > 0 ? fmtB(rec.totalBytes) : fmtB(rec.downloaded)}
                     </b></span>
