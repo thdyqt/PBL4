@@ -271,11 +271,9 @@ if (window.chrome && window.chrome.webview) {
 function addDownloadTask(url, savePath, thread, customFileName = "") {
     if (!url || !savePath) return null;
 
-    let fileName = (customFileName && customFileName.trim()) ? customFileName.trim() : "unknown_file";
-    if (!customFileName || !customFileName.trim()) {
-        try {
-            fileName = decodeURIComponent(new URL(url).pathname.split("/").pop()) || fileName;
-        } catch (e) { }
+    let fileName = (customFileName && customFileName.trim()) ? customFileName.trim() : "";
+    if (!fileName) {
+        fileName = extractFileNameFromUrl(url) || "unknown_file";
     }
 
     const category = window.getFileCategory ? window.getFileCategory(fileName) : "other";
@@ -292,6 +290,7 @@ function addDownloadTask(url, savePath, thread, customFileName = "") {
     const now = Date.now();
     const safeFileName = fileName.replace(/"/g, '&quot;');
     const safeUrl = url.replace(/"/g, '&quot;');
+    const safeSavePath = (savePath || "").replace(/"/g, '&quot;');
 
     const downloadHTML = `
         <div class="download-item" id="${taskId}"
@@ -304,7 +303,8 @@ function addDownloadTask(url, savePath, thread, customFileName = "") {
              data-downloaded-bytes="0"
              data-elapsed-time="0"
              data-speed="0"
-             data-source-url="${safeUrl}">
+             data-source-url="${safeUrl}"
+             data-target-path="${safeSavePath}">
             <div class="progress-header">
                 <div class="file-info">
                     <i class="${iconClass}"></i>

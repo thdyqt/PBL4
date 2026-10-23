@@ -231,6 +231,8 @@
 
         const status = ensureExtras(item, d.supportsRanges ? (d.segments || []).length : 0);
         const previousState = item.dataset.state;
+        const previousFileName = item.dataset.fileName;
+        const previousCategory = item.dataset.category;
         item.dataset.state = d.state;
         if (d.targetPath) item.dataset.targetPath = d.targetPath;
         if (d.fileName) item.dataset.fileName = d.fileName;
@@ -427,7 +429,10 @@
             item.appendChild(actions);
         }
 
-        if (previousState !== d.state) {
+        const metadataChanged = (previousState !== d.state) ||
+                                (d.fileName && previousFileName !== d.fileName) ||
+                                (previousCategory !== item.dataset.category);
+        if (metadataChanged) {
             syncHeaderPauseButtons();
             if (window.applyFilter) window.applyFilter();
         }
@@ -539,6 +544,7 @@
                 const st = item.querySelector(".download-status");
                 if (st) st.textContent = "Đang bắt đầu tải ngay...";
                 syncHeaderPauseButtons();
+                if (window.applyFilter) window.applyFilter();
                 return;
             }
 
@@ -562,6 +568,7 @@
                     if (sp) sp.textContent = "—";
                 }
                 syncHeaderPauseButtons();
+                if (window.applyFilter) window.applyFilter();
                 return;
             }
 
@@ -588,6 +595,7 @@
                         const eta = document.getElementById(`${taskId}-eta`);
                         if (eta) eta.textContent = "--:--";
                         syncHeaderPauseButtons();
+                        if (window.applyFilter) window.applyFilter();
                     }
                 });
                 return;
@@ -653,6 +661,7 @@
                     if (sp) sp.textContent = "—";
                 });
                 syncHeaderPauseButtons();
+                if (window.applyFilter) window.applyFilter();
                 return;
             }
 
@@ -675,6 +684,7 @@
                     if (st) st.textContent = "Đang tải...";
                 });
                 syncHeaderPauseButtons();
+                if (window.applyFilter) window.applyFilter();
                 return;
             }
 
@@ -709,6 +719,7 @@
                             if (eta) eta.textContent = "--:--";
                         });
                         syncHeaderPauseButtons();
+                        if (window.applyFilter) window.applyFilter();
                     }
                 });
                 return;

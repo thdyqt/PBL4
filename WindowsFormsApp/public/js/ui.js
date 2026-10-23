@@ -23,15 +23,20 @@ document.addEventListener("click", (e) => {
 // ---------- Phân loại tệp & Quản lý frame / Lọc danh sách ----------
 function getFileCategory(fileName) {
     if (!fileName) return "other";
-    const dotIndex = fileName.lastIndexOf(".");
+    const cleanName = String(fileName).trim().replace(/^["']|["']$/g, '').split(/[?#]/)[0];
+    const dotIndex = cleanName.lastIndexOf(".");
     if (dotIndex === -1) return "other";
-    const ext = fileName.slice(dotIndex + 1).toLowerCase();
+    const ext = cleanName.slice(dotIndex + 1).toLowerCase();
 
-    const audioExts = ["mp3", "wav", "ogg", "flac", "aac", "m4a", "wma", "opus"];
-    const videoExts = ["mp4", "mkv", "avi", "mov", "wmv", "flv", "webm", "m4v"];
+    const audioExts = [
+        "mp3", "wav", "ogg", "flac", "aac", "m4a", "wma", "opus", "alac", "aiff", "mid", "midi", "mka"
+    ];
+    const videoExts = [
+        "mp4", "mkv", "avi", "mov", "wmv", "flv", "webm", "m4v", "3gp", "ts", "mpg", "mpeg", "vob", "ogv", "rmvb", "asf", "divx"
+    ];
     const docExts = [
-        "zip", "rar", "7z", "tar", "gz", "bz2", "xz", "iso",
-        "pdf", "doc", "docx", "xls", "xlsx", "ppt", "pptx", "txt", "csv", "epub"
+        "zip", "rar", "7z", "tar", "gz", "bz2", "xz", "iso", "tgz", "tbz2", "txz", "cab", "dmg", "pkg", "deb", "rpm", "wim",
+        "pdf", "doc", "docx", "xls", "xlsx", "ppt", "pptx", "txt", "csv", "epub", "rtf", "odt", "ods", "odp", "md", "log", "json", "xml", "html", "htm"
     ];
 
     if (audioExts.indexOf(ext) !== -1) return "audio";
@@ -128,20 +133,68 @@ let currentSearchQuery = "";
 // Tiện ích bỏ dấu tiếng Việt để tìm kiếm không dấu / có dấu
 function removeVietnameseTones(str) {
     if (!str) return "";
-    return str
+    return String(str)
         .normalize("NFD")
         .replace(/[\u0300-\u036f]/g, "")
-        .replace(/đ/g, "d")
-        .replace(/Đ/g, "D")
+        .replace(/[đĐ]/g, "d")
         .toLowerCase()
         .trim();
 }
 
 function escapeRegExp(str) {
-    return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    return String(str).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
-// Đánh dấu từ khóa tìm kiếm an toàn (DOM node)
+function makeAccentInsensitiveRegex(token) {
+    const charMap = {
+        'a': '[aàáảãạăằắẳẵặâầấẩẫậ]',
+        'e': '[eèéẻẽẹêềếểễệ]',
+        'i': '[iìíỉĩị]',
+        'o': '[oòóỏõọôồốổỗộơờớởỡợ]',
+        'u': '[uùúủũụưừứửữự]',
+        'y': '[yỳýỷỹỵ]',
+        'd': '[dđ]'
+    };
+    return token.split('').map(ch => {
+        const lower = ch.toLowerCase();
+        if (charMap[lower]) {
+            return charMap[lower];
+        }
+        return escapeRegExp(ch);
+    }).join('');
+}
+
+function formatFileSizeForSearch(bytes) {
+    if (!bytes || bytes <= 0) return "";
+    const units = ["b", "kb", "mb", "gb", "tb"];
+    let i = 0;
+    let val = Number(bytes);
+    while (val >= 1024 && i < units.length - 1) {
+        val /= 1024;
+        i++;
+    }
+    const numStr = val.toFixed(i === 0 ? 0 : (val >= 100 ? 0 : 1));
+    return `${numStr} ${units[i]} ${numStr}${units[i]}`;
+}
+
+const STATE_SEARCH_MAP = {
+    downloading: "dang tai tai ve downloading download run running dang chay",
+    preparing: "dang chuan bi khoi tao preparing prepare start",
+    queued: "cho tai hang doi dang cho queued queue wait waiting cho den luot",
+    paused: "tam dung da tam dung paused pause resume tiep tuc",
+    completed: "hoan thanh da hoan thanh hoan tat da hoan tat xong da xong completed complete done finish finished thanh cong",
+    failed: "that bai loi that bai error failed fail",
+    cancelled: "da huy huy bo cancelled cancel da dung"
+};
+
+const CATEGORY_SEARCH_MAP = {
+    audio: "audio am thanh nhac music song mp3 sound bai hat",
+    video: "video phim clip movie mp4 mkv phim anh",
+    document: "document tai lieu file nen nen tap tin archive zip rar pdf doc docx xls xlsx ppt pptx text txt",
+    other: "other khac file tap tin"
+};
+
+// Đánh dấu từ khóa tìm kiếm an toàn (DOM node), hỗ trợ tiếng Việt không dấu & có dấu
 function highlightFilename(el, rawText, query) {
     if (!el) return;
     if (!query || !query.trim()) {
@@ -149,20 +202,23 @@ function highlightFilename(el, rawText, query) {
         return;
     }
 
-    const tokens = query.trim().split(/\s+/).filter(Boolean);
+    const tokens = removeVietnameseTones(query).split(/\s+/).filter(Boolean);
     if (tokens.length === 0) {
         el.textContent = rawText;
         return;
     }
 
-    const pattern = tokens.map(escapeRegExp).join("|");
     try {
+        const pattern = tokens.map(makeAccentInsensitiveRegex).join("|");
         const regex = new RegExp(`(${pattern})`, "gi");
         const parts = rawText.split(regex);
         el.innerHTML = "";
+
+        const testRegex = new RegExp(`^(?:${pattern})$`, "i");
+
         parts.forEach(part => {
             if (!part) return;
-            if (regex.test(part)) {
+            if (testRegex.test(part)) {
                 const mark = document.createElement("mark");
                 mark.className = "search-highlight";
                 mark.textContent = part;
@@ -178,39 +234,53 @@ function highlightFilename(el, rawText, query) {
 window.highlightFilename = highlightFilename;
 window.getCurrentSearchQuery = () => currentSearchQuery;
 
-// Kiểm tra tệp có khớp với từ khóa tìm kiếm không (tên, link, đuôi file, trạng thái tiếng Việt)
+// Kiểm tra tệp có khớp với từ khóa tìm kiếm không (tên, link, đuôi file, trạng thái, danh mục, dung lượng, đường dẫn...)
 function matchesSearch(item, queryRaw) {
-    if (!queryRaw) return true;
+    if (!queryRaw || !queryRaw.trim()) return true;
     const queryNorm = removeVietnameseTones(queryRaw);
-    const fileName = item.dataset.fileName || item.querySelector(".file-name")?.textContent || "";
-    const sourceUrl = item.dataset.sourceUrl || "";
-    const targetPath = item.dataset.targetPath || "";
-    const state = item.dataset.state || "";
-
-    const STATE_VI_NAMES = {
-        queued: "cho tai hang doi",
-        preparing: "dang chuan bi",
-        downloading: "dang tai",
-        paused: "tam dung",
-        completed: "hoan thanh",
-        failed: "loi that bai",
-        cancelled: "da huy"
-    };
-
-    const fileNameNorm = removeVietnameseTones(fileName);
-    const sourceUrlNorm = sourceUrl.toLowerCase();
-    const targetPathNorm = removeVietnameseTones(targetPath);
-    const stateVi = STATE_VI_NAMES[state] || "";
-
     const tokens = queryNorm.split(/\s+/).filter(Boolean);
     if (tokens.length === 0) return true;
 
-    return tokens.every(token => {
-        return fileNameNorm.includes(token) ||
-               sourceUrlNorm.includes(token) ||
-               targetPathNorm.includes(token) ||
-               stateVi.includes(token);
-    });
+    const fileName = item.dataset.fileName || item.querySelector(".file-name")?.textContent || "";
+    const sourceUrl = item.dataset.sourceUrl || "";
+    const targetPath = item.dataset.targetPath || "";
+    const state = (item.dataset.state || "").toLowerCase();
+    const category = (item.dataset.category || getFileCategory(fileName) || "other").toLowerCase();
+    const statusText = item.querySelector(".download-status")?.textContent || "";
+    const completedAt = item.dataset.completedAt || "";
+
+    const totalBytes = Number(item.dataset.totalBytes) || Number(item.dataset.downloadedBytes) || 0;
+    const sizeStr = formatFileSizeForSearch(totalBytes);
+
+    let decodedUrl = sourceUrl;
+    try { decodedUrl = decodeURIComponent(sourceUrl); } catch (e) {}
+
+    const fileNameNorm = removeVietnameseTones(fileName);
+    const fileNameSpaces = fileNameNorm.replace(/[_\-.,]+/g, " ");
+    const sourceUrlNorm = removeVietnameseTones(decodedUrl).toLowerCase();
+    const targetPathNorm = removeVietnameseTones(targetPath).replace(/\\/g, "/");
+    const targetPathBackslash = removeVietnameseTones(targetPath);
+    const statusTextNorm = removeVietnameseTones(statusText);
+    const completedAtNorm = removeVietnameseTones(completedAt);
+
+    const stateTerms = (STATE_SEARCH_MAP[state] || "") + " " + state;
+    const categoryTerms = (CATEGORY_SEARCH_MAP[category] || "") + " " + category;
+
+    // Toàn bộ dữ liệu của tệp gom vào một "kho" tìm kiếm phong phú
+    const haystack = [
+        fileNameNorm,
+        fileNameSpaces,
+        categoryTerms,
+        stateTerms,
+        sourceUrlNorm,
+        targetPathNorm,
+        targetPathBackslash,
+        statusTextNorm,
+        sizeStr,
+        completedAtNorm
+    ].join(" ");
+
+    return tokens.every(token => haystack.includes(token));
 }
 
 // So sánh 2 tệp theo tiêu chí sắp xếp
@@ -246,8 +316,18 @@ function compareItems(a, b, criteria, direction) {
             break;
         }
         case "speed": {
-            const speedA = parseFloat(a.dataset.speed) || 0;
-            const speedB = parseFloat(b.dataset.speed) || 0;
+            const getEffectiveSpeed = (el) => {
+                const sp = parseFloat(el.dataset.speed) || 0;
+                if (sp > 0) return sp;
+                const tot = Number(el.dataset.totalBytes) || Number(el.dataset.downloadedBytes) || 0;
+                const elap = parseFloat(el.dataset.elapsedTime) || 0;
+                if (tot > 0 && elap > 0) return tot / elap;
+                return 0;
+            };
+            const speedA = getEffectiveSpeed(a);
+            const speedB = getEffectiveSpeed(b);
+            if (speedA === 0 && speedB > 0) return 1;
+            if (speedB === 0 && speedA > 0) return -1;
             result = speedA - speedB;
             break;
         }
@@ -385,6 +465,15 @@ function applyFilter(filterName) {
     const list = document.getElementById("download-list");
     const allItems = list ? Array.from(list.querySelectorAll(".download-item")) : [];
 
+    // Tự động chuẩn hóa category cho các file nếu còn thiếu hoặc 'other'
+    allItems.forEach(item => {
+        const fileName = item.dataset.fileName || item.querySelector(".file-name")?.textContent || "";
+        if (!item.dataset.category || item.dataset.category === "other") {
+            const detected = getFileCategory(fileName);
+            if (detected !== "other") item.dataset.category = detected;
+        }
+    });
+
     // 1. Phân loại theo Danh mục (Category Filter)
     let categoryItems = [];
     if (currentFilter === "home") {
@@ -392,12 +481,13 @@ function applyFilter(filterName) {
             // Khi đang tìm kiếm ở Trang chủ: tìm trên toàn bộ tác vụ để người dùng không bị giới hạn 10 tệp
             categoryItems = allItems;
         } else {
-            // Ở trang chủ khi không tìm kiếm: ưu tiên tác vụ active, sau đó lấy thêm đến 10
+            // Ở trang chủ khi không tìm kiếm: ưu tiên tác vụ active & paused, sau đó lấy thêm đến 10
             const homeVisible = new Set();
             const activeItems = allItems.filter(el =>
                 el.dataset.state === "downloading" ||
                 el.dataset.state === "preparing" ||
-                el.dataset.state === "queued"
+                el.dataset.state === "queued" ||
+                el.dataset.state === "paused"
             );
             activeItems.forEach(el => homeVisible.add(el));
 
@@ -418,7 +508,7 @@ function applyFilter(filterName) {
             const category = item.dataset.category || "other";
             switch (currentFilter) {
                 case "all": return true;
-                case "downloading": return (state === "downloading" || state === "preparing" || state === "queued");
+                case "downloading": return (state === "downloading" || state === "preparing" || state === "queued" || state === "paused");
                 case "completed": return (state === "completed");
                 case "audio": return (category === "audio");
                 case "video": return (category === "video");
@@ -435,7 +525,7 @@ function applyFilter(filterName) {
     categoryItems.forEach(item => {
         const isMatch = matchesSearch(item, currentSearchQuery);
         const nameEl = item.querySelector(".file-name");
-        const rawFileName = item.dataset.fileName || nameEl?.textContent || "";
+        const rawFileName = item.dataset.fileName || nameEl?.title || nameEl?.textContent || "";
 
         if (isMatch) {
             matchingSet.add(item);
@@ -453,7 +543,7 @@ function applyFilter(filterName) {
         if (!matchingSet.has(item)) {
             item.style.display = "none";
             const nameEl = item.querySelector(".file-name");
-            const rawFileName = item.dataset.fileName || nameEl?.textContent || "";
+            const rawFileName = item.dataset.fileName || nameEl?.title || nameEl?.textContent || "";
             if (nameEl) nameEl.textContent = rawFileName;
         }
     });
@@ -501,24 +591,30 @@ function applyFilter(filterName) {
     const searchEmptyState = document.getElementById("search-empty-state");
     const keywordDisplay = document.getElementById("search-keyword-display");
 
-    if (categoryItems.length === 0) {
-        if (emptyState) {
-            emptyState.style.display = "";
-            const h3 = emptyState.querySelector("h3");
-            const div = emptyState.querySelector("div");
-            if (h3) h3.textContent = config.emptyTitle;
-            if (div) div.textContent = config.emptyDesc;
-        }
-        if (searchEmptyState) searchEmptyState.style.display = "none";
-    } else if (visibleCount === 0) {
-        if (emptyState) emptyState.style.display = "none";
-        if (searchEmptyState) {
-            searchEmptyState.style.display = "flex";
-            if (keywordDisplay) keywordDisplay.textContent = currentSearchQuery;
+    if (currentSearchQuery) {
+        if (visibleCount === 0) {
+            if (emptyState) emptyState.style.display = "none";
+            if (searchEmptyState) {
+                searchEmptyState.style.display = "flex";
+                if (keywordDisplay) keywordDisplay.textContent = currentSearchQuery;
+            }
+        } else {
+            if (emptyState) emptyState.style.display = "none";
+            if (searchEmptyState) searchEmptyState.style.display = "none";
         }
     } else {
-        if (emptyState) emptyState.style.display = "none";
         if (searchEmptyState) searchEmptyState.style.display = "none";
+        if (categoryItems.length === 0) {
+            if (emptyState) {
+                emptyState.style.display = "";
+                const h3 = emptyState.querySelector("h3");
+                const div = emptyState.querySelector("div");
+                if (h3) h3.textContent = config.emptyTitle;
+                if (div) div.textContent = config.emptyDesc;
+            }
+        } else {
+            if (emptyState) emptyState.style.display = "none";
+        }
     }
 }
 window.applyFilter = applyFilter;
