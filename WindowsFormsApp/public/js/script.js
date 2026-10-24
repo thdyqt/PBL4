@@ -556,8 +556,77 @@ function populateSettingsForm(s) {
     if (confirmDelete) confirmDelete.checked = isConfirm;
     window.confirmBeforeDelete = isConfirm;
     try { localStorage.setItem("confirmBeforeDelete", isConfirm ? "true" : "false"); } catch (e) {}
+
+    // Giao diện (Theme)
+    const currentTheme = s.theme || localStorage.getItem("app_theme") || "light";
+    applyTheme(currentTheme, false);
 }
 window.populateSettingsForm = populateSettingsForm;
+
+// Áp dụng chế độ giao diện Sáng / Tối / Mặc định hệ thống
+function applyTheme(themeSetting, persist = true) {
+    const validThemes = ["light", "dark", "system"];
+    const theme = validThemes.includes(themeSetting) ? themeSetting : "light";
+
+    let effectiveTheme = theme;
+    if (theme === "system") {
+        const prefersDark = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
+        effectiveTheme = prefersDark ? "dark" : "light";
+    }
+
+    document.documentElement.setAttribute("data-theme", effectiveTheme);
+    document.documentElement.setAttribute("data-theme-setting", theme);
+
+    // Cập nhật radio và class active trên thẻ giao diện
+    const targetRadio = document.getElementById(`setting-theme-${theme}`);
+    if (targetRadio) targetRadio.checked = true;
+
+    document.querySelectorAll(".theme-option-card").forEach(card => {
+        card.classList.toggle("active", card.dataset.themeVal === theme);
+    });
+
+    if (persist) {
+        try { localStorage.setItem("app_theme", theme); } catch (e) {}
+        if (window.chrome && window.chrome.webview) {
+            window.chrome.webview.postMessage(JSON.stringify({
+                action: "UPDATE_THEME",
+                theme: theme
+            }));
+        }
+    }
+}
+window.applyTheme = applyTheme;
+
+// Khởi chạy kiểm tra theme ngay khi script load
+(function initAppTheme() {
+    try {
+        const savedTheme = localStorage.getItem("app_theme") || "light";
+        applyTheme(savedTheme, false);
+    } catch (e) {}
+
+    // Lắng nghe thay đổi theme từ hệ thống Windows nếu đang chọn "system"
+    if (window.matchMedia) {
+        try {
+            window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => {
+                const currentSetting = document.documentElement.getAttribute("data-theme-setting") || localStorage.getItem("app_theme") || "light";
+                if (currentSetting === "system") {
+                    applyTheme("system", false);
+                }
+            });
+        } catch (e) {}
+    }
+})();
+
+// Bắt sự kiện click chọn thẻ theme trực tiếp
+document.addEventListener("click", (e) => {
+    const themeCard = e.target.closest(".theme-option-card");
+    if (themeCard) {
+        const themeVal = themeCard.dataset.themeVal;
+        if (themeVal) {
+            applyTheme(themeVal, true);
+        }
+    }
+});
 
 window.shouldConfirmDelete = function () {
     if (typeof window.confirmBeforeDelete === "boolean") {
@@ -803,6 +872,9 @@ if (btnSaveSettings) {
         window.confirmBeforeDelete = confirmBeforeDelete;
         try { localStorage.setItem("confirmBeforeDelete", confirmBeforeDelete ? "true" : "false"); } catch (e) {}
 
+        const themeVal = document.querySelector('input[name="setting-theme"]:checked')?.value || "light";
+        applyTheme(themeVal, true);
+
         const newSettings = {
             maxConcurrentDownloads: isNaN(maxConcurrent) ? 2 : maxConcurrent,
             speedLimitKbps: speedKbps,
@@ -810,7 +882,8 @@ if (btnSaveSettings) {
             defaultSavePath: document.getElementById("save-path")?.value || currentSettings.defaultSavePath || "",
             defaultThreads: defaultThreads,
             autoStartNextInQueue: autoNext,
-            confirmBeforeDelete: confirmBeforeDelete
+            confirmBeforeDelete: confirmBeforeDelete,
+            theme: themeVal
         };
 
         if (window.chrome && window.chrome.webview) {

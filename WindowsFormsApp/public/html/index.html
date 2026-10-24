@@ -7,6 +7,19 @@
     <link rel="stylesheet" href="../css/style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.3.1/css/all.min.css">
     <link rel="stylesheet" href="https://unpkg.com/aos@2.3.1/dist/aos.css">
+    <script>
+        (function() {
+            try {
+                var theme = localStorage.getItem('app_theme') || 'light';
+                var effective = theme;
+                if (theme === 'system') {
+                    effective = (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) ? 'dark' : 'light';
+                }
+                document.documentElement.setAttribute('data-theme', effective);
+                document.documentElement.setAttribute('data-theme-setting', theme);
+            } catch(e) {}
+        })();
+    </script>
 </head>
 <body>
     <!-- Header -->
@@ -444,7 +457,110 @@
 
                 <!-- Tab 4: Other Settings -->
                 <div class="settings-tab-content" id="tab-other">
-                    <div class="form-group switch-row">
+                    <!-- Theme Settings Card -->
+                    <div class="theme-settings-section">
+                        <div class="theme-settings-header">
+                            <div class="theme-header-icon"><i class="fa-solid fa-palette"></i></div>
+                            <div>
+                                <div class="form-label">Giao diện hiển thị (Theme)</div>
+                                <div class="form-desc">Tùy chỉnh chế độ sáng, tối hoặc tự động theo thiết lập hệ thống Windows (Mặc định: Chế độ sáng).</div>
+                            </div>
+                        </div>
+
+                        <div class="theme-options-grid" id="theme-options-grid">
+                            <!-- Option 1: Light Mode (Default) -->
+                            <div class="theme-option-card active" data-theme-val="light" id="theme-card-light">
+                                <input type="radio" name="setting-theme" value="light" id="setting-theme-light" checked class="theme-radio-input">
+                                <div class="theme-card-preview preview-light">
+                                    <div class="mini-app-header">
+                                        <span class="mini-app-dot"></span>
+                                        <span class="mini-app-bar"></span>
+                                    </div>
+                                    <div class="mini-app-body">
+                                        <div class="mini-app-sider"></div>
+                                        <div class="mini-app-content">
+                                            <div class="mini-app-card"></div>
+                                            <div class="mini-app-card small"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="theme-card-meta">
+                                    <div class="theme-card-title">
+                                        <i class="fa-regular fa-sun icon-sun"></i>
+                                        <span>Chế độ sáng</span>
+                                    </div>
+                                    <div class="theme-card-badge">Mặc định</div>
+                                </div>
+                                <div class="theme-card-desc">Giao diện tươi sáng, rõ ràng và thanh thoát</div>
+                                <div class="theme-selected-indicator"><i class="fa-solid fa-circle-check"></i></div>
+                            </div>
+
+                            <!-- Option 2: Dark Mode -->
+                            <div class="theme-option-card" data-theme-val="dark" id="theme-card-dark">
+                                <input type="radio" name="setting-theme" value="dark" id="setting-theme-dark" class="theme-radio-input">
+                                <div class="theme-card-preview preview-dark">
+                                    <div class="mini-app-header">
+                                        <span class="mini-app-dot"></span>
+                                        <span class="mini-app-bar"></span>
+                                    </div>
+                                    <div class="mini-app-body">
+                                        <div class="mini-app-sider"></div>
+                                        <div class="mini-app-content">
+                                            <div class="mini-app-card"></div>
+                                            <div class="mini-app-card small"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="theme-card-meta">
+                                    <div class="theme-card-title">
+                                        <i class="fa-solid fa-moon icon-moon"></i>
+                                        <span>Chế độ tối</span>
+                                    </div>
+                                </div>
+                                <div class="theme-card-desc">Tông màu tối hiện đại, bảo vệ mắt khi dùng lâu</div>
+                                <div class="theme-selected-indicator"><i class="fa-solid fa-circle-check"></i></div>
+                            </div>
+
+                            <!-- Option 3: System Default -->
+                            <div class="theme-option-card" data-theme-val="system" id="theme-card-system">
+                                <input type="radio" name="setting-theme" value="system" id="setting-theme-system" class="theme-radio-input">
+                                <div class="theme-card-preview preview-system">
+                                    <div class="preview-split-half split-light">
+                                        <div class="mini-app-header">
+                                            <span class="mini-app-dot"></span>
+                                        </div>
+                                        <div class="mini-app-body">
+                                            <div class="mini-app-content">
+                                                <div class="mini-app-card"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="preview-split-half split-dark">
+                                        <div class="mini-app-header">
+                                            <span class="mini-app-dot"></span>
+                                        </div>
+                                        <div class="mini-app-body">
+                                            <div class="mini-app-content">
+                                                <div class="mini-app-card"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="theme-card-meta">
+                                    <div class="theme-card-title">
+                                        <i class="fa-solid fa-circle-half-stroke icon-system"></i>
+                                        <span>Hệ thống</span>
+                                    </div>
+                                </div>
+                                <div class="theme-card-desc">Tự động đồng bộ theo giao diện hệ điều hành Windows</div>
+                                <div class="theme-selected-indicator"><i class="fa-solid fa-circle-check"></i></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Confirm Delete Option -->
+                    <div class="theme-divider"></div>
+                    <div class="form-group switch-row" style="margin-top: 18px; margin-bottom: 6px;">
                         <div>
                             <div class="form-label">Xác nhận trước khi xóa tệp</div>
                             <div class="form-desc">Hiển thị hộp thoại xác nhận khi bạn xóa tệp hoặc xóa tất cả tệp khỏi danh sách. Bỏ chọn nếu bạn muốn xóa ngay mà không cần xác nhận lại.</div>

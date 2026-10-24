@@ -167,6 +167,15 @@ namespace WindowsFormsApp.IPC
                                 break;
                             }
 
+                        case "UPDATE_THEME":
+                            {
+                                string theme = GetString(root, "theme") ?? "light";
+                                var currentSettings = SettingsManager.Current;
+                                currentSettings.Theme = theme;
+                                SettingsManager.Save(currentSettings);
+                                break;
+                            }
+
                         case "TEST_PROXY":
                             _ = HandleTestProxyAsync(root);
                             break;

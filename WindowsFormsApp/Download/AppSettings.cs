@@ -31,6 +31,7 @@ namespace WindowsFormsApp.Download
         public int DefaultThreads { get; set; } = 4;
         public bool AutoStartNextInQueue { get; set; } = true;
         public bool ConfirmBeforeDelete { get; set; } = true;
+        public string Theme { get; set; } = "light"; // "light", "dark", "system"
     }
 
     public class ProxyTestResult
