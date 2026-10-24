@@ -32,6 +32,7 @@ namespace WindowsFormsApp.Download
         public bool AutoStartNextInQueue { get; set; } = true;
         public bool ConfirmBeforeDelete { get; set; } = true;
         public string Theme { get; set; } = "light"; // "light", "dark", "system"
+        public string Language { get; set; } = "vi"; // "vi", "en"
     }
 
     public class ProxyTestResult
@@ -78,6 +79,7 @@ namespace WindowsFormsApp.Download
                         if (settings != null)
                         {
                             if (settings.Proxy == null) settings.Proxy = new ProxySettings();
+                            if (string.IsNullOrWhiteSpace(settings.Language)) settings.Language = "vi";
                             _current = settings;
                             return _current;
                         }

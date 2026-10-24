@@ -1078,25 +1078,43 @@ a {
 
 .section-2 form .just-validate-error-label {
     position: absolute;
-    top: calc(100% + 4px); 
+    top: calc(100% + 5px); 
     left: 4px;
-    font-size: 12px;
+    font-size: 12.5px;
     font-weight: 500;
-    color: #ef4444; 
-    animation: slideDownFade 0.3s ease-out forwards; 
+    color: #dc2626 !important; 
+    animation: slideDownFade 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards; 
     white-space: nowrap;
     pointer-events: none; 
+    z-index: 10;
 }
 
 .section-2 form input.just-validate-error-field {
     border-color: #ef4444 !important;
     background-color: #fef2f2 !important;
+    color: #991b1b !important;
 }
 
 .section-2 form .url-input:has(input.just-validate-error-field) {
     border-color: #ef4444 !important;
     background-color: #fef2f2 !important;
-    box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.1) !important; 
+    box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.15) !important; 
+}
+
+.section-2 form .url-input:has(input.just-validate-error-field) .inner-input {
+    color: #991b1b !important;
+    background: transparent !important;
+}
+
+.section-2 form .url-input:has(input.just-validate-error-field) i {
+    color: #ef4444 !important;
+}
+
+.section-2 form .save-path-row:has(input.just-validate-error-field) .inner-input {
+    border-color: #ef4444 !important;
+    background-color: #fef2f2 !important;
+    box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.15) !important;
+    color: #991b1b !important;
 }
 
 .section-2 form input.just-validate-success-field {
@@ -2095,6 +2113,11 @@ mark.search-highlight {
     margin-right: 4px;
     white-space: nowrap;
     letter-spacing: 0.02em;
+}
+
+html[lang="en"] .download-actions::before,
+html[data-language="en"] .download-actions::before {
+    content: "✔ Completed";
 }
 
 .download-actions .btn-action {
@@ -3819,9 +3842,61 @@ mark.search-highlight {
     transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-.theme-option-card.active .theme-selected-indicator {
+.theme-option-card.active .theme-selected-indicator,
+.lang-option-card.active .theme-selected-indicator {
     opacity: 1;
     transform: scale(1);
+}
+
+/* Language Options Grid */
+.lang-options-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 14px;
+}
+
+.lang-option-card {
+    position: relative;
+    border: 2px solid #e2e8f0;
+    border-radius: 14px;
+    padding: 14px;
+    background: #ffffff;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+}
+
+.lang-option-card:hover {
+    border-color: #94a3b8;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.06);
+}
+
+.lang-option-card.active {
+    border-color: #1e5173;
+    background: #f0f7ff;
+    box-shadow: 0 0 0 3px rgba(30, 81, 115, 0.12), 0 8px 20px rgba(30, 81, 115, 0.08);
+}
+
+.lang-card-icon-wrap {
+    font-size: 28px;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 2px;
+}
+
+.lang-card-icon-wrap .lang-flag-symbol {
+    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1));
+}
+
+.theme-card-badge.en-badge {
+    background: #ecfdf5;
+    color: #059669;
 }
 
 .theme-divider {
@@ -3831,7 +3906,8 @@ mark.search-highlight {
 }
 
 @media (max-width: 640px) {
-    .theme-options-grid {
+    .theme-options-grid,
+    .lang-options-grid {
         grid-template-columns: 1fr;
     }
 }
@@ -4110,6 +4186,46 @@ html[data-theme="dark"] .section-2 .filename-input i {
 
 html[data-theme="dark"] .section-2 .url-input i:hover {
     color: #38bdf8 !important;
+}
+
+/* JustValidate in Dark Theme */
+html[data-theme="dark"] .section-2 form .just-validate-error-label {
+    color: #fb7185 !important;
+    font-weight: 600;
+    text-shadow: 0 0 12px rgba(251, 113, 133, 0.4);
+}
+
+html[data-theme="dark"] .section-2 form input.just-validate-error-field {
+    border-color: #fb7185 !important;
+    background-color: rgba(244, 63, 94, 0.12) !important;
+    color: #ffffff !important;
+}
+
+html[data-theme="dark"] .section-2 form .url-input:has(input.just-validate-error-field) {
+    border-color: #fb7185 !important;
+    background-color: rgba(244, 63, 94, 0.12) !important;
+    box-shadow: 0 0 0 3px rgba(251, 113, 133, 0.3) !important;
+}
+
+html[data-theme="dark"] .section-2 form .url-input:has(input.just-validate-error-field) .inner-input {
+    color: #ffffff !important;
+    background: transparent !important;
+}
+
+html[data-theme="dark"] .section-2 form .url-input:has(input.just-validate-error-field) i {
+    color: #fb7185 !important;
+}
+
+html[data-theme="dark"] .section-2 form .save-path-row:has(input.just-validate-error-field) .inner-input {
+    border-color: #fb7185 !important;
+    background-color: rgba(244, 63, 94, 0.12) !important;
+    box-shadow: 0 0 0 3px rgba(251, 113, 133, 0.3) !important;
+    color: #ffffff !important;
+}
+
+html[data-theme="dark"] .section-2 form .url-input:has(input.just-validate-success-field) {
+    border-color: #34d399 !important;
+    box-shadow: 0 0 0 3px rgba(52, 211, 153, 0.25) !important;
 }
 
 html[data-theme="dark"] .section-2 .save-path-row .inner-browse-button {
@@ -5207,20 +5323,28 @@ html[data-theme="dark"] .theme-header-icon {
     color: #38bdf8 !important;
 }
 
-html[data-theme="dark"] .theme-option-card {
+html[data-theme="dark"] .theme-option-card,
+html[data-theme="dark"] .lang-option-card {
     background: #0f172a !important;
     border-color: #334155 !important;
 }
 
-html[data-theme="dark"] .theme-option-card:hover {
+html[data-theme="dark"] .theme-option-card:hover,
+html[data-theme="dark"] .lang-option-card:hover {
     border-color: #475569 !important;
     background: #131d31 !important;
 }
 
-html[data-theme="dark"] .theme-option-card.active {
+html[data-theme="dark"] .theme-option-card.active,
+html[data-theme="dark"] .lang-option-card.active {
     border-color: #38bdf8 !important;
     background: rgba(56, 189, 248, 0.12) !important;
     box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.25), 0 8px 20px rgba(0, 0, 0, 0.35) !important;
+}
+
+html[data-theme="dark"] .theme-card-badge.en-badge {
+    background: rgba(16, 185, 129, 0.18) !important;
+    color: #34d399 !important;
 }
 
 html[data-theme="dark"] .theme-card-title {

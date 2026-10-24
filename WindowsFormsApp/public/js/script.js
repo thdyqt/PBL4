@@ -23,19 +23,25 @@ let isFileNameManuallyEdited = false;
 
 function extractFileNameFromUrl(rawUrl) {
     if (!rawUrl || typeof rawUrl !== "string") return "";
+    const trimmed = rawUrl.trim();
+    if (!trimmed) return "";
     try {
-        const u = new URL(rawUrl.trim());
+        const u = new URL(trimmed);
         const pathname = u.pathname;
         let lastSegment = pathname.split("/").filter(Boolean).pop() || "";
-        lastSegment = decodeURIComponent(lastSegment);
-        lastSegment = lastSegment.replace(/[\\/:*?"<>|]/g, "_").trim();
-        return lastSegment;
+        if (lastSegment) {
+            lastSegment = decodeURIComponent(lastSegment);
+            lastSegment = lastSegment.replace(/[\\/:*?"<>|]/g, "_").trim();
+            return lastSegment;
+        }
     } catch (e) {
         try {
-            const clean = rawUrl.split("?")[0].split("#")[0];
-            const parts = clean.split("/").filter(Boolean);
-            if (parts.length > 0) {
-                return decodeURIComponent(parts[parts.length - 1]).replace(/[\\/:*?"<>|]/g, "_").trim();
+            if (trimmed.includes("/")) {
+                const clean = trimmed.split("?")[0].split("#")[0];
+                const parts = clean.split("/").filter(Boolean);
+                if (parts.length > 1 || (parts.length === 1 && parts[0].includes("."))) {
+                    return decodeURIComponent(parts[parts.length - 1]).replace(/[\\/:*?"<>|]/g, "_").trim();
+                }
             }
         } catch (e2) {}
     }
@@ -50,17 +56,23 @@ function updateFileNameFromUrl(url) {
     const extracted = extractFileNameFromUrl(url);
     detectedUrlFileName = extracted;
 
+    const defaultPlaceholder = (window.i18n && window.i18n.t)
+        ? window.i18n.t("add.custom_name_placeholder")
+        : "Tự động nhận diện từ liên kết (hoặc nhập tên bạn muốn đổi)";
+
     if (!isFileNameManuallyEdited) {
         if (extracted) {
             fileNameInput.value = extracted;
             fileNameInput.placeholder = extracted;
         } else {
             fileNameInput.value = "";
-            fileNameInput.placeholder = "Tự động nhận diện từ liên kết (hoặc nhập tên bạn muốn đổi)";
+            fileNameInput.placeholder = defaultPlaceholder;
         }
     } else {
         if (extracted) {
             fileNameInput.placeholder = extracted;
+        } else {
+            fileNameInput.placeholder = defaultPlaceholder;
         }
     }
 
@@ -88,19 +100,28 @@ if (pasteButton && urlInput) {
                         urlInput.focus();
                         showSuccessIcon(pasteButton); 
                     } else {
-                        alert("Bộ nhớ tạm đang trống hoặc không phải là chữ!");
+                        const msg = (window.i18n && window.i18n.t) ? window.i18n.t("validate.clipboard_empty") : "Bộ nhớ tạm đang trống hoặc không phải là chữ!";
+                        alert(msg);
                     }
                 }).catch(error => {
                     console.error("Lỗi đọc Clipboard trên Web: ", error);
-                    alert("Trình duyệt chặn quyền đọc Clipboard. Hãy nhấn Ctrl+V!");
+                    const msg = (window.i18n && window.i18n.t) ? window.i18n.t("validate.clipboard_blocked") : "Trình duyệt chặn quyền đọc Clipboard. Hãy nhấn Ctrl+V!";
+                    alert(msg);
                 });
             } catch(e) {
-                alert("Không thể dán tự động. Hãy nhấn Ctrl+V!");
+                const msg = (window.i18n && window.i18n.t) ? window.i18n.t("validate.clipboard_fail") : "Không thể dán tự động. Hãy nhấn Ctrl+V!";
+                alert(msg);
             }
         }
     });
 
     urlInput.addEventListener("input", (e) => {
+        const val = e.target.value.trim();
+        if (!val) {
+            urlInput.classList.remove("just-validate-success-field", "just-validate-error-field");
+            const errLabel = document.querySelector("#input-form .just-validate-error-label");
+            if (errLabel) errLabel.remove();
+        }
         updateFileNameFromUrl(e.target.value);
     });
     urlInput.addEventListener("change", (e) => {
@@ -140,7 +161,8 @@ function requestBrowseFolder(forBatch = false) {
     if (window.chrome && window.chrome.webview) {
         window.chrome.webview.postMessage(JSON.stringify({ action: "BROWSE_FOLDER" }));
     } else {
-        alert("Tính năng chọn thư mục chỉ hoạt động trên ứng dụng Desktop!");
+        const msg = (window.i18n && window.i18n.t) ? window.i18n.t("validate.browse_desktop_only") : "Tính năng chọn thư mục chỉ hoạt động trên ứng dụng Desktop!";
+        alert(msg);
     }
 }
 window.requestBrowseFolder = requestBrowseFolder;
@@ -180,7 +202,8 @@ if (window.chrome && window.chrome.webview) {
                     urlInput.focus();   
                     showSuccessIcon(pasteBtn);
                 } else {
-                    alert("Bộ nhớ tạm đang trống hoặc không chứa văn bản (link)!");
+                    const msg = (window.i18n && window.i18n.t) ? window.i18n.t("validate.clipboard_empty") : "Bộ nhớ tạm đang trống hoặc không chứa văn bản (link)!";
+                    alert(msg);
                 }
             }
             
@@ -205,7 +228,8 @@ if (window.chrome && window.chrome.webview) {
 
                     if (window.showAppToast) {
                         const shortName = selectedPath.length > 35 ? "..." + selectedPath.slice(-32) : selectedPath;
-                        window.showAppToast("Đã chọn nơi lưu: " + shortName);
+                        const isEn = window.i18n && window.i18n.getLanguage && window.i18n.getLanguage() === "en";
+                        window.showAppToast((isEn ? "Save location: " : "Đã chọn nơi lưu: ") + shortName);
                     }
                 }
 
@@ -219,7 +243,8 @@ if (window.chrome && window.chrome.webview) {
 
             // Xử lý sau khi lưu cài đặt
             if (response.action === "SETTINGS_SAVED") {
-                if (window.showAppToast) window.showAppToast("Đã lưu cài đặt thành công!");
+                const toastMsg = (window.i18n && window.i18n.t) ? window.i18n.t("toast.settings_saved") : "Đã lưu cài đặt thành công!";
+                if (window.showAppToast) window.showAppToast(toastMsg);
                 if (window.populateSettingsForm) window.populateSettingsForm(response.data);
                 const modal = document.getElementById("settings-modal");
                 if (modal) modal.style.display = "none";
@@ -231,7 +256,8 @@ if (window.chrome && window.chrome.webview) {
                 const statusEl = document.getElementById("proxy-test-status");
                 if (btnTest) {
                     btnTest.classList.remove("loading");
-                    btnTest.innerHTML = '<i class="fa-solid fa-plug-circle-bolt"></i> <span>Kiểm tra kết nối Proxy</span>';
+                    const testBtnText = (window.i18n && window.i18n.t) ? window.i18n.t("settings.proxy.test_btn") : "Kiểm tra kết nối Proxy";
+                    btnTest.innerHTML = `<i class="fa-solid fa-plug-circle-bolt"></i> <span data-i18n="settings.proxy.test_btn">${testBtnText}</span>`;
                 }
                 if (statusEl) {
                     statusEl.className = "proxy-test-status " + (response.success ? "success" : "error");
@@ -292,6 +318,16 @@ function addDownloadTask(url, savePath, thread, customFileName = "") {
     const safeUrl = url.replace(/"/g, '&quot;');
     const safeSavePath = (savePath || "").replace(/"/g, '&quot;');
 
+    const isEn = window.i18n && window.i18n.getLanguage && window.i18n.getLanguage() === "en";
+    const titleForce = isEn ? "Start now (Bypass queue)" : "Bắt đầu tải ngay (Bỏ qua hàng đợi)";
+    const titlePause = isEn ? "Pause" : "Tạm dừng";
+    const titleCancel = isEn ? "Cancel download" : "Hủy tải";
+    const titleDelete = isEn ? "Delete" : "Xóa";
+    const speedLabel = isEn ? "Speed:" : "Tốc độ:";
+    const speedCalc = isEn ? "Calculating..." : "Đang tính...";
+    const downloadedLabel = isEn ? "Downloaded:" : "Đã tải:";
+    const etaLabel = isEn ? "ETA:" : "Còn lại:";
+
     const downloadHTML = `
         <div class="download-item" id="${taskId}"
              data-state="preparing"
@@ -312,16 +348,16 @@ function addDownloadTask(url, savePath, thread, customFileName = "") {
                 </div>
                 <div class="header-right">
                     <div class="item-actions">
-                        <button type="button" class="btn-item-action btn-force-start" title="Bắt đầu tải ngay (Bỏ qua hàng đợi)" data-item-action="force-start" style="display: none;">
+                        <button type="button" class="btn-item-action btn-force-start" title="${titleForce}" data-item-action="force-start" style="display: none;">
                             <i class="fa-solid fa-bolt"></i>
                         </button>
-                        <button type="button" class="btn-item-action btn-pause-resume" title="Tạm dừng" data-item-action="toggle-pause">
+                        <button type="button" class="btn-item-action btn-pause-resume" title="${titlePause}" data-item-action="toggle-pause">
                             <i class="fa-solid fa-pause"></i>
                         </button>
-                        <button type="button" class="btn-item-action btn-cancel" title="Hủy tải" data-item-action="cancel">
+                        <button type="button" class="btn-item-action btn-cancel" title="${titleCancel}" data-item-action="cancel">
                             <i class="fa-solid fa-ban"></i>
                         </button>
-                        <button type="button" class="btn-item-action btn-delete" title="Xóa" data-item-action="delete">
+                        <button type="button" class="btn-item-action btn-delete" title="${titleDelete}" data-item-action="delete">
                             <i class="fa-solid fa-trash"></i>
                         </button>
                     </div>
@@ -334,9 +370,9 @@ function addDownloadTask(url, savePath, thread, customFileName = "") {
             </div>
             
             <div class="progress-stats">
-                <span class="stat-item"><span id="${taskId}-speed-label">Tốc độ:</span> <b id="${taskId}-speed">Đang tính...</b></span>
-                <span class="stat-item">Đã tải: <b id="${taskId}-downloaded">0 MB / -- MB</b></span>
-                <span class="stat-item"><span id="${taskId}-eta-label">Còn lại:</span> <b id="${taskId}-eta">--:--</b></span>
+                <span class="stat-item"><span id="${taskId}-speed-label">${speedLabel}</span> <b id="${taskId}-speed">${speedCalc}</b></span>
+                <span class="stat-item"><span id="${taskId}-downloaded-label">${downloadedLabel}</span> <b id="${taskId}-downloaded">0 MB / -- MB</b></span>
+                <span class="stat-item"><span id="${taskId}-eta-label">${etaLabel}</span> <b id="${taskId}-eta">--:--</b></span>
             </div>
         </div>
     `;
@@ -367,15 +403,34 @@ function addDownloadTask(url, savePath, thread, customFileName = "") {
 window.addDownloadTask = addDownloadTask;
 
 // Form nhập link tải đơn lẻ
-const inputForm = document.querySelector("#input-form");
-if (inputForm) {
-    const validator = new JustValidate("#input-form");
+let mainFormValidator = null;
 
-    validator
+function setupMainValidator() {
+    const inputForm = document.querySelector("#input-form");
+    if (!inputForm || typeof JustValidate === "undefined") return;
+
+    if (mainFormValidator) {
+        try {
+            mainFormValidator.destroy();
+        } catch (e) {}
+    }
+
+    const t = (key, fallback) => (window.i18n && window.i18n.t) ? window.i18n.t(key) : fallback;
+
+    mainFormValidator = new JustValidate("#input-form", {
+        errorFieldCssClass: "just-validate-error-field",
+        successFieldCssClass: "just-validate-success-field",
+        errorLabelCssClass: "just-validate-error-label",
+        errorLabelStyle: {
+            color: null
+        }
+    });
+
+    mainFormValidator
         .addField("#url", [
             {
                 rule: "required",
-                errorMessage: "Vui lòng nhập đường link tải về!"
+                errorMessage: t("validate.url_required", "Vui lòng nhập đường link tải về!")
             },
             {
                 validator: (value) => {
@@ -386,13 +441,13 @@ if (inputForm) {
                         return false;
                     }
                 },
-                errorMessage: "Liên kết không hợp lệ! Hãy nhập URL bắt đầu bằng http:// hoặc https://"
+                errorMessage: t("validate.url_invalid", "Liên kết không hợp lệ! Hãy nhập URL bắt đầu bằng http:// hoặc https://")
             }
         ])
         .addField("#save-path", [
             {
                 rule: "required",
-                errorMessage: "Vui lòng chọn vị trí lưu file!"
+                errorMessage: t("validate.save_required", "Vui lòng chọn vị trí lưu file!")
             },
         ])
         .onSuccess(event => {
@@ -408,17 +463,34 @@ if (inputForm) {
 
             addDownloadTask(url, savePath, thread, customFileName);
 
-            if (urlInput) urlInput.value = '';
+            if (urlInput) {
+                urlInput.value = '';
+                urlInput.classList.remove("just-validate-success-field", "just-validate-error-field");
+            }
             if (customNameEl) {
                 customNameEl.value = '';
-                customNameEl.placeholder = "Tự động nhận diện từ liên kết (hoặc nhập tên bạn muốn đổi)";
+                customNameEl.placeholder = (window.i18n && window.i18n.t)
+                    ? window.i18n.t("add.custom_name_placeholder")
+                    : "Tự động nhận diện từ liên kết (hoặc nhập tên bạn muốn đổi)";
             }
             detectedUrlFileName = "";
             isFileNameManuallyEdited = false;
             const btnResetFileName = document.getElementById("btn-reset-filename");
             if (btnResetFileName) btnResetFileName.style.display = "none";
+
+            if (mainFormValidator) {
+                try {
+                    mainFormValidator.refresh();
+                } catch (e) {}
+            }
         });
+
+    inputForm.justValidate = mainFormValidator;
 }
+window.setupMainValidator = setupMainValidator;
+
+// Khởi tạo validator lần đầu
+setupMainValidator();
 
 // ==========================================================================
 // CÀI ĐẶT ỨNG DỤNG (SETTINGS MODAL: QUEUE, BANDWIDTH, PROXY)
@@ -560,6 +632,12 @@ function populateSettingsForm(s) {
     // Giao diện (Theme)
     const currentTheme = s.theme || localStorage.getItem("app_theme") || "light";
     applyTheme(currentTheme, false);
+
+    // Ngôn ngữ (Language)
+    const currentLang = s.language || localStorage.getItem("app_language") || "vi";
+    if (window.setLanguage) {
+        window.setLanguage(currentLang, false);
+    }
 }
 window.populateSettingsForm = populateSettingsForm;
 
@@ -617,13 +695,13 @@ window.applyTheme = applyTheme;
     }
 })();
 
-// Bắt sự kiện click chọn thẻ theme trực tiếp
+// Bắt sự kiện click chọn thẻ theme trực tiếp (Chỉ xem trước giao diện trong modal, không tự động lưu)
 document.addEventListener("click", (e) => {
     const themeCard = e.target.closest(".theme-option-card");
     if (themeCard) {
         const themeVal = themeCard.dataset.themeVal;
         if (themeVal) {
-            applyTheme(themeVal, true);
+            applyTheme(themeVal, false);
         }
     }
 });
@@ -653,10 +731,22 @@ window.setConfirmBeforeDelete = function (val) {
     }
 };
 
+let modalInitialTheme = "light";
+let modalInitialLanguage = "vi";
+
 // Mở modal cài đặt
 function openSettingsModal(defaultTab = "tab-queue") {
     const modal = document.getElementById("settings-modal");
     if (!modal) return;
+
+    // Lưu lại theme và ngôn ngữ đang áp dụng để khôi phục nếu người dùng hủy bỏ
+    modalInitialTheme = document.documentElement.getAttribute("data-theme-setting") || localStorage.getItem("app_theme") || "light";
+    modalInitialLanguage = (window.i18n && window.i18n.getLanguage) ? window.i18n.getLanguage() : (localStorage.getItem("app_language") || "vi");
+
+    // Đổ lại cấu hình hiện tại vào form
+    if (currentSettings && window.populateSettingsForm) {
+        window.populateSettingsForm(currentSettings);
+    }
 
     // Chuyển tới tab mong muốn
     document.querySelectorAll(".settings-tab-btn").forEach(btn => {
@@ -673,6 +763,21 @@ function openSettingsModal(defaultTab = "tab-queue") {
     }
 
     modal.style.display = "flex";
+}
+
+function cancelSettingsModal() {
+    // Khôi phục lại theme và language đã xem trước
+    if (window.applyTheme) {
+        window.applyTheme(modalInitialTheme, false);
+    }
+    if (window.setLanguage) {
+        window.setLanguage(modalInitialLanguage, false);
+    }
+    // Khôi phục lại dữ liệu các trường cài đặt
+    if (currentSettings && window.populateSettingsForm) {
+        window.populateSettingsForm(currentSettings);
+    }
+    closeSettingsModal();
 }
 
 function closeSettingsModal() {
@@ -694,16 +799,16 @@ document.addEventListener("click", (e) => {
         return;
     }
 
-    // 3. Đóng Cài đặt
+    // 3. Đóng Cài đặt (Hủy bỏ các thay đổi chưa lưu)
     if (e.target.closest("#btn-close-settings") || e.target.closest("#btn-cancel-settings")) {
-        closeSettingsModal();
+        cancelSettingsModal();
         return;
     }
 
-    // Đóng khi click ngoài thẻ card
+    // Đóng khi click ngoài thẻ card (Hủy bỏ các thay đổi chưa lưu)
     const settingsModal = document.getElementById("settings-modal");
     if (settingsModal && e.target === settingsModal) {
-        closeSettingsModal();
+        cancelSettingsModal();
         return;
     }
 
@@ -875,6 +980,14 @@ if (btnSaveSettings) {
         const themeVal = document.querySelector('input[name="setting-theme"]:checked')?.value || "light";
         applyTheme(themeVal, true);
 
+        const langVal = document.querySelector('input[name="setting-language"]:checked')?.value || "vi";
+        if (window.setLanguage) {
+            window.setLanguage(langVal, true);
+        }
+
+        modalInitialTheme = themeVal;
+        modalInitialLanguage = langVal;
+
         const newSettings = {
             maxConcurrentDownloads: isNaN(maxConcurrent) ? 2 : maxConcurrent,
             speedLimitKbps: speedKbps,
@@ -883,7 +996,8 @@ if (btnSaveSettings) {
             defaultThreads: defaultThreads,
             autoStartNextInQueue: autoNext,
             confirmBeforeDelete: confirmBeforeDelete,
-            theme: themeVal
+            theme: themeVal,
+            language: langVal
         };
 
         if (window.chrome && window.chrome.webview) {
@@ -957,12 +1071,19 @@ function updateBatchCount() {
 
     const validUrls = parseValidUrlsFromText(textarea.value);
     const count = validUrls.length;
+    const isEn = window.i18n && window.i18n.getLanguage && window.i18n.getLanguage() === "en";
 
-    badge.textContent = `${count} liên kết hợp lệ`;
+    if (window.i18n && window.i18n.format) {
+        badge.textContent = window.i18n.format("batch.valid_count", count);
+    } else {
+        badge.textContent = isEn ? `${count} valid links` : `${count} liên kết hợp lệ`;
+    }
     badge.classList.toggle("has-items", count > 0);
 
     if (submitText) {
-        submitText.textContent = count > 0 ? `Thêm vào hàng đợi (${count} tệp)` : "Thêm vào hàng đợi";
+        const baseSubmit = (window.i18n && window.i18n.t) ? window.i18n.t("batch.submit", isEn ? "Add to Queue" : "Thêm vào hàng đợi") : (isEn ? "Add to Queue" : "Thêm vào hàng đợi");
+        const suffix = isEn ? ` (${count} files)` : ` (${count} tệp)`;
+        submitText.textContent = count > 0 ? `${baseSubmit}${suffix}` : baseSubmit;
     }
 }
 
@@ -1003,16 +1124,17 @@ if (btnSubmitBatch) {
         const textarea = document.getElementById("batch-urls-input");
         const batchSave = document.getElementById("batch-save-path");
         const batchThread = document.getElementById("batch-thread-select");
+        const isEn = window.i18n && window.i18n.getLanguage && window.i18n.getLanguage() === "en";
 
         const urls = parseValidUrlsFromText(textarea?.value || "");
         if (urls.length === 0) {
-            alert("Vui lòng nhập ít nhất một đường dẫn HTTP/HTTPS hợp lệ vào danh sách!");
+            alert(isEn ? "Please enter at least one valid HTTP/HTTPS link into the list!" : "Vui lòng nhập ít nhất một đường dẫn HTTP/HTTPS hợp lệ vào danh sách!");
             return;
         }
 
         const savePath = (batchSave?.value || document.getElementById("save-path")?.value || "").trim();
         if (!savePath) {
-            alert("Vui lòng chọn thư mục lưu tệp trước khi bắt đầu tải!");
+            alert(isEn ? "Please select a download folder before starting!" : "Vui lòng chọn thư mục lưu tệp trước khi bắt đầu tải!");
             return;
         }
 
@@ -1024,7 +1146,7 @@ if (btnSubmitBatch) {
         });
 
         if (window.showAppToast) {
-            window.showAppToast(`Đã thêm ${urls.length} liên kết vào hàng đợi tải về!`);
+            window.showAppToast(isEn ? `Added ${urls.length} links to the download queue!` : `Đã thêm ${urls.length} liên kết vào hàng đợi tải về!`);
         }
 
         if (textarea) textarea.value = "";
@@ -1062,9 +1184,10 @@ window.showDiskSpaceWarningModal = function (data) {
     const suggestedValEl = document.getElementById("compare-suggested-val");
     const btnSwitch = document.getElementById("btn-disk-switch-folder");
     const btnClose = document.getElementById("btn-disk-close");
+    const isEn = window.i18n && window.i18n.getLanguage && window.i18n.getLanguage() === "en";
 
     if (data.isAllDrivesFull) {
-        // Test case 2: Tất cả các ổ đều gần đầy hoặc không đủ -> Huỷ tải & Cảnh báo an toàn
+        // Tất cả các ổ đều gần đầy hoặc không đủ
         if (iconWrap) {
             iconWrap.className = "disk-space-icon-wrap danger";
         }
@@ -1072,13 +1195,13 @@ window.showDiskSpaceWarningModal = function (data) {
             icon.className = "fa-solid fa-triangle-exclamation";
         }
         if (titleEl) {
-            titleEl.textContent = "Không đủ bộ nhớ toàn hệ thống!";
+            titleEl.textContent = isEn ? "Insufficient System Storage!" : "Không đủ bộ nhớ toàn hệ thống!";
         }
         if (subtitleEl) {
-            subtitleEl.textContent = "Tất cả các ổ đĩa trên máy đều gần đầy hoặc không đủ dung lượng";
+            subtitleEl.textContent = isEn ? "All drives on your computer are nearly full or out of space" : "Tất cả các ổ đĩa trên máy đều gần đầy hoặc không đủ dung lượng";
         }
         if (msgEl) {
-            msgEl.textContent = data.message || "Tất cả các ổ đĩa trên thiết bị đều gần đầy hoặc không đủ chỗ trống để chứa tệp này. Quá trình tải đã được tự động huỷ để tránh lỗi hệ thống!";
+            msgEl.textContent = data.message || (isEn ? "All drives on this computer are full or have insufficient free space. Download has been safely cancelled!" : "Tất cả các ổ đĩa trên thiết bị đều gần đầy hoặc không đủ chỗ trống để chứa tệp này. Quá trình tải đã được tự động huỷ để tránh lỗi hệ thống!");
         }
         if (comparisonEl) {
             comparisonEl.style.display = "none";
@@ -1087,10 +1210,10 @@ window.showDiskSpaceWarningModal = function (data) {
             btnSwitch.style.display = "none";
         }
         if (btnClose) {
-            btnClose.textContent = "Đã hiểu";
+            btnClose.textContent = isEn ? "Understood" : "Đã hiểu";
         }
     } else {
-        // Test case 1: Ổ đích không đủ nhưng có ổ khác đủ -> Đề xuất đổi sang ổ khác
+        // Ổ đích không đủ nhưng có ổ khác đủ -> Đề xuất đổi sang ổ khác
         if (iconWrap) {
             iconWrap.className = "disk-space-icon-wrap warning";
         }
@@ -1098,28 +1221,31 @@ window.showDiskSpaceWarningModal = function (data) {
             icon.className = "fa-solid fa-hard-drive";
         }
         if (titleEl) {
-            titleEl.textContent = "Ổ đĩa đích không đủ dung lượng!";
+            titleEl.textContent = isEn ? "Destination Drive Out of Space!" : "Ổ đĩa đích không đủ dung lượng!";
         }
         if (subtitleEl) {
-            subtitleEl.textContent = "Đề xuất đổi vị trí lưu tệp sang ổ đĩa khác còn trống";
+            subtitleEl.textContent = isEn ? "Suggest changing save destination to another drive" : "Đề xuất đổi vị trí lưu tệp sang ổ đĩa khác còn trống";
         }
         if (msgEl) {
-            msgEl.textContent = data.message || "Ổ đĩa hiện tại không đủ dung lượng trống để lưu tệp. Hãy đổi thư mục lưu sang ổ đĩa khác có đủ chỗ trống.";
+            msgEl.textContent = data.message || (isEn ? "The current drive does not have enough free space. Please switch to another drive." : "Ổ đĩa hiện tại không đủ dung lượng trống để lưu tệp. Hãy đổi thư mục lưu sang ổ đĩa khác có đủ chỗ trống.");
         }
         if (comparisonEl) {
             comparisonEl.style.display = "flex";
+            const driveWord = isEn ? "Drive" : "Ổ";
+            const freeWord = isEn ? "Free" : "Còn";
             if (currentValEl) {
-                currentValEl.textContent = `Ổ ${data.targetDrive || 'C:'} (Còn ${formatBytesCompact(data.targetFreeBytes)})`;
+                currentValEl.textContent = `${driveWord} ${data.targetDrive || 'C:'} (${freeWord} ${formatBytesCompact(data.targetFreeBytes)})`;
             }
             if (suggestedValEl) {
-                suggestedValEl.textContent = `Ổ ${data.suggestedDrive || 'D:'} (Còn ${formatBytesCompact(data.suggestedFreeBytes)})`;
+                suggestedValEl.textContent = `${driveWord} ${data.suggestedDrive || 'D:'} (${freeWord} ${formatBytesCompact(data.suggestedFreeBytes)})`;
             }
         }
         if (btnSwitch) {
             btnSwitch.style.display = "inline-flex";
+            btnSwitch.innerHTML = `<i class="fa-regular fa-folder-open"></i> <span>${isEn ? "Switch Folder Now" : "Đổi thư mục lưu ngay"}</span>`;
         }
         if (btnClose) {
-            btnClose.textContent = "Để sau";
+            btnClose.textContent = isEn ? "Later" : "Để sau";
         }
     }
 
@@ -1129,6 +1255,20 @@ window.showDiskSpaceWarningModal = function (data) {
         window.showAppToast(data.message, 5000);
     }
 };
+
+window.addEventListener("app:languagechange", () => {
+    updateBatchCount();
+    if (typeof setupMainValidator === "function") {
+        setupMainValidator();
+    }
+
+    const fileNameInput = document.getElementById("custom-file-name");
+    if (fileNameInput && !isFileNameManuallyEdited && !detectedUrlFileName) {
+        fileNameInput.placeholder = (window.i18n && window.i18n.t)
+            ? window.i18n.t("add.custom_name_placeholder")
+            : "Tự động nhận diện từ liên kết (hoặc nhập tên bạn muốn đổi)";
+    }
+});
 
 function closeDiskSpaceModal() {
     const modal = document.getElementById("disk-space-modal");

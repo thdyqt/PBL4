@@ -176,6 +176,15 @@ namespace WindowsFormsApp.IPC
                                 break;
                             }
 
+                        case "UPDATE_LANGUAGE":
+                            {
+                                string lang = GetString(root, "language") ?? "vi";
+                                var currentSettings = SettingsManager.Current;
+                                currentSettings.Language = lang;
+                                SettingsManager.Save(currentSettings);
+                                break;
+                            }
+
                         case "TEST_PROXY":
                             _ = HandleTestProxyAsync(root);
                             break;

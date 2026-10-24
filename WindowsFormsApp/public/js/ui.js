@@ -48,58 +48,78 @@ window.getFileCategory = getFileCategory;
 
 const HOME_RECENT_LIMIT = 10;
 
-const FILTER_CONFIG = {
-    home: {
-        label: "GẦN ĐÂY",
-        title: "Tệp gần đây",
-        emptyTitle: "Chưa có tệp nào",
-        emptyDesc: "Dán liên kết tải về, chọn vị trí lưu rồi bắt đầu."
-    },
-    all: {
-        label: "DANH MỤC",
-        title: "Tất cả tệp",
-        emptyTitle: "Chưa có tệp nào",
-        emptyDesc: "Danh sách tác vụ tải về đang trống."
-    },
-    downloading: {
-        label: "DANH MỤC",
-        title: "Tệp đang tải",
-        emptyTitle: "Không có tệp đang tải",
-        emptyDesc: "Các tác vụ đang tải sẽ hiển thị tại đây."
-    },
-    completed: {
-        label: "DANH MỤC",
-        title: "Tệp đã hoàn thành",
-        emptyTitle: "Chưa có tệp hoàn thành",
-        emptyDesc: "Các tệp đã tải xong sẽ xuất hiện tại đây."
-    },
-    audio: {
-        label: "DANH MỤC",
-        title: "Tệp âm thanh",
-        emptyTitle: "Không có tệp âm thanh",
-        emptyDesc: "Các tệp âm thanh (.mp3, .wav, .flac...) sẽ hiển thị tại đây."
-    },
-    video: {
-        label: "DANH MỤC",
-        title: "Tệp video",
-        emptyTitle: "Không có tệp video",
-        emptyDesc: "Các tệp video (.mp4, .mkv, .avi...) sẽ hiển thị tại đây."
-    },
-    document: {
-        label: "DANH MỤC",
-        title: "Nén & Tài liệu",
-        emptyTitle: "Không có tệp nén / tài liệu",
-        emptyDesc: "Các tệp .zip, .rar, .pdf, .docx... sẽ hiển thị tại đây."
-    },
-    device: {
-        label: "HỆ THỐNG",
-        title: "Thông tin thiết bị",
-        emptyTitle: "",
-        emptyDesc: ""
+function getFilterConfig(filterName) {
+    const key = filterName || currentFilter || "home";
+    const t = (k, fb) => (window.i18n && window.i18n.t) ? window.i18n.t(k, fb) : fb;
+    switch (key) {
+        case "home":
+            return {
+                label: t("filter.home.label", "GẦN ĐÂY"),
+                title: t("filter.home.title", "Tệp gần đây"),
+                emptyTitle: t("filter.home.emptyTitle", "Chưa có tệp nào"),
+                emptyDesc: t("filter.home.emptyDesc", "Dán liên kết tải về, chọn vị trí lưu rồi bắt đầu.")
+            };
+        case "downloading":
+            return {
+                label: t("filter.downloading.label", "DANH MỤC"),
+                title: t("filter.downloading.title", "Tệp đang tải"),
+                emptyTitle: t("filter.downloading.emptyTitle", "Không có tệp đang tải"),
+                emptyDesc: t("filter.downloading.emptyDesc", "Các tác vụ đang tải sẽ hiển thị tại đây.")
+            };
+        case "completed":
+            return {
+                label: t("filter.completed.label", "DANH MỤC"),
+                title: t("filter.completed.title", "Tệp đã hoàn thành"),
+                emptyTitle: t("filter.completed.emptyTitle", "Chưa có tệp hoàn thành"),
+                emptyDesc: t("filter.completed.emptyDesc", "Các tệp đã tải xong sẽ xuất hiện tại đây.")
+            };
+        case "audio":
+            return {
+                label: t("filter.audio.label", "DANH MỤC"),
+                title: t("filter.audio.title", "Tệp âm thanh"),
+                emptyTitle: t("filter.audio.emptyTitle", "Không có tệp âm thanh"),
+                emptyDesc: t("filter.audio.emptyDesc", "Các tệp âm thanh (.mp3, .wav, .flac...) sẽ hiển thị tại đây.")
+            };
+        case "video":
+            return {
+                label: t("filter.video.label", "DANH MỤC"),
+                title: t("filter.video.title", "Tệp video"),
+                emptyTitle: t("filter.video.emptyTitle", "Không có tệp video"),
+                emptyDesc: t("filter.video.emptyDesc", "Các tệp video (.mp4, .mkv, .avi...) sẽ hiển thị tại đây.")
+            };
+        case "document":
+            return {
+                label: t("filter.document.label", "DANH MỤC"),
+                title: t("filter.document.title", "Nén & Tài liệu"),
+                emptyTitle: t("filter.document.emptyTitle", "Không có tệp nén / tài liệu"),
+                emptyDesc: t("filter.document.emptyDesc", "Các tệp .zip, .rar, .pdf, .docx... sẽ hiển thị tại đây.")
+            };
+        case "device":
+            return {
+                label: t("filter.device.label", "HỆ THỐNG"),
+                title: t("filter.device.title", "Thông tin thiết bị"),
+                emptyTitle: "",
+                emptyDesc: ""
+            };
+        case "all":
+        default:
+            return {
+                label: t("filter.all.label", "DANH MỤC"),
+                title: t("filter.all.title", "Tất cả tệp"),
+                emptyTitle: t("filter.all.emptyTitle", "Chưa có tệp nào"),
+                emptyDesc: t("filter.all.emptyDesc", "Danh sách tác vụ tải về đang trống.")
+            };
     }
-};
+}
+window.getFilterConfig = getFilterConfig;
 
 let currentFilter = "home";
+
+window.addEventListener("app:languagechange", () => {
+    if (typeof applyFilter === "function") {
+        applyFilter(currentFilter);
+    }
+});
 
 // ── Quản lý trạng thái Tìm kiếm & Sắp xếp ──
 const VALID_CRITERIA = ["date", "name", "size", "duration", "speed", "status"];
@@ -373,52 +393,55 @@ function updateSortButtonUI() {
     if (!btnOrder || !iconEl || !textEl) return;
 
     const isAsc = currentSortDirection === "asc";
-    let iconClass = isAsc ? "fa-arrow-up-short-wide" : "fa-arrow-down-wide-short";
-    let label = isAsc ? "Tăng dần" : "Giảm dần";
-    let tooltip = "";
+    const t = (k, fb) => (window.i18n && window.i18n.t) ? window.i18n.t(k, fb) : fb;
+    const isEn = window.i18n && window.i18n.getLanguage && window.i18n.getLanguage() === "en";
+
+    let iconClass = "fa-arrow-down-wide-short";
+    let label = isAsc ? (isEn ? "Oldest" : "Cũ nhất") : (isEn ? "Newest" : "Mới nhất");
+    let tooltip = isEn ? "Toggle sort order" : "Đảo chiều sắp xếp";
 
     switch (currentSortCriteria) {
         case "name":
             iconClass = isAsc ? "fa-arrow-down-a-z" : "fa-arrow-up-z-a";
             label = isAsc ? "A → Z" : "Z → A";
-            tooltip = isAsc
-                ? "Đang sắp xếp: Tên file từ A đến Z. Bấm để đổi sang Z đến A."
-                : "Đang sắp xếp: Tên file từ Z đến A. Bấm để đổi sang A đến Z.";
+            tooltip = isEn
+                ? (isAsc ? "Sorting: A to Z. Click to switch to Z to A." : "Sorting: Z to A. Click to switch to A to Z.")
+                : (isAsc ? "Đang sắp xếp: Tên file từ A đến Z. Bấm để đổi sang Z đến A." : "Đang sắp xếp: Tên file từ Z đến A. Bấm để đổi sang A đến Z.");
             break;
         case "date":
             iconClass = isAsc ? "fa-arrow-up-short-wide" : "fa-arrow-down-wide-short";
-            label = isAsc ? "Cũ nhất" : "Mới nhất";
-            tooltip = isAsc
-                ? "Đang sắp xếp: Tệp tải cũ nhất trước. Bấm để đổi sang Mới nhất trước."
-                : "Đang sắp xếp: Tệp tải mới nhất trước. Bấm để đổi sang Cũ nhất trước.";
+            label = isAsc ? (isEn ? "Oldest" : "Cũ nhất") : (isEn ? "Newest" : "Mới nhất");
+            tooltip = isEn
+                ? (isAsc ? "Sorting: Oldest first. Click to switch to Newest." : "Sorting: Newest first. Click to switch to Oldest.")
+                : (isAsc ? "Đang sắp xếp: Tệp tải cũ nhất trước. Bấm để đổi sang Mới nhất trước." : "Đang sắp xếp: Tệp tải mới nhất trước. Bấm để đổi sang Cũ nhất trước.");
             break;
         case "size":
             iconClass = isAsc ? "fa-arrow-up-short-wide" : "fa-arrow-down-wide-short";
-            label = isAsc ? "Nhỏ nhất" : "Lớn nhất";
-            tooltip = isAsc
-                ? "Đang sắp xếp: Dung lượng nhỏ nhất trước. Bấm để đổi sang Lớn nhất trước."
-                : "Đang sắp xếp: Dung lượng lớn nhất trước. Bấm để đổi sang Nhỏ nhất trước.";
+            label = isAsc ? (isEn ? "Smallest" : "Nhỏ nhất") : (isEn ? "Largest" : "Lớn nhất");
+            tooltip = isEn
+                ? (isAsc ? "Sorting: Smallest first. Click to switch to Largest." : "Sorting: Largest first. Click to switch to Smallest.")
+                : (isAsc ? "Đang sắp xếp: Dung lượng nhỏ nhất trước. Bấm để đổi sang Lớn nhất trước." : "Đang sắp xếp: Dung lượng lớn nhất trước. Bấm để đổi sang Nhỏ nhất trước.");
             break;
         case "duration":
             iconClass = isAsc ? "fa-arrow-down-short-wide" : "fa-arrow-up-wide-short";
-            label = isAsc ? "Nhanh nhất" : "Lâu nhất";
-            tooltip = isAsc
-                ? "Đang sắp xếp: Thời gian tải ngắn nhất trước. Bấm để đổi sang Lâu nhất trước."
-                : "Đang sắp xếp: Thời gian tải lâu nhất trước. Bấm để đổi sang Nhanh nhất trước.";
+            label = isAsc ? (isEn ? "Fastest" : "Nhanh nhất") : (isEn ? "Slowest" : "Lâu nhất");
+            tooltip = isEn
+                ? (isAsc ? "Sorting: Shortest duration first. Click for Longest." : "Sorting: Longest duration first. Click for Shortest.")
+                : (isAsc ? "Đang sắp xếp: Thời gian tải ngắn nhất trước. Bấm để đổi sang Lâu nhất trước." : "Đang sắp xếp: Thời gian tải lâu nhất trước. Bấm để đổi sang Nhanh nhất trước.");
             break;
         case "speed":
             iconClass = isAsc ? "fa-arrow-up-short-wide" : "fa-arrow-down-wide-short";
-            label = isAsc ? "Chậm nhất" : "Nhanh nhất";
-            tooltip = isAsc
-                ? "Đang sắp xếp: Tốc độ thấp nhất trước. Bấm để đổi sang Nhanh nhất trước."
-                : "Đang sắp xếp: Tốc độ cao nhất trước. Bấm để đổi sang Chậm nhất trước.";
+            label = isAsc ? (isEn ? "Slowest" : "Chậm nhất") : (isEn ? "Fastest" : "Nhanh nhất");
+            tooltip = isEn
+                ? (isAsc ? "Sorting: Slowest first. Click for Fastest." : "Sorting: Fastest first. Click for Slowest.")
+                : (isAsc ? "Đang sắp xếp: Tốc độ thấp nhất trước. Bấm để đổi sang Nhanh nhất trước." : "Đang sắp xếp: Tốc độ cao nhất trước. Bấm để đổi sang Chậm nhất trước.");
             break;
         case "status":
             iconClass = isAsc ? "fa-arrow-down-short-wide" : "fa-arrow-up-wide-short";
-            label = isAsc ? "Đang tải trước" : "Hoàn thành trước";
-            tooltip = isAsc
-                ? "Đang sắp xếp: Đang tải → Hoàn thành. Bấm để đảo chiều."
-                : "Đang sắp xếp: Hoàn thành → Đang tải. Bấm để đảo chiều.";
+            label = isAsc ? (isEn ? "Downloading first" : "Đang tải trước") : (isEn ? "Completed first" : "Hoàn thành trước");
+            tooltip = isEn
+                ? (isAsc ? "Sorting: Downloading → Completed. Click to invert." : "Sorting: Completed → Downloading. Click to invert.")
+                : (isAsc ? "Đang sắp xếp: Đang tải → Hoàn thành. Bấm để đảo chiều." : "Đang sắp xếp: Hoàn thành → Đang tải. Bấm để đảo chiều.");
             break;
     }
 
@@ -429,7 +452,7 @@ function updateSortButtonUI() {
 
 function applyFilter(filterName) {
     if (filterName) currentFilter = filterName;
-    const config = FILTER_CONFIG[currentFilter] || FILTER_CONFIG.all;
+    const config = getFilterConfig(currentFilter);
 
     const section1 = document.querySelector(".section-1");
     const section2 = document.querySelector(".section-2");
@@ -555,12 +578,15 @@ function applyFilter(filterName) {
     }
 
     // 4. Cập nhật Badge & Controls trên Toolbar
+    const isEn = window.i18n && window.i18n.getLanguage && window.i18n.getLanguage() === "en";
+    const taskWord = isEn ? "tasks" : "tác vụ";
+    const resultWord = isEn ? "results" : "kết quả";
     const mainBadge = document.querySelector(".inner-count-badge");
     if (mainBadge) {
         if (currentSearchQuery) {
-            mainBadge.textContent = `${visibleCount} / ${categoryItems.length} tác vụ`;
+            mainBadge.textContent = `${visibleCount} / ${categoryItems.length} ${taskWord}`;
         } else {
-            mainBadge.textContent = `${visibleCount} tác vụ`;
+            mainBadge.textContent = `${visibleCount} ${taskWord}`;
         }
     }
 
@@ -568,7 +594,7 @@ function applyFilter(filterName) {
     if (searchCountPill) {
         if (currentSearchQuery) {
             searchCountPill.style.display = "inline-flex";
-            searchCountPill.textContent = `${visibleCount} kết quả`;
+            searchCountPill.textContent = `${visibleCount} ${resultWord}`;
         } else {
             searchCountPill.style.display = "none";
         }
@@ -773,9 +799,10 @@ document.addEventListener("click", (e) => {
     }
 
     function getDriveStatusBadge(pct) {
-        if (pct >= 90) return { text: "Gần đầy", class: "status-danger" };
-        if (pct >= 70) return { text: "Sắp đầy", class: "status-warning" };
-        return { text: "Dung lượng tốt", class: "status-safe" };
+        const t = (k, fb) => (window.i18n && window.i18n.t) ? window.i18n.t(k, fb) : fb;
+        if (pct >= 90) return { text: t("device.status_almost_full", "Gần đầy"), class: "status-danger" };
+        if (pct >= 70) return { text: t("device.status_getting_full", "Sắp đầy"), class: "status-warning" };
+        return { text: t("device.status_healthy", "Dung lượng tốt"), class: "status-safe" };
     }
 
     function getDriveIcon(driveType) {
@@ -823,6 +850,9 @@ document.addEventListener("click", (e) => {
         deviceInfoLoaded = true;
         cachedDeviceData = data;
 
+        const t = (k, fb) => (window.i18n && window.i18n.t) ? window.i18n.t(k, fb) : fb;
+        const fmt = (k, ...args) => (window.i18n && window.i18n.format) ? window.i18n.format(k, ...args) : '';
+
         const loading = document.getElementById("device-loading-state");
         const container = document.getElementById("device-content-container");
         if (loading) loading.style.display = "none";
@@ -842,28 +872,28 @@ document.addEventListener("click", (e) => {
                 <div class="device-sys-card">
                     <div class="sys-card-icon machine"><i class="fa-solid fa-laptop"></i></div>
                     <div class="sys-card-data">
-                        <span class="sys-card-label">Tên thiết bị</span>
+                        <span class="sys-card-label">${t("device.machine_name", "Tên thiết bị")}</span>
                         <strong class="sys-card-val" title="${escHtml(data.machineName)}">${escHtml(data.machineName || "PC-System")}</strong>
                     </div>
                 </div>
                 <div class="device-sys-card">
                     <div class="sys-card-icon os"><i class="fa-brands fa-windows"></i></div>
                     <div class="sys-card-data">
-                        <span class="sys-card-label">Hệ điều hành</span>
+                        <span class="sys-card-label">${t("device.os_version", "Hệ điều hành")}</span>
                         <strong class="sys-card-val" title="${escHtml(data.osVersion)}">${escHtml(data.osVersion || "Windows")}</strong>
                     </div>
                 </div>
                 <div class="device-sys-card">
                     <div class="sys-card-icon cpu"><i class="fa-solid fa-microchip"></i></div>
                     <div class="sys-card-data">
-                        <span class="sys-card-label">Bộ vi xử lý (CPU)</span>
-                        <strong class="sys-card-val">${data.processorCount ? data.processorCount + " Luồng xử lý" : "—"}</strong>
+                        <span class="sys-card-label">${t("device.cpu", "Bộ vi xử lý (CPU)")}</span>
+                        <strong class="sys-card-val">${data.processorCount ? fmt("device.threads_count", data.processorCount) : "—"}</strong>
                     </div>
                 </div>
                 <div class="device-sys-card">
                     <div class="sys-card-icon ram"><i class="fa-solid fa-memory"></i></div>
                     <div class="sys-card-data">
-                        <span class="sys-card-label">Bộ nhớ RAM</span>
+                        <span class="sys-card-label">${t("device.ram", "Bộ nhớ RAM")}</span>
                         <strong class="sys-card-val">${data.totalRamBytes ? formatBytes(data.totalRamBytes) : "—"}</strong>
                     </div>
                 </div>
@@ -889,10 +919,10 @@ document.addEventListener("click", (e) => {
                 <div class="overall-header">
                     <div class="overall-title">
                         <i class="fa-solid fa-hard-drive"></i>
-                        <span>Tổng dung lượng toàn bộ thiết bị</span>
+                        <span>${t("device.overall_title", "Tổng dung lượng toàn bộ thiết bị")}</span>
                     </div>
                     <span class="overall-usage-pill" style="background:${overallColor}15; color:${overallColor};">
-                        Đã sử dụng ${overallPct.toFixed(1)}%
+                        ${fmt("device.used_pct", overallPct.toFixed(1))}
                     </span>
                 </div>
                 <div class="overall-bar-track">
@@ -901,14 +931,14 @@ document.addEventListener("click", (e) => {
                 <div class="overall-stats-row">
                     <div class="overall-stat">
                         <span class="dot" style="background:${overallColor};"></span>
-                        <span>Đã dùng: <strong>${formatBytes(totalUsed)}</strong></span>
+                        <span>${fmt("device.used_stat", `<strong>${formatBytes(totalUsed)}</strong>`)}</span>
                     </div>
                     <div class="overall-stat">
                         <span class="dot" style="background:#cbd5e1;"></span>
-                        <span>Còn trống khả dụng: <strong class="text-free">${formatBytes(totalFree)}</strong></span>
+                        <span>${fmt("device.free_stat", `<strong class="text-free">${formatBytes(totalFree)}</strong>`)}</span>
                     </div>
                     <div class="overall-stat ml-auto">
-                        <span>Tổng lưu trữ: <strong>${formatBytes(totalCap)}</strong> (${data.drives.length} ổ đĩa)</span>
+                        <span>${fmt("device.total_stat", `<strong>${formatBytes(totalCap)}</strong>`, data.drives.length)}</span>
                     </div>
                 </div>
             `;
@@ -924,7 +954,8 @@ document.addEventListener("click", (e) => {
                 const color = getUsageColor(usedPct);
                 const statusBadge = getDriveStatusBadge(usedPct);
                 const driveLetter = drv.name.replace(/\\/g, '');
-                const driveLabel = drv.label || "Ổ đĩa cục bộ";
+                const driveLabel = drv.label || t("device.local_drive", "Ổ đĩa cục bộ");
+                const driveTypeStr = drv.driveType === 'Removable' ? t("device.removable_drive", "Ổ di động") : t("device.fixed_drive", "Ổ cố định");
 
                 drivesHtml += `
                     <div class="device-drive-card">
@@ -935,7 +966,7 @@ document.addEventListener("click", (e) => {
                             </div>
                             <div class="drive-info-meta">
                                 <h4 class="drive-title" title="${escHtml(driveLabel)}">${escHtml(driveLabel)}</h4>
-                                <div class="drive-subtext">${escHtml(drv.format || 'NTFS')} &bull; ${drv.driveType === 'Removable' ? 'Ổ di động' : 'Ổ cố định'}</div>
+                                <div class="drive-subtext">${escHtml(drv.format || 'NTFS')} &bull; ${driveTypeStr}</div>
                             </div>
                             <span class="drive-health-badge ${statusBadge.class}">${statusBadge.text}</span>
                         </div>
@@ -949,15 +980,15 @@ document.addEventListener("click", (e) => {
 
                         <div class="drive-details-grid">
                             <div class="drive-detail-item">
-                                <span class="detail-label">Đã sử dụng</span>
+                                <span class="detail-label">${t("device.detail_used", "Đã sử dụng")}</span>
                                 <strong class="detail-value">${formatBytes(drv.usedBytes)}</strong>
                             </div>
                             <div class="drive-detail-item">
-                                <span class="detail-label">Còn trống</span>
+                                <span class="detail-label">${t("device.detail_free", "Còn trống")}</span>
                                 <strong class="detail-value text-green">${formatBytes(drv.freeBytes)}</strong>
                             </div>
                             <div class="drive-detail-item">
-                                <span class="detail-label">Tổng dung lượng</span>
+                                <span class="detail-label">${t("device.detail_total", "Tổng dung lượng")}</span>
                                 <strong class="detail-value">${formatBytes(drv.totalBytes)}</strong>
                             </div>
                         </div>
@@ -967,6 +998,16 @@ document.addEventListener("click", (e) => {
             drivesGrid.innerHTML = drivesHtml;
         }
     };
+
+    // Re-render when language changes
+    window.addEventListener("app:languagechange", () => {
+        if (window.applyFilter) {
+            window.applyFilter();
+        }
+        if (cachedDeviceData) {
+            window.renderDeviceInfo(cachedDeviceData);
+        }
+    });
 
     // Nút làm mới dữ liệu
     document.addEventListener("click", (e) => {

@@ -25,7 +25,13 @@
     }
 
     // ---------- Modal hộp thoại xác nhận (Confirm Dialog) ----------
-    function showConfirmModal({ title, message, htmlContent = null, confirmText = "Đồng ý", cancelText = "Hủy bỏ", danger = false, showDontAskAgain = false, onConfirm }) {
+    function showConfirmModal({ title, message, htmlContent = null, confirmText, cancelText, danger = false, showDontAskAgain = false, onConfirm }) {
+        const isEn = window.i18n && window.i18n.getCurrentLanguage && window.i18n.getCurrentLanguage() === "en";
+        const defConfirm = isEn ? "Confirm" : "Đồng ý";
+        const defCancel = isEn ? "Cancel" : "Hủy bỏ";
+        const finalConfirm = confirmText || defConfirm;
+        const finalCancel = cancelText || defCancel;
+
         let overlay = document.getElementById("confirm-modal");
         if (!overlay) {
             overlay = document.createElement("div");
@@ -45,12 +51,12 @@
                     <div class="confirm-modal-checkbox-row" id="confirm-modal-checkbox-wrap" style="display: none;">
                         <label class="confirm-checkbox-label">
                             <input type="checkbox" id="confirm-modal-dont-ask">
-                            <span>Không hiển thị yêu cầu xác nhận xóa nữa</span>
+                            <span id="confirm-modal-dont-ask-text">${isEn ? "Don't ask for confirmation again" : "Không hiển thị yêu cầu xác nhận xóa nữa"}</span>
                         </label>
                     </div>
                     <div class="confirm-modal-footer">
-                        <button type="button" class="btn-modal-cancel" id="confirm-modal-btn-cancel">Hủy bỏ</button>
-                        <button type="button" class="btn-modal-confirm" id="confirm-modal-btn-confirm">Đồng ý</button>
+                        <button type="button" class="btn-modal-cancel" id="confirm-modal-btn-cancel">${finalCancel}</button>
+                        <button type="button" class="btn-modal-confirm" id="confirm-modal-btn-confirm">${finalConfirm}</button>
                     </div>
                 </div>
             `;
@@ -76,20 +82,24 @@
         const cancelBtn = document.getElementById("confirm-modal-btn-cancel");
         const chkWrap = document.getElementById("confirm-modal-checkbox-wrap");
         const dontAskChk = document.getElementById("confirm-modal-dont-ask");
+        const dontAskText = document.getElementById("confirm-modal-dont-ask-text");
 
-        if (titleEl) titleEl.textContent = title || "Xác nhận";
+        if (titleEl) titleEl.textContent = title || (isEn ? "Confirmation" : "Xác nhận");
         if (bodyEl) {
             if (htmlContent) {
                 bodyEl.innerHTML = htmlContent;
             } else {
-                bodyEl.textContent = message || "Bạn có chắc chắn muốn thực hiện thao tác này?";
+                bodyEl.textContent = message || (isEn ? "Are you sure you want to proceed?" : "Bạn có chắc chắn muốn thực hiện thao tác này?");
             }
         }
         if (confirmBtn) {
-            confirmBtn.textContent = confirmText;
+            confirmBtn.textContent = finalConfirm;
             confirmBtn.className = "btn-modal-confirm" + (danger ? " danger" : "");
         }
-        if (cancelBtn) cancelBtn.textContent = cancelText;
+        if (cancelBtn) cancelBtn.textContent = finalCancel;
+        if (dontAskText) {
+            dontAskText.textContent = isEn ? "Don't ask for confirmation again" : "Không hiển thị yêu cầu xác nhận xóa nữa";
+        }
 
         if (iconEl) {
             iconEl.className = "confirm-modal-icon " + (danger ? "danger" : "warning");
@@ -153,6 +163,14 @@
         cancelled: "Đã hủy"
     };
 
+    function getStateText(state) {
+        if (window.i18n && window.i18n.t) {
+            return window.i18n.t("state." + state, STATE_TEXT[state] || state);
+        }
+        return STATE_TEXT[state] || state;
+    }
+    window.getStateText = getStateText;
+
     // ---------- Đồng bộ các nút Tạm dừng / Tiếp tục trên Header ----------
     function syncHeaderPauseButtons() {
         const items = Array.from(document.querySelectorAll("#download-list .download-item"));
@@ -166,9 +184,11 @@
             const statusLabel = activityStatus.querySelector(".status-label");
             activityStatus.classList.toggle("is-downloading", hasActiveDownload);
             if (statusLabel) {
+                const t = (k, fb) => (window.i18n && window.i18n.t) ? window.i18n.t(k, fb) : fb;
+                const fmt = (k, ...args) => (window.i18n && window.i18n.format) ? window.i18n.format(k, ...args) : `Đang tải ${activeItems.length} tệp`;
                 statusLabel.textContent = hasActiveDownload
-                    ? `Đang tải ${activeItems.length} tệp`
-                    : "Sẵn sàng tải";
+                    ? fmt("state.downloading_count", activeItems.length)
+                    : t("state.ready", "Sẵn sàng tải");
             }
         }
 
@@ -179,16 +199,66 @@
         const hasPausableDownload = items.some(el => el.dataset.state === "downloading" || el.dataset.state === "queued");
         const hasPaused = items.some(el => el.dataset.state === "paused");
 
+        const t = (k, fb) => (window.i18n && window.i18n.t) ? window.i18n.t(k, fb) : fb;
         headerPauseBtn.disabled = !hasPausableDownload;
         headerPauseBtn.title = hasPausableDownload
-            ? "Tạm dừng tất cả các tệp"
-            : "Không có tệp nào đang tải để tạm dừng";
+            ? t("header.pause_all_title", "Tạm dừng tất cả các tệp")
+            : t("header.pause_none_title", "Không có tệp nào đang tải để tạm dừng");
 
         headerResumeBtn.disabled = !hasPaused;
         headerResumeBtn.title = hasPaused
-            ? "Tiếp tục tất cả các tệp"
-            : "Không có tệp nào đang tạm dừng để tiếp tục";
+            ? t("header.resume_all_title", "Tiếp tục tất cả các tệp")
+            : t("header.resume_none_title", "Không có tệp nào đang tạm dừng để tiếp tục");
     }
+
+    window.addEventListener("app:languagechange", () => {
+        const isEn = window.i18n && window.i18n.getCurrentLanguage && window.i18n.getCurrentLanguage() === "en";
+        document.querySelectorAll("#download-list .download-item").forEach(item => {
+            const state = item.dataset.state;
+            const statusEl = item.querySelector(".download-status");
+            if (state && statusEl) {
+                if (state === "completed") {
+                    const elapsedSec = item.dataset.elapsedTime;
+                    const avgSpeed = item.dataset.avgSpeed;
+                    const completedAt = item.dataset.completedAt;
+                    const thCount = item.querySelectorAll(".segment-bar").length || 1;
+                    const threadWord = isEn ? (thCount > 1 ? "threads" : "thread") : "luồng";
+                    const completedWord = isEn ? "Completed" : "Hoàn thành";
+                    const durationWord = isEn ? "Duration" : "Thời gian";
+                    const avgWord = isEn ? "Avg Speed" : "Tốc độ TB";
+                    let text = `${completedWord} — ${thCount} ${threadWord}`;
+                    if (elapsedSec) {
+                        text += ` (${durationWord}: ${elapsedSec}s${avgSpeed ? ` — ${avgWord}: ${avgSpeed}` : ""})`;
+                    }
+                    if (completedAt) {
+                        text += ` • ${completedAt}`;
+                    }
+                    statusEl.textContent = text;
+                } else {
+                    statusEl.textContent = getStateText(state);
+                }
+            }
+
+            const speedLabel = item.querySelector(`[id$="-speed-label"]`);
+            if (speedLabel) {
+                speedLabel.textContent = state === "completed" ? (isEn ? "Avg Speed:" : "Tốc độ TB:") : (isEn ? "Speed:" : "Tốc độ:");
+            }
+            const etaLabel = item.querySelector(`[id$="-eta-label"]`);
+            if (etaLabel) {
+                etaLabel.textContent = state === "completed" ? (isEn ? "Duration:" : "Thời gian tải:") : (isEn ? "ETA:" : "Còn lại:");
+            }
+            const downloadedLabel = item.querySelector(`[id$="-downloaded-label"]`);
+            if (downloadedLabel) {
+                downloadedLabel.textContent = isEn ? "Downloaded:" : "Đã tải:";
+            }
+
+            const btnOpenFile = item.querySelector(".btn-open-file span");
+            if (btnOpenFile) btnOpenFile.textContent = isEn ? "Open File" : "Mở file";
+            const btnOpenFolder = item.querySelector(".btn-open-folder span");
+            if (btnOpenFolder) btnOpenFolder.textContent = isEn ? "Open Folder" : "Mở thư mục";
+        });
+        syncHeaderPauseButtons();
+    });
 
     // ---------- cập nhật giao diện tác vụ ----------
     // Bảng màu phân biệt cho từng luồng (tối đa 16 luồng)
@@ -331,12 +401,14 @@
         set("percent", known || d.state === "completed" ? percent + "%" : (d.state === "queued" ? "Chờ..." : "..."));
         set("downloaded", `${fmtBytes(d.downloaded)} / ${known ? fmtBytes(d.totalBytes) : "--"}`);
 
+        const isEn = window.i18n && window.i18n.getCurrentLanguage && window.i18n.getCurrentLanguage() === "en";
+
         if (d.state === "queued") {
             const speedLabel = document.getElementById(`${d.taskId}-speed-label`);
-            if (speedLabel) speedLabel.textContent = "Tốc độ:";
+            if (speedLabel) speedLabel.textContent = isEn ? "Speed:" : "Tốc độ:";
             const etaLabel = document.getElementById(`${d.taskId}-eta-label`);
-            if (etaLabel) etaLabel.textContent = "Còn lại:";
-            set("speed", "Chờ đến lượt");
+            if (etaLabel) etaLabel.textContent = isEn ? "ETA:" : "Còn lại:";
+            set("speed", isEn ? "Waiting..." : "Chờ đến lượt");
             set("eta", "--:--");
         } else if (d.state === "completed") {
             let elapsedSec = "";
@@ -362,18 +434,18 @@
             }
 
             const speedLabel = document.getElementById(`${d.taskId}-speed-label`);
-            if (speedLabel) speedLabel.textContent = "Tốc độ TB:";
+            if (speedLabel) speedLabel.textContent = isEn ? "Avg Speed:" : "Tốc độ TB:";
 
             const etaLabel = document.getElementById(`${d.taskId}-eta-label`);
-            if (etaLabel) etaLabel.textContent = "Thời gian tải:";
+            if (etaLabel) etaLabel.textContent = isEn ? "Duration:" : "Thời gian tải:";
 
-            set("eta", elapsedSec ? elapsedSec + "s" : "Hoàn tất");
+            set("eta", elapsedSec ? elapsedSec + "s" : (isEn ? "Done" : "Hoàn tất"));
             set("speed", avgSpeed ? avgSpeed : "—");
         } else {
             const speedLabel = document.getElementById(`${d.taskId}-speed-label`);
-            if (speedLabel) speedLabel.textContent = "Tốc độ:";
+            if (speedLabel) speedLabel.textContent = isEn ? "Speed:" : "Tốc độ:";
             const etaLabel = document.getElementById(`${d.taskId}-eta-label`);
-            if (etaLabel) etaLabel.textContent = "Còn lại:";
+            if (etaLabel) etaLabel.textContent = isEn ? "ETA:" : "Còn lại:";
             set("speed", d.state === "downloading" ? fmtBytes(d.speed) + "/s" : "—");
             set("eta", d.state === "downloading" ? fmtEta(d.etaSeconds) : "--:--");
         }
@@ -392,17 +464,20 @@
                 const doneBytes = isDone && seg.length > 0 ? seg.length : seg.downloaded;
                 const doneStr = fmtBytes(doneBytes);
                 const totalStr = seg.length > 0 ? fmtBytes(seg.length) : "--";
-                bars[i].title = `Luồng ${i + 1}: ${pct}% (${doneStr} / ${totalStr})`;
+                const segTitlePrefix = isEn ? "Thread" : "Luồng";
+                bars[i].title = `${segTitlePrefix} ${i + 1}: ${pct}% (${doneStr} / ${totalStr})`;
             }
         });
 
-        let text = STATE_TEXT[d.state] || d.state;
+        let text = getStateText(d.state);
+        const thCount = d.threads || 1;
+        const threadWord = isEn ? (thCount > 1 ? "threads" : "thread") : "luồng";
         if (d.state === "downloading") {
             text += d.supportsRanges
-                ? ` — ${d.threads} luồng`
-                : " — 1 luồng (server không hỗ trợ Range)";
+                ? ` — ${thCount} ${threadWord}`
+                : (isEn ? " — 1 thread (server doesn't support Range)" : " — 1 luồng (server không hỗ trợ Range)");
         } else if (d.state === "queued") {
-            text += ` — ${d.threads} luồng`;
+            text += ` — ${thCount} ${threadWord}`;
         } else if (d.state === "completed") {
             const elapsedSec = (typeof d.elapsedSeconds === "number" && d.elapsedSeconds > 0)
                 ? d.elapsedSeconds.toFixed(1)
@@ -410,8 +485,11 @@
             const avgSpeed = d.avgSpeed || item.dataset.avgSpeed;
             const completedAt = d.completedAt || item.dataset.completedAt || "";
             if (completedAt) item.dataset.completedAt = completedAt;
-            text = `Hoàn thành — ${d.threads || 1} luồng` +
-                   (elapsedSec ? ` (Thời gian: ${elapsedSec}s${avgSpeed ? ` — Tốc độ TB: ${avgSpeed}` : ""})` : "") +
+            const completedWord = isEn ? "Completed" : "Hoàn thành";
+            const durationWord = isEn ? "Duration" : "Thời gian";
+            const avgWord = isEn ? "Avg Speed" : "Tốc độ TB";
+            text = `${completedWord} — ${thCount} ${threadWord}` +
+                   (elapsedSec ? ` (${durationWord}: ${elapsedSec}s${avgSpeed ? ` — ${avgWord}: ${avgSpeed}` : ""})` : "") +
                    (completedAt ? ` • ${completedAt}` : "");
         }
         if (d.state === "failed" && d.error) text += ": " + d.error;
@@ -422,9 +500,11 @@
         if (d.state === "completed" && !item.querySelector(".download-actions")) {
             const actions = document.createElement("div");
             actions.className = "download-actions";
+            const openFileText = isEn ? "Open File" : "Mở file";
+            const openFolderText = isEn ? "Open Folder" : "Mở thư mục";
             actions.innerHTML = `
-                <button type="button" class="btn-action btn-open-file" data-action="open-file"><i class="fa-solid fa-arrow-up-right-from-square"></i> Mở file</button>
-                <button type="button" class="btn-action btn-open-folder" data-action="open-folder"><i class="fa-regular fa-folder-open"></i> Mở thư mục</button>
+                <button type="button" class="btn-action btn-open-file" data-action="open-file"><i class="fa-solid fa-arrow-up-right-from-square"></i> <span>${openFileText}</span></button>
+                <button type="button" class="btn-action btn-open-folder" data-action="open-folder"><i class="fa-regular fa-folder-open"></i> <span>${openFolderText}</span></button>
             `;
             item.appendChild(actions);
         }
@@ -529,8 +609,9 @@
             if (!item) return;
             const taskId = item.id;
             const action = itemActionBtn.dataset.itemAction;
+            const isEn = window.i18n && window.i18n.getCurrentLanguage && window.i18n.getCurrentLanguage() === "en";
             const fileNameElement = item.querySelector(".file-name");
-            const fileName = fileNameElement ? fileNameElement.textContent : "tệp này";
+            const fileName = fileNameElement ? fileNameElement.textContent : (isEn ? "this file" : "tệp này");
             if (action === "force-start") {
                 post({ action: "FORCE_START_DOWNLOAD", taskId: taskId });
                 item.dataset.state = "downloading";
@@ -538,11 +619,11 @@
                 const btnPause = item.querySelector('[data-item-action="toggle-pause"]');
                 if (btnPause) {
                     btnPause.style.display = "inline-flex";
-                    btnPause.title = "Tạm dừng";
+                    btnPause.title = isEn ? "Pause" : "Tạm dừng";
                     btnPause.innerHTML = '<i class="fa-solid fa-pause"></i>';
                 }
                 const st = item.querySelector(".download-status");
-                if (st) st.textContent = "Đang bắt đầu tải ngay...";
+                if (st) st.textContent = isEn ? "Starting download..." : "Đang bắt đầu tải ngay...";
                 syncHeaderPauseButtons();
                 if (window.applyFilter) window.applyFilter();
                 return;
@@ -553,17 +634,17 @@
                 if (currentState === "paused") {
                     post({ action: "RESUME_DOWNLOAD", taskId: taskId });
                     item.dataset.state = "downloading";
-                    itemActionBtn.title = "Tạm dừng";
+                    itemActionBtn.title = isEn ? "Pause" : "Tạm dừng";
                     itemActionBtn.innerHTML = '<i class="fa-solid fa-pause"></i>';
                     const st = item.querySelector(".download-status");
-                    if (st) st.textContent = "Đang tiếp tục...";
+                    if (st) st.textContent = isEn ? "Resuming..." : "Đang tiếp tục...";
                 } else {
                     post({ action: "PAUSE_DOWNLOAD", taskId: taskId });
                     item.dataset.state = "paused";
-                    itemActionBtn.title = "Tiếp tục";
+                    itemActionBtn.title = isEn ? "Resume" : "Tiếp tục";
                     itemActionBtn.innerHTML = '<i class="fa-solid fa-play"></i>';
                     const st = item.querySelector(".download-status");
-                    if (st) st.textContent = "Đã tạm dừng";
+                    if (st) st.textContent = isEn ? "Paused" : "Đã tạm dừng";
                     const sp = document.getElementById(`${taskId}-speed`);
                     if (sp) sp.textContent = "—";
                 }
@@ -574,9 +655,9 @@
 
             if (action === "cancel") {
                 showConfirmModal({
-                    title: "Xác nhận hủy tải",
-                    message: `Bạn có chắc chắn muốn hủy tải tệp "${fileName}" không?`,
-                    confirmText: "Hủy tải",
+                    title: isEn ? "Confirm Cancel Download" : "Xác nhận hủy tải",
+                    message: isEn ? `Are you sure you want to cancel downloading "${fileName}"?` : `Bạn có chắc chắn muốn hủy tải tệp "${fileName}" không?`,
+                    confirmText: isEn ? "Cancel Download" : "Hủy tải",
                     danger: true,
                     onConfirm: () => {
                         post({ action: "CANCEL_DOWNLOAD", taskId: taskId });
@@ -587,7 +668,7 @@
                         if (btnCancel) btnCancel.style.display = "none";
                         const st = item.querySelector(".download-status");
                         if (st) {
-                            st.textContent = "Đã hủy";
+                            st.textContent = isEn ? "Cancelled" : "Đã hủy";
                             st.className = "download-status is-error";
                         }
                         const sp = document.getElementById(`${taskId}-speed`);
@@ -615,13 +696,17 @@
                 }
 
                 const isCompleted = item.dataset.state === "completed";
-                const msg = isCompleted
-                    ? `Bạn có chắc chắn muốn xóa "${fileName}" khỏi danh sách tải về?`
-                    : `Bạn có chắc chắn muốn xóa tác vụ "${fileName}"? Tệp tải dở dang sẽ bị dừng và xóa khỏi đĩa.`;
+                const msg = isEn
+                    ? (isCompleted
+                        ? `Are you sure you want to remove "${fileName}" from the download list?`
+                        : `Are you sure you want to delete "${fileName}"? Incomplete file will be stopped and removed from disk.`)
+                    : (isCompleted
+                        ? `Bạn có chắc chắn muốn xóa "${fileName}" khỏi danh sách tải về?`
+                        : `Bạn có chắc chắn muốn xóa tác vụ "${fileName}"? Tệp tải dở dang sẽ bị dừng và xóa khỏi đĩa.`);
                 showConfirmModal({
-                    title: "Xác nhận xóa tác vụ",
+                    title: isEn ? "Confirm Delete Task" : "Xác nhận xóa tác vụ",
                     message: msg,
-                    confirmText: "Xóa",
+                    confirmText: isEn ? "Delete" : "Xóa",
                     danger: true,
                     showDontAskAgain: true,
                     onConfirm: (dontAsk) => {
@@ -639,12 +724,13 @@
         const headerBtn = e.target.closest("[data-header-action]");
         if (headerBtn) {
             const headerAction = headerBtn.dataset.headerAction;
+            const isEn = window.i18n && window.i18n.getCurrentLanguage && window.i18n.getCurrentLanguage() === "en";
 
             if (headerAction === "pause-all") {
                 const items = Array.from(document.querySelectorAll("#download-list .download-item"))
                     .filter(el => el.dataset.state === "downloading" || el.dataset.state === "queued");
                 if (items.length === 0) {
-                    showToast("Không có tệp nào đang tải để tạm dừng.");
+                    showToast(isEn ? "No files currently downloading to pause." : "Không có tệp nào đang tải để tạm dừng.");
                     return;
                 }
                 items.forEach(el => {
@@ -652,11 +738,11 @@
                     el.dataset.state = "paused";
                     const btn = el.querySelector('[data-item-action="toggle-pause"]');
                     if (btn) {
-                        btn.title = "Tiếp tục";
+                        btn.title = isEn ? "Resume" : "Tiếp tục";
                         btn.innerHTML = '<i class="fa-solid fa-play"></i>';
                     }
                     const st = el.querySelector(".download-status");
-                    if (st) st.textContent = "Đã tạm dừng";
+                    if (st) st.textContent = isEn ? "Paused" : "Đã tạm dừng";
                     const sp = document.getElementById(`${el.id}-speed`);
                     if (sp) sp.textContent = "—";
                 });
@@ -669,7 +755,7 @@
                 const items = Array.from(document.querySelectorAll("#download-list .download-item"))
                     .filter(el => el.dataset.state === "paused");
                 if (items.length === 0) {
-                    showToast("Không có tệp nào đang tạm dừng để tiếp tục.");
+                    showToast(isEn ? "No paused files to resume." : "Không có tệp nào đang tạm dừng để tiếp tục.");
                     return;
                 }
                 items.forEach(el => {
@@ -677,11 +763,11 @@
                     el.dataset.state = "downloading";
                     const btn = el.querySelector('[data-item-action="toggle-pause"]');
                     if (btn) {
-                        btn.title = "Tạm dừng";
+                        btn.title = isEn ? "Pause" : "Tạm dừng";
                         btn.innerHTML = '<i class="fa-solid fa-pause"></i>';
                     }
                     const st = el.querySelector(".download-status");
-                    if (st) st.textContent = "Đang tải...";
+                    if (st) st.textContent = isEn ? "Downloading..." : "Đang tải...";
                 });
                 syncHeaderPauseButtons();
                 if (window.applyFilter) window.applyFilter();
@@ -692,13 +778,13 @@
                 const items = Array.from(document.querySelectorAll("#download-list .download-item"))
                     .filter(el => el.dataset.state !== "completed" && el.dataset.state !== "cancelled");
                 if (items.length === 0) {
-                    showToast("Không có tệp nào đang tải để hủy.");
+                    showToast(isEn ? "No files currently downloading to cancel." : "Không có tệp nào đang tải để hủy.");
                     return;
                 }
                 showConfirmModal({
-                    title: "Xác nhận hủy tất cả",
-                    message: `Bạn có chắc chắn muốn hủy tất cả (${items.length}) tệp đang tải không?`,
-                    confirmText: "Hủy tất cả",
+                    title: isEn ? "Confirm Cancel All" : "Xác nhận hủy tất cả",
+                    message: isEn ? `Are you sure you want to cancel all (${items.length}) downloading files?` : `Bạn có chắc chắn muốn hủy tất cả (${items.length}) tệp đang tải không?`,
+                    confirmText: isEn ? "Cancel All" : "Hủy tất cả",
                     danger: true,
                     onConfirm: () => {
                         items.forEach(el => {
@@ -710,7 +796,7 @@
                             if (btnCancel) btnCancel.style.display = "none";
                             const st = el.querySelector(".download-status");
                             if (st) {
-                                st.textContent = "Đã hủy";
+                                st.textContent = isEn ? "Cancelled" : "Đã hủy";
                                 st.className = "download-status is-error";
                             }
                             const sp = document.getElementById(`${el.id}-speed`);
@@ -735,15 +821,24 @@
                     video: "Video",
                     document: "Tài liệu & Nén"
                 };
+                const FILTER_NAMES_EN = {
+                    home: "Recent Files",
+                    all: "All Files",
+                    downloading: "Downloading",
+                    completed: "Completed",
+                    audio: "Audio",
+                    video: "Video",
+                    document: "Archives & Docs"
+                };
                 const currentFilter = (window.getCurrentFilter && window.getCurrentFilter()) || "all";
-                const categoryLabel = FILTER_NAMES[currentFilter] || "Mục hiện tại";
+                const categoryLabel = isEn ? (FILTER_NAMES_EN[currentFilter] || "Current Section") : (FILTER_NAMES[currentFilter] || "Mục hiện tại");
 
                 // Chỉ lấy các file đang hiển thị trong mục hiện tại
                 const visibleItems = Array.from(document.querySelectorAll("#download-list .download-item"))
                     .filter(el => el.style.display !== "none");
 
                 if (visibleItems.length === 0) {
-                    showToast("Không có tệp nào trong mục này để xóa.");
+                    showToast(isEn ? "No files in this category to delete." : "Không có tệp nào trong mục này để xóa.");
                     return;
                 }
 
@@ -753,7 +848,7 @@
                 if (selectedItems.length > 0) {
                     // Nếu có lựa chọn 1 hay nhiều file -> chỉ xóa những file được lựa chọn
                     const doDeleteSelected = () => {
-                        removeDownloadItems(selectedItems, `Đã xóa ${selectedItems.length} tệp đã chọn.`);
+                        removeDownloadItems(selectedItems, isEn ? `Deleted ${selectedItems.length} selected files.` : `Đã xóa ${selectedItems.length} tệp đã chọn.`);
                     };
 
                     if (window.shouldConfirmDelete && !window.shouldConfirmDelete()) {
@@ -762,9 +857,11 @@
                     }
 
                     showConfirmModal({
-                        title: "Xác nhận xóa tệp đã chọn",
-                        message: `Bạn có chắc chắn muốn xóa ${selectedItems.length} tệp đã chọn trong mục "${categoryLabel}" khỏi danh sách không? Các tệp đang tải dở dang sẽ bị dừng và xóa khỏi đĩa.`,
-                        confirmText: `Xóa (${selectedItems.length})`,
+                        title: isEn ? "Confirm Delete Selected Files" : "Xác nhận xóa tệp đã chọn",
+                        message: isEn
+                            ? `Are you sure you want to remove ${selectedItems.length} selected files in "${categoryLabel}" from the list? Incomplete downloads will be stopped and deleted.`
+                            : `Bạn có chắc chắn muốn xóa ${selectedItems.length} tệp đã chọn trong mục "${categoryLabel}" khỏi danh sách không? Các tệp đang tải dở dang sẽ bị dừng và xóa khỏi đĩa.`,
+                        confirmText: isEn ? `Delete (${selectedItems.length})` : `Xóa (${selectedItems.length})`,
                         danger: true,
                         showDontAskAgain: true,
                         onConfirm: (dontAsk) => {
@@ -783,11 +880,19 @@
                 const totalCount = visibleItems.length;
 
                 const defaultChoice = completedItems.length > 0 ? "completed" : (activeItems.length > 0 ? "active" : "all");
+                const descText = isEn
+                    ? `You are in <strong>${categoryLabel}</strong>. Please select which files to delete:`
+                    : `Bạn đang ở mục <strong>${categoryLabel}</strong>. Vui lòng chọn loại tệp muốn xóa:`;
+                const optDoneTitle = isEn ? "Delete all completed files" : "Xóa tất cả các file đã tải";
+                const optActiveTitle = isEn ? "Delete all downloading files" : "Xóa tất cả các file đang tải";
+                const optAllTitle = isEn ? "Delete all files" : "Xóa toàn bộ file";
+                const badgeWord = isEn ? "files" : "tệp";
+                const warningText = isEn ? "Incomplete download files will be stopped and removed from disk." : "Các tệp đang tải dở dang sẽ bị dừng và xóa khỏi đĩa.";
 
                 const modalHtml = `
                     <div class="delete-all-prompt">
                         <div class="delete-all-desc">
-                            Bạn đang ở mục <strong>${categoryLabel}</strong>. Vui lòng chọn loại tệp muốn xóa:
+                            ${descText}
                         </div>
                         <div class="delete-options-list">
                             <label class="delete-option-item ${completedItems.length === 0 ? "disabled" : ""}">
@@ -795,9 +900,9 @@
                                 <div class="delete-option-text">
                                     <span class="delete-option-title">
                                         <i class="fa-solid fa-circle-check" style="color: #10B981;"></i>
-                                        Xóa tất cả các file đã tải
+                                        ${optDoneTitle}
                                     </span>
-                                    <span class="delete-option-badge">${completedItems.length} tệp</span>
+                                    <span class="delete-option-badge">${completedItems.length} ${badgeWord}</span>
                                 </div>
                             </label>
                             <label class="delete-option-item ${activeItems.length === 0 ? "disabled" : ""}">
@@ -805,9 +910,9 @@
                                 <div class="delete-option-text">
                                     <span class="delete-option-title">
                                         <i class="fa-solid fa-arrows-rotate" style="color: #0EA5E9;"></i>
-                                        Xóa tất cả các file đang tải
+                                        ${optActiveTitle}
                                     </span>
-                                    <span class="delete-option-badge">${activeItems.length} tệp</span>
+                                    <span class="delete-option-badge">${activeItems.length} ${badgeWord}</span>
                                 </div>
                             </label>
                             <label class="delete-option-item">
@@ -815,23 +920,23 @@
                                 <div class="delete-option-text">
                                     <span class="delete-option-title">
                                         <i class="fa-solid fa-trash-can" style="color: #EF4444;"></i>
-                                        Xóa toàn bộ file
+                                        ${optAllTitle}
                                     </span>
-                                    <span class="delete-option-badge">${totalCount} tệp</span>
+                                    <span class="delete-option-badge">${totalCount} ${badgeWord}</span>
                                 </div>
                             </label>
                         </div>
                         <div class="delete-warning-note">
                             <i class="fa-solid fa-circle-exclamation"></i>
-                            <span>Các tệp đang tải dở dang sẽ bị dừng và xóa khỏi đĩa.</span>
+                            <span>${warningText}</span>
                         </div>
                     </div>
                 `;
 
                 showConfirmModal({
-                    title: `Tùy chọn xóa tệp (${categoryLabel})`,
+                    title: isEn ? `Delete Options (${categoryLabel})` : `Tùy chọn xóa tệp (${categoryLabel})`,
                     htmlContent: modalHtml,
-                    confirmText: "Xóa",
+                    confirmText: isEn ? "Delete" : "Xóa",
                     danger: true,
                     showDontAskAgain: true,
                     onConfirm: (dontAsk) => {
@@ -840,17 +945,17 @@
                         let labelMsg = "";
                         if (selectedScope === "completed") {
                             targetItems = completedItems;
-                            labelMsg = `Đã xóa ${targetItems.length} tệp đã tải trong mục ${categoryLabel}.`;
+                            labelMsg = isEn ? `Deleted ${targetItems.length} completed files in ${categoryLabel}.` : `Đã xóa ${targetItems.length} tệp đã tải trong mục ${categoryLabel}.`;
                         } else if (selectedScope === "active") {
                             targetItems = activeItems;
-                            labelMsg = `Đã xóa ${targetItems.length} tệp đang tải trong mục ${categoryLabel}.`;
+                            labelMsg = isEn ? `Deleted ${targetItems.length} downloading files in ${categoryLabel}.` : `Đã xóa ${targetItems.length} tệp đang tải trong mục ${categoryLabel}.`;
                         } else {
                             targetItems = visibleItems;
-                            labelMsg = `Đã xóa toàn bộ ${targetItems.length} tệp trong mục ${categoryLabel}.`;
+                            labelMsg = isEn ? `Deleted all ${targetItems.length} files in ${categoryLabel}.` : `Đã xóa toàn bộ ${targetItems.length} tệp trong mục ${categoryLabel}.`;
                         }
 
                         if (targetItems.length === 0) {
-                            showToast("Không có tệp nào phù hợp để xóa.");
+                            showToast(isEn ? "No matching files to delete." : "Không có tệp nào phù hợp để xóa.");
                             return;
                         }
 
@@ -909,12 +1014,8 @@
             return n.toFixed(i === 0 ? 0 : 2) + " " + u[i];
         };
 
-        const STATE_LABEL = {
-            queued: "Chờ tải (Trong hàng đợi)", preparing: "Đang chuẩn bị...",
-            downloading: "Đang tải", paused: "Đã tạm dừng",
-            completed: "Hoàn thành", failed: "Lỗi", cancelled: "Đã hủy"
-        };
-        const stateText = STATE_LABEL[state] || state;
+        const stateText = getStateText(state);
+        const isEn = window.i18n && window.i18n.getCurrentLanguage && window.i18n.getCurrentLanguage() === "en";
 
         const threadCount = rec.threads || 1;
         const elapsedSec = rec.elapsedSeconds > 0 ? rec.elapsedSeconds.toFixed(1) : "";
@@ -925,9 +1026,13 @@
 
         let statusText = stateText;
         if (state === "completed") {
-            statusText = `Hoàn thành — ${threadCount} luồng`;
+            const threadWord = isEn ? (threadCount > 1 ? "threads" : "thread") : "luồng";
+            const completedWord = isEn ? "Completed" : "Hoàn thành";
+            const durationWord = isEn ? "Duration" : "Thời gian";
+            const avgWord = isEn ? "Avg Speed" : "Tốc độ TB";
+            statusText = `${completedWord} — ${threadCount} ${threadWord}`;
             if (elapsedSec) {
-                statusText += ` (Thời gian: ${elapsedSec}s${avgSpeed ? ` — Tốc độ TB: ${avgSpeed}` : ""})`;
+                statusText += ` (${durationWord}: ${elapsedSec}s${avgSpeed ? ` — ${avgWord}: ${avgSpeed}` : ""})`;
             }
             if (completedAt) {
                 statusText += ` • ${completedAt}`;
@@ -941,21 +1046,24 @@
             segmentBarsHtml = `<div class="segment-bars">`;
             for (let i = 0; i < threadCount; i++) {
                 const color = SEG_PALETTE[i % SEG_PALETTE.length];
+                const segTitle = isEn ? `Thread ${i + 1}: 100%` : `Luồng ${i + 1}: 100%`;
                 segmentBarsHtml += `
-                    <div class="segment-bar" title="Luồng ${i + 1}: 100%">
+                    <div class="segment-bar" title="${segTitle}">
                         <div class="segment-fill" style="width: 100%; --seg-color: ${color};"></div>
                     </div>`;
             }
             segmentBarsHtml += `</div>`;
         }
 
+        const openFileText = isEn ? "Open File" : "Mở file";
+        const openFolderText = isEn ? "Open Folder" : "Mở thư mục";
         const openFileBtn = state === "completed" ? `
             <div class="download-actions">
                 <button type="button" class="btn-action btn-open-file" data-action="open-file">
-                    <i class="fa-solid fa-arrow-up-right-from-square"></i> Mở file
+                    <i class="fa-solid fa-arrow-up-right-from-square"></i> <span>${openFileText}</span>
                 </button>
                 <button type="button" class="btn-action btn-open-folder" data-action="open-folder">
-                    <i class="fa-regular fa-folder-open"></i> Mở thư mục
+                    <i class="fa-regular fa-folder-open"></i> <span>${openFolderText}</span>
                 </button>
             </div>` : "";
 
@@ -986,24 +1094,24 @@
                     <div class="header-right">
                         <div class="item-actions">
                             <button type="button" class="btn-item-action btn-force-start"
-                                    title="Bắt đầu tải ngay (Bỏ qua hàng đợi)"
+                                    title="${isEn ? "Start now (Bypass queue)" : "Bắt đầu tải ngay (Bỏ qua hàng đợi)"}"
                                     data-item-action="force-start"
                                     style="display:${showForce ? "inline-flex" : "none"};">
                                 <i class="fa-solid fa-bolt"></i>
                             </button>
                             <button type="button" class="btn-item-action btn-pause-resume"
-                                    title="${showPause ? "Tiếp tục" : "Tạm dừng"}"
+                                    title="${showPause ? (isEn ? "Resume" : "Tiếp tục") : (isEn ? "Pause" : "Tạm dừng")}"
                                     data-item-action="toggle-pause"
                                     style="display:${showPause ? "inline-flex" : "none"};">
                                 <i class="fa-solid ${showPause ? "fa-play" : "fa-pause"}"></i>
                             </button>
                             <button type="button" class="btn-item-action btn-cancel"
-                                    title="Hủy tải" data-item-action="cancel"
+                                    title="${isEn ? "Cancel download" : "Hủy tải"}" data-item-action="cancel"
                                     style="display:${showCancel ? "inline-flex" : "none"};">
                                 <i class="fa-solid fa-ban"></i>
                             </button>
                             <button type="button" class="btn-item-action btn-delete"
-                                    title="Xóa" data-item-action="delete"
+                                    title="${isEn ? "Delete" : "Xóa"}" data-item-action="delete"
                                     style="display:inline-flex;">
                                 <i class="fa-solid fa-trash"></i>
                             </button>
@@ -1019,13 +1127,13 @@
                 </div>
 
                 <div class="progress-stats">
-                    <span class="stat-item"><span id="${rec.id}-speed-label">${state === "completed" ? "Tốc độ TB:" : "Tốc độ:"}</span> <b id="${rec.id}-speed">${state === "completed" ? (avgSpeed || "—") : "—"}</b></span>
-                    <span class="stat-item">Đã tải: <b id="${rec.id}-downloaded">
+                    <span class="stat-item"><span id="${rec.id}-speed-label">${state === "completed" ? (isEn ? "Avg Speed:" : "Tốc độ TB:") : (isEn ? "Speed:" : "Tốc độ:")}</span> <b id="${rec.id}-speed">${state === "completed" ? (avgSpeed || "—") : "—"}</b></span>
+                    <span class="stat-item"><span id="${rec.id}-downloaded-label">${isEn ? "Downloaded:" : "Đã tải:"}</span> <b id="${rec.id}-downloaded">
                         ${fmtB(rec.downloaded)} / ${rec.totalBytes > 0 ? fmtB(rec.totalBytes) : fmtB(rec.downloaded)}
                     </b></span>
                     <span class="stat-item">
-                        <span id="${rec.id}-eta-label">${state === "completed" ? "Thời gian tải:" : "Còn lại:"}</span>
-                        <b id="${rec.id}-eta">${state === "completed" ? (elapsedSec ? elapsedSec + "s" : "Hoàn tất") : "--:--"}</b>
+                        <span id="${rec.id}-eta-label">${state === "completed" ? (isEn ? "Duration:" : "Thời gian tải:") : (isEn ? "ETA:" : "Còn lại:")}</span>
+                        <b id="${rec.id}-eta">${state === "completed" ? (elapsedSec ? elapsedSec + "s" : (isEn ? "Done" : "Hoàn tất")) : "--:--"}</b>
                     </span>
                 </div>
 
