@@ -2521,7 +2521,7 @@ mark.search-highlight {
     background: #ffffff;
     border-radius: 20px;
     width: 100%;
-    max-width: 680px;
+    max-width: 740px;
     max-height: 90vh;
     display: flex;
     flex-direction: column;
@@ -2886,49 +2886,348 @@ mark.search-highlight {
     color: #ffffff;
 }
 
-/* Proxy Test Box */
-.proxy-test-container {
+/* ==========================================================================
+   Proxy Tab Styling & Spacious Redesign
+   ========================================================================== */
+.proxy-sub-wrap {
     display: flex;
     flex-direction: column;
-    gap: 10px;
-    margin-top: 6px;
+    gap: 16px;
+    animation: fadeInModal 0.25s ease-out;
+}
+
+.proxy-mode-group {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 14px;
+    padding: 16px 18px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.02);
+}
+
+.proxy-mode-banner {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 16px 20px;
+    background: #f0f7ff;
+    border: 1px solid #bae0fd;
+    border-radius: 14px;
+    animation: fadeInModal 0.2s ease-out;
+}
+
+.proxy-mode-banner .banner-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    background: #1e5173;
+    color: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    flex-shrink: 0;
+}
+
+.proxy-mode-banner .banner-icon i {
+    color: #ffffff;
+}
+
+.proxy-mode-banner .banner-title {
+    font-size: 13.5px;
+    font-weight: 700;
+    color: #0f354f;
+    margin-bottom: 2px;
+}
+
+.proxy-mode-banner .banner-desc {
+    font-size: 12px;
+    color: #475569;
+    line-height: 1.45;
+}
+
+/* Manual Proxy Card */
+.proxy-manual-card {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 16px;
+    padding: 22px;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.03);
+    animation: fadeInModal 0.25s ease-out;
+}
+
+.proxy-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-bottom: 12px;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.proxy-card-title {
+    font-size: 14px;
+    font-weight: 700;
+    color: #1e293b;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.proxy-card-title i {
+    color: #1e5173;
+}
+
+.proxy-card-badge {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: 3px 10px;
+    border-radius: 20px;
+    background: #eff6ff;
+    color: #1e5173;
+    border: 1px solid #dbeafe;
+}
+
+/* Proxy Server Grid */
+.proxy-server-grid {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+}
+
+.proxy-col-protocol {
+    width: 155px;
+    flex-shrink: 0;
+}
+
+.proxy-col-host {
+    flex: 1;
+    min-width: 0;
+}
+
+.proxy-col-port {
+    width: 115px;
+    flex-shrink: 0;
+}
+
+/* Input With Icon */
+.input-with-icon {
+    position: relative;
+    display: flex;
+    align-items: center;
+    width: 100%;
+}
+
+.input-with-icon .input-icon {
+    position: absolute;
+    left: 12px;
+    color: #94a3b8;
+    font-size: 13px;
+    pointer-events: none;
+    transition: color 0.2s ease;
+    z-index: 1;
+}
+
+.input-with-icon .form-input,
+.input-with-icon .form-select {
+    padding-left: 36px;
+}
+
+.input-with-icon:focus-within .input-icon {
+    color: #1e5173;
+}
+
+.text-center {
+    text-align: center;
+}
+
+/* Authentication Card */
+.proxy-auth-card {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 14px;
+    padding: 14px 18px;
+    transition: all 0.2s ease;
+}
+
+.proxy-auth-card:hover {
+    border-color: #cbd5e1;
+}
+
+.proxy-auth-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 14px;
+}
+
+.proxy-auth-title-wrap {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.proxy-auth-title-wrap .auth-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 9px;
+    background: #e2e8f0;
+    color: #475569;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 15px;
+    flex-shrink: 0;
+}
+
+.proxy-auth-body {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-top: 14px;
     padding-top: 14px;
-    border-top: 1px dashed #cbd5e1;
+    border-top: 1px dashed #e2e8f0;
+    animation: fadeInModal 0.2s ease-out;
+}
+
+/* Password Toggle */
+.password-input-wrap {
+    position: relative;
+}
+
+.password-input-wrap .form-input {
+    padding-right: 38px;
+}
+
+.btn-toggle-pw {
+    position: absolute;
+    right: 8px;
+    background: transparent;
+    border: none;
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    color: #94a3b8;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    transition: all 0.2s;
+    z-index: 2;
+}
+
+.btn-toggle-pw:hover {
+    color: #1e5173;
+    background: #e2e8f0;
+}
+
+/* Option Box (Bypass local) */
+.proxy-option-box {
+    padding: 12px 16px;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    transition: all 0.2s;
+}
+
+.proxy-option-box:hover {
+    background: #f1f5f9;
+    border-color: #cbd5e1;
+}
+
+.checkbox-text-wrap {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.checkbox-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: #1e293b;
+}
+
+.checkbox-desc {
+    font-size: 11.5px;
+    color: #64748b;
+    line-height: 1.4;
+}
+
+/* Test Proxy Card */
+.proxy-test-card {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 14px;
+    padding: 16px 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.02);
+}
+
+.proxy-test-action {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+}
+
+.test-proxy-hint {
+    font-size: 12px;
+    color: #64748b;
 }
 
 .btn-test-proxy {
-    align-self: flex-start;
-    padding: 8px 16px;
-    border-radius: 8px;
-    border: 1px solid #cbd5e1;
+    padding: 10px 20px;
+    border-radius: 10px;
+    border: 1.5px solid #1e5173;
     background: #ffffff;
-    font-size: 12px;
+    font-size: 13px;
     font-weight: 600;
-    color: #334155;
+    color: #1e5173;
     cursor: pointer;
     display: inline-flex;
     align-items: center;
     gap: 8px;
-    transition: all 0.2s;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 2px 6px rgba(30, 81, 115, 0.08);
+    flex-shrink: 0;
 }
 
 .btn-test-proxy:hover {
-    border-color: #1e5173;
+    background: #1e5173;
+    color: #ffffff;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(30, 81, 115, 0.25);
+}
+
+.btn-test-proxy:hover i {
+    color: #ffffff;
+}
+
+.btn-test-proxy i {
     color: #1e5173;
-    background: #f1f5f9;
+    transition: color 0.25s;
 }
 
 .btn-test-proxy.loading {
+    background: #f1f5f9;
+    border-color: #cbd5e1;
+    color: #64748b;
     pointer-events: none;
-    opacity: 0.7;
 }
 
 .proxy-test-status {
-    font-size: 12px;
-    padding: 8px 14px;
-    border-radius: 8px;
+    font-size: 12.5px;
+    padding: 10px 16px;
+    border-radius: 10px;
     display: none;
-    line-height: 1.4;
+    line-height: 1.45;
+    animation: fadeInModal 0.2s ease-out;
 }
 
 .proxy-test-status.success {

@@ -507,9 +507,12 @@ function populateSettingsForm(s) {
     if (proxyMode) proxyMode.value = p.mode || "manual";
 
     const proxyManualFields = document.getElementById("proxy-manual-fields");
-    if (proxyManualFields) {
-        proxyManualFields.style.display = (p.mode === "system" || p.mode === "direct") ? "none" : "";
-    }
+    const infoSystem = document.getElementById("proxy-info-system");
+    const infoDirect = document.getElementById("proxy-info-direct");
+    const isManual = (p.mode !== "system" && p.mode !== "direct");
+    if (proxyManualFields) proxyManualFields.style.display = isManual ? "" : "none";
+    if (infoSystem) infoSystem.style.display = p.mode === "system" ? "flex" : "none";
+    if (infoDirect) infoDirect.style.display = p.mode === "direct" ? "flex" : "none";
 
     const proxyType = document.getElementById("setting-proxy-type");
     if (proxyType) proxyType.value = p.type || "http";
@@ -688,10 +691,14 @@ if (proxyEnableToggle) {
 const proxyModeSelect = document.getElementById("setting-proxy-mode");
 if (proxyModeSelect) {
     proxyModeSelect.addEventListener("change", (e) => {
+        const val = e.target.value;
         const manualFields = document.getElementById("proxy-manual-fields");
-        if (manualFields) {
-            manualFields.style.display = (e.target.value === "system" || e.target.value === "direct") ? "none" : "";
-        }
+        const infoSystem = document.getElementById("proxy-info-system");
+        const infoDirect = document.getElementById("proxy-info-direct");
+        const isManual = (val !== "system" && val !== "direct");
+        if (manualFields) manualFields.style.display = isManual ? "" : "none";
+        if (infoSystem) infoSystem.style.display = val === "system" ? "flex" : "none";
+        if (infoDirect) infoDirect.style.display = val === "direct" ? "flex" : "none";
     });
 }
 
@@ -700,7 +707,19 @@ const proxyAuthToggle = document.getElementById("setting-proxy-auth");
 if (proxyAuthToggle) {
     proxyAuthToggle.addEventListener("change", (e) => {
         const authFields = document.getElementById("proxy-auth-fields");
-        if (authFields) authFields.style.display = e.target.checked ? "flex" : "none";
+        if (authFields) authFields.style.display = e.target.checked ? "grid" : "none";
+    });
+}
+
+// Ẩn / Hiện mật khẩu Proxy
+const btnToggleProxyPass = document.getElementById("btn-toggle-proxy-pass");
+if (btnToggleProxyPass) {
+    btnToggleProxyPass.addEventListener("click", () => {
+        const passInput = document.getElementById("setting-proxy-pass");
+        if (!passInput) return;
+        const isPw = passInput.type === "password";
+        passInput.type = isPw ? "text" : "password";
+        btnToggleProxyPass.innerHTML = isPw ? '<i class="fa-regular fa-eye-slash"></i>' : '<i class="fa-regular fa-eye"></i>';
     });
 }
 

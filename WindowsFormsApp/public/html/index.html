@@ -310,71 +310,133 @@
                         </label>
                     </div>
 
-                    <div id="proxy-sub-wrap" class="sub-controls" style="display: none;">
-                        <div class="form-group">
-                            <label class="form-label" for="setting-proxy-mode">Chế độ Proxy</label>
-                            <select id="setting-proxy-mode" class="form-select">
-                                <option value="manual">Tùy chỉnh máy chủ Proxy thủ công</option>
-                                <option value="system">Sử dụng cấu hình Proxy hệ thống Windows</option>
-                                <option value="direct">Kết nối trực tiếp (Bỏ qua Proxy)</option>
-                            </select>
+                    <div id="proxy-sub-wrap" class="proxy-sub-wrap" style="display: none;">
+                        <div class="form-group proxy-mode-group">
+                            <label class="form-label" for="setting-proxy-mode">
+                                <i class="fa-solid fa-sliders"></i> Chế độ Proxy
+                            </label>
+                            <div class="input-with-icon">
+                                <i class="fa-solid fa-network-wired input-icon"></i>
+                                <select id="setting-proxy-mode" class="form-select proxy-mode-select">
+                                    <option value="manual">Tùy chỉnh máy chủ Proxy thủ công</option>
+                                    <option value="system">Sử dụng cấu hình Proxy hệ thống Windows</option>
+                                    <option value="direct">Kết nối trực tiếp (Bỏ qua Proxy)</option>
+                                </select>
+                            </div>
                         </div>
 
-                        <div id="proxy-manual-fields">
-                            <div class="form-row-2">
-                                <div class="form-group" style="flex: 1;">
+                        <!-- Banner thông tin khi chọn chế độ System hoặc Direct -->
+                        <div class="proxy-mode-banner" id="proxy-info-system" style="display: none;">
+                            <div class="banner-icon"><i class="fa-brands fa-windows"></i></div>
+                            <div class="banner-content">
+                                <div class="banner-title">Proxy hệ thống Windows</div>
+                                <div class="banner-desc">Ứng dụng sẽ tự động đồng bộ và sử dụng cấu hình Proxy đang hoạt động trong thiết lập mạng của Windows.</div>
+                            </div>
+                        </div>
+
+                        <div class="proxy-mode-banner" id="proxy-info-direct" style="display: none;">
+                            <div class="banner-icon"><i class="fa-solid fa-globe"></i></div>
+                            <div class="banner-content">
+                                <div class="banner-title">Kết nối Internet trực tiếp</div>
+                                <div class="banner-desc">Mọi tác vụ tải về sẽ kết nối thẳng tới máy chủ tệp mà không thông qua bất kỳ máy chủ trung gian nào.</div>
+                            </div>
+                        </div>
+
+                        <!-- Khung cấu hình Proxy thủ công rộng rãi, thoáng đãng -->
+                        <div id="proxy-manual-fields" class="proxy-manual-card">
+                            <div class="proxy-card-header">
+                                <span class="proxy-card-title">
+                                    <i class="fa-solid fa-server"></i> Cấu hình máy chủ
+                                </span>
+                                <span class="proxy-card-badge">Thủ công</span>
+                            </div>
+
+                            <!-- Lưới thông số kết nối: Giao thức, Máy chủ, Cổng -->
+                            <div class="proxy-server-grid">
+                                <div class="form-group proxy-col-protocol">
                                     <label class="form-label" for="setting-proxy-type">Giao thức</label>
-                                    <select id="setting-proxy-type" class="form-select">
-                                        <option value="http">HTTP / HTTPS</option>
-                                        <option value="socks5">SOCKS5</option>
-                                    </select>
+                                    <div class="input-with-icon">
+                                        <i class="fa-solid fa-shield-halved input-icon"></i>
+                                        <select id="setting-proxy-type" class="form-select">
+                                            <option value="http">HTTP / HTTPS</option>
+                                            <option value="socks5">SOCKS5</option>
+                                        </select>
+                                    </div>
                                 </div>
-                                <div class="form-group" style="flex: 2;">
+                                <div class="form-group proxy-col-host">
                                     <label class="form-label" for="setting-proxy-host">Địa chỉ máy chủ (Host / IP)</label>
-                                    <input type="text" id="setting-proxy-host" class="form-input" placeholder="vd: 127.0.0.1 hoặc proxy.example.com">
+                                    <div class="input-with-icon">
+                                        <i class="fa-solid fa-globe input-icon"></i>
+                                        <input type="text" id="setting-proxy-host" class="form-input" placeholder="vd: 127.0.0.1 hoặc proxy.example.com">
+                                    </div>
                                 </div>
-                                <div class="form-group" style="flex: 1;">
+                                <div class="form-group proxy-col-port">
                                     <label class="form-label" for="setting-proxy-port">Cổng (Port)</label>
-                                    <input type="number" id="setting-proxy-port" class="form-input" placeholder="8080" min="1" max="65535">
+                                    <div class="input-with-icon">
+                                        <i class="fa-solid fa-hashtag input-icon"></i>
+                                        <input type="number" id="setting-proxy-port" class="form-input text-center" placeholder="8080" min="1" max="65535">
+                                    </div>
                                 </div>
                             </div>
 
-                            <div class="form-group switch-row">
-                                <div>
-                                    <div class="form-label">Yêu cầu xác thực tài khoản (Authentication)</div>
-                                    <div class="form-desc">Bật nếu máy chủ Proxy yêu cầu Tên đăng nhập và Mật khẩu.</div>
+                            <!-- Khu vực Xác thực tài khoản -->
+                            <div class="proxy-auth-card">
+                                <div class="proxy-auth-header">
+                                    <div class="proxy-auth-title-wrap">
+                                        <span class="auth-icon"><i class="fa-solid fa-user-lock"></i></span>
+                                        <div>
+                                            <div class="form-label">Yêu cầu xác thực tài khoản (Authentication)</div>
+                                            <div class="form-desc">Bật nếu máy chủ Proxy yêu cầu Tên đăng nhập và Mật khẩu truy cập.</div>
+                                        </div>
+                                    </div>
+                                    <label class="toggle-switch">
+                                        <input type="checkbox" id="setting-proxy-auth">
+                                        <span class="toggle-slider"></span>
+                                    </label>
                                 </div>
-                                <label class="toggle-switch">
-                                    <input type="checkbox" id="setting-proxy-auth">
-                                    <span class="toggle-slider"></span>
-                                </label>
+
+                                <div id="proxy-auth-fields" class="proxy-auth-body" style="display: none;">
+                                    <div class="form-group">
+                                        <label class="form-label" for="setting-proxy-user">Tên đăng nhập (Username)</label>
+                                        <div class="input-with-icon">
+                                            <i class="fa-solid fa-user input-icon"></i>
+                                            <input type="text" id="setting-proxy-user" class="form-input" placeholder="Nhập tên tài khoản...">
+                                        </div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label" for="setting-proxy-pass">Mật khẩu (Password)</label>
+                                        <div class="input-with-icon password-input-wrap">
+                                            <i class="fa-solid fa-key input-icon"></i>
+                                            <input type="password" id="setting-proxy-pass" class="form-input" placeholder="Nhập mật khẩu...">
+                                            <button type="button" class="btn-toggle-pw" id="btn-toggle-proxy-pass" title="Hiện/Ẩn mật khẩu">
+                                                <i class="fa-regular fa-eye"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
 
-                            <div id="proxy-auth-fields" class="form-row-2" style="display: none;">
-                                <div class="form-group">
-                                    <label class="form-label" for="setting-proxy-user">Tên đăng nhập (Username)</label>
-                                    <input type="text" id="setting-proxy-user" class="form-input" placeholder="Username">
-                                </div>
-                                <div class="form-group">
-                                    <label class="form-label" for="setting-proxy-pass">Mật khẩu (Password)</label>
-                                    <input type="password" id="setting-proxy-pass" class="form-input" placeholder="••••••••">
-                                </div>
-                            </div>
-
-                            <div class="form-group">
+                            <!-- Tùy chọn Bỏ qua địa chỉ nội bộ -->
+                            <div class="proxy-option-box">
                                 <label class="custom-checkbox">
                                     <input type="checkbox" id="setting-proxy-bypass-local" checked>
                                     <span class="checkbox-indicator"></span>
-                                    <span>Bỏ qua Proxy đối với các địa chỉ mạng cục bộ (Bypass Local Addresses)</span>
+                                    <div class="checkbox-text-wrap">
+                                        <span class="checkbox-title">Bỏ qua Proxy đối với các địa chỉ mạng cục bộ (Bypass Local Addresses)</span>
+                                        <span class="checkbox-desc">Không định tuyến qua Proxy khi tải từ localhost, 127.0.0.1 hoặc mạng nội bộ LAN.</span>
+                                    </div>
                                 </label>
                             </div>
                         </div>
 
-                        <!-- Test Proxy -->
-                        <div class="proxy-test-container">
-                            <button type="button" class="btn-test-proxy" id="btn-test-proxy">
-                                <i class="fa-solid fa-plug-circle-bolt"></i> <span>Kiểm tra kết nối Proxy</span>
-                            </button>
+                        <!-- Kiểm tra kết nối Proxy -->
+                        <div class="proxy-test-card">
+                            <div class="proxy-test-action">
+                                <button type="button" class="btn-test-proxy" id="btn-test-proxy">
+                                    <i class="fa-solid fa-bolt-lightning"></i> <span>Kiểm tra kết nối Proxy</span>
+                                </button>
+                                <span class="test-proxy-hint">Gửi yêu cầu thử nghiệm để đo độ trễ và kiểm tra tính khả dụng</span>
+                            </div>
                             <div class="proxy-test-status" id="proxy-test-status"></div>
                         </div>
                     </div>
