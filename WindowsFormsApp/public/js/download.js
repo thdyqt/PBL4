@@ -876,15 +876,33 @@
 
                 // Nếu không có file nào được chọn -> hiển thị hộp thoại chọn phạm vi xóa
                 const completedItems = visibleItems.filter(el => el.dataset.state === "completed");
-                const activeItems = visibleItems.filter(el => el.dataset.state !== "completed");
+                const downloadingItems = visibleItems.filter(el =>
+                    el.dataset.state === "downloading" ||
+                    el.dataset.state === "queued" ||
+                    el.dataset.state === "preparing" ||
+                    el.dataset.state === "paused"
+                );
+                const cancelledItems = visibleItems.filter(el =>
+                    el.dataset.state === "cancelled" ||
+                    el.dataset.state === "failed"
+                );
                 const totalCount = visibleItems.length;
 
-                const defaultChoice = completedItems.length > 0 ? "completed" : (activeItems.length > 0 ? "active" : "all");
+                let defaultChoice = "all";
+                if (completedItems.length > 0) {
+                    defaultChoice = "completed";
+                } else if (cancelledItems.length > 0) {
+                    defaultChoice = "cancelled";
+                } else if (downloadingItems.length > 0) {
+                    defaultChoice = "downloading";
+                }
+
                 const descText = isEn
                     ? `You are in <strong>${categoryLabel}</strong>. Please select which files to delete:`
                     : `Bạn đang ở mục <strong>${categoryLabel}</strong>. Vui lòng chọn loại tệp muốn xóa:`;
                 const optDoneTitle = isEn ? "Delete all completed files" : "Xóa tất cả các file đã tải";
-                const optActiveTitle = isEn ? "Delete all downloading files" : "Xóa tất cả các file đang tải";
+                const optDownloadingTitle = isEn ? "Delete all downloading files" : "Xóa tất cả các file đang tải";
+                const optCancelledTitle = isEn ? "Delete all cancelled files" : "Xóa tất cả các file đã hủy";
                 const optAllTitle = isEn ? "Delete all files" : "Xóa toàn bộ file";
                 const badgeWord = isEn ? "files" : "tệp";
                 const warningText = isEn ? "Incomplete download files will be stopped and removed from disk." : "Các tệp đang tải dở dang sẽ bị dừng và xóa khỏi đĩa.";
@@ -905,14 +923,24 @@
                                     <span class="delete-option-badge">${completedItems.length} ${badgeWord}</span>
                                 </div>
                             </label>
-                            <label class="delete-option-item ${activeItems.length === 0 ? "disabled" : ""}">
-                                <input type="radio" name="deleteScope" value="active" ${defaultChoice === "active" ? "checked" : ""} ${activeItems.length === 0 ? "disabled" : ""}>
+                            <label class="delete-option-item ${downloadingItems.length === 0 ? "disabled" : ""}">
+                                <input type="radio" name="deleteScope" value="downloading" ${defaultChoice === "downloading" ? "checked" : ""} ${downloadingItems.length === 0 ? "disabled" : ""}>
                                 <div class="delete-option-text">
                                     <span class="delete-option-title">
                                         <i class="fa-solid fa-arrows-rotate" style="color: #0EA5E9;"></i>
-                                        ${optActiveTitle}
+                                        ${optDownloadingTitle}
                                     </span>
-                                    <span class="delete-option-badge">${activeItems.length} ${badgeWord}</span>
+                                    <span class="delete-option-badge">${downloadingItems.length} ${badgeWord}</span>
+                                </div>
+                            </label>
+                            <label class="delete-option-item ${cancelledItems.length === 0 ? "disabled" : ""}">
+                                <input type="radio" name="deleteScope" value="cancelled" ${defaultChoice === "cancelled" ? "checked" : ""} ${cancelledItems.length === 0 ? "disabled" : ""}>
+                                <div class="delete-option-text">
+                                    <span class="delete-option-title">
+                                        <i class="fa-solid fa-ban" style="color: #F97316;"></i>
+                                        ${optCancelledTitle}
+                                    </span>
+                                    <span class="delete-option-badge">${cancelledItems.length} ${badgeWord}</span>
                                 </div>
                             </label>
                             <label class="delete-option-item">
@@ -946,9 +974,12 @@
                         if (selectedScope === "completed") {
                             targetItems = completedItems;
                             labelMsg = isEn ? `Deleted ${targetItems.length} completed files in ${categoryLabel}.` : `Đã xóa ${targetItems.length} tệp đã tải trong mục ${categoryLabel}.`;
-                        } else if (selectedScope === "active") {
-                            targetItems = activeItems;
+                        } else if (selectedScope === "downloading") {
+                            targetItems = downloadingItems;
                             labelMsg = isEn ? `Deleted ${targetItems.length} downloading files in ${categoryLabel}.` : `Đã xóa ${targetItems.length} tệp đang tải trong mục ${categoryLabel}.`;
+                        } else if (selectedScope === "cancelled") {
+                            targetItems = cancelledItems;
+                            labelMsg = isEn ? `Deleted ${targetItems.length} cancelled files in ${categoryLabel}.` : `Đã xóa ${targetItems.length} tệp đã hủy trong mục ${categoryLabel}.`;
                         } else {
                             targetItems = visibleItems;
                             labelMsg = isEn ? `Deleted all ${targetItems.length} files in ${categoryLabel}.` : `Đã xóa toàn bộ ${targetItems.length} tệp trong mục ${categoryLabel}.`;

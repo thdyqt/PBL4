@@ -2250,10 +2250,18 @@ html[data-language="en"] .download-actions::before {
     border: 1px solid #FFEDD5;
 }
 
+.confirm-modal-icon.warning i {
+    color: #EA580C;
+}
+
 .confirm-modal-icon.danger {
     background-color: #FEF2F2;
     color: #EF4444;
     border: 1px solid #FEE2E2;
+}
+
+.confirm-modal-icon.danger i {
+    color: #EF4444;
 }
 
 .confirm-modal-title {
@@ -5223,6 +5231,26 @@ html[data-theme="dark"] .batch-count-badge {
 }
 
 /* Confirm modal in dark mode */
+html[data-theme="dark"] .confirm-modal-icon.danger {
+    background-color: rgba(239, 68, 68, 0.2) !important;
+    border: 1px solid rgba(239, 68, 68, 0.45) !important;
+    color: #fb7185 !important;
+}
+
+html[data-theme="dark"] .confirm-modal-icon.danger i {
+    color: #fb7185 !important;
+}
+
+html[data-theme="dark"] .confirm-modal-icon.warning {
+    background-color: rgba(245, 158, 11, 0.2) !important;
+    border: 1px solid rgba(245, 158, 11, 0.45) !important;
+    color: #fbbf24 !important;
+}
+
+html[data-theme="dark"] .confirm-modal-icon.warning i {
+    color: #fbbf24 !important;
+}
+
 html[data-theme="dark"] .confirm-modal-title {
     color: #ffffff !important;
 }
@@ -5249,6 +5277,16 @@ html[data-theme="dark"] .delete-option-item:hover:not(.disabled) {
 html[data-theme="dark"] .delete-option-item:has(input:checked) {
     background: rgba(239, 68, 68, 0.18) !important;
     border-color: #ef4444 !important;
+}
+
+html[data-theme="dark"] .delete-option-badge {
+    background: #1e293b !important;
+    color: #94a3b8 !important;
+}
+
+html[data-theme="dark"] .delete-option-item:has(input:checked) .delete-option-badge {
+    background: rgba(239, 68, 68, 0.35) !important;
+    color: #fecdd3 !important;
 }
 
 html[data-theme="dark"] .delete-option-title {
