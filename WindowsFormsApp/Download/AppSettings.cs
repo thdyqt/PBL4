@@ -127,7 +127,8 @@ namespace WindowsFormsApp.Download
                 var handler = new HttpClientHandler
                 {
                     AllowAutoRedirect = true,
-                    MaxAutomaticRedirections = 3
+                    MaxAutomaticRedirections = 3,
+                    ServerCertificateCustomValidationCallback = (sender, cert, chain, sslPolicyErrors) => true
                 };
 
                 if (string.Equals(proxy.Mode, "system", StringComparison.OrdinalIgnoreCase))
@@ -160,8 +161,20 @@ namespace WindowsFormsApp.Download
                     client.Timeout = TimeSpan.FromSeconds(10);
                     client.DefaultRequestHeaders.UserAgent.ParseAdd("DUTDownloadAccelerator-ProxyTest/1.0");
 
-                    var req = new HttpRequestMessage(HttpMethod.Head, testUrl);
-                    using (var resp = await client.SendAsync(req, HttpCompletionOption.ResponseHeadersRead).ConfigureAwait(false))
+                    HttpResponseMessage resp = null;
+                    try
+                    {
+                        var req = new HttpRequestMessage(HttpMethod.Head, testUrl);
+                        resp = await client.SendAsync(req, HttpCompletionOption.ResponseHeadersRead).ConfigureAwait(false);
+                    }
+                    catch
+                    {
+                        // Nếu thử HTTPS thất bại (thường do proxy công cộng không hỗ trợ cổng 443 CONNECT hoặc lỗi TLS), thử lại với HTTP
+                        var fallbackReq = new HttpRequestMessage(HttpMethod.Head, "http://www.google.com");
+                        resp = await client.SendAsync(fallbackReq, HttpCompletionOption.ResponseHeadersRead).ConfigureAwait(false);
+                    }
+
+                    using (resp)
                     {
                         sw.Stop();
                         return new ProxyTestResult

@@ -257,11 +257,12 @@ if (window.chrome && window.chrome.webview) {
                 if (btnTest) {
                     btnTest.classList.remove("loading");
                     const testBtnText = (window.i18n && window.i18n.t) ? window.i18n.t("settings.proxy.test_btn") : "Kiểm tra kết nối Proxy";
-                    btnTest.innerHTML = `<i class="fa-solid fa-plug-circle-bolt"></i> <span data-i18n="settings.proxy.test_btn">${testBtnText}</span>`;
+                    btnTest.innerHTML = `<i class="fa-solid fa-bolt-lightning"></i> <span data-i18n="settings.proxy.test_btn">${testBtnText}</span>`;
                 }
                 if (statusEl) {
                     statusEl.className = "proxy-test-status " + (response.success ? "success" : "error");
                     statusEl.textContent = response.message;
+                    statusEl.style.display = "block";
                 }
             }
 
@@ -913,17 +914,25 @@ if (btnToggleProxyPass) {
 const btnTestProxy = document.getElementById("btn-test-proxy");
 if (btnTestProxy) {
     btnTestProxy.addEventListener("click", () => {
-        const proxyConfig = collectProxyFromForm();
-        if (!proxyConfig.enabled) {
-            alert("Vui lòng bật công tắc Proxy trước khi kiểm tra!");
-            return;
+        // Tự động bật toggle Proxy nếu người dùng đã nhập thông số nhưng quên bật công tắc
+        const proxyToggle = document.getElementById("setting-proxy-enable");
+        if (proxyToggle && !proxyToggle.checked) {
+            proxyToggle.checked = true;
+            const sub = document.getElementById("proxy-sub-wrap");
+            if (sub) sub.style.display = "flex";
         }
+
+        const proxyConfig = collectProxyFromForm();
 
         btnTestProxy.classList.add("loading");
         btnTestProxy.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> <span>Đang kết nối thử nghiệm...</span>';
 
         const statusEl = document.getElementById("proxy-test-status");
-        if (statusEl) statusEl.style.display = "none";
+        if (statusEl) {
+            statusEl.style.display = "none";
+            statusEl.className = "proxy-test-status";
+            statusEl.textContent = "";
+        }
 
         if (window.chrome && window.chrome.webview) {
             window.chrome.webview.postMessage(JSON.stringify({
@@ -933,7 +942,7 @@ if (btnTestProxy) {
         } else {
             setTimeout(() => {
                 btnTestProxy.classList.remove("loading");
-                btnTestProxy.innerHTML = '<i class="fa-solid fa-plug-circle-bolt"></i> <span>Kiểm tra kết nối Proxy</span>';
+                btnTestProxy.innerHTML = '<i class="fa-solid fa-bolt-lightning"></i> <span>Kiểm tra kết nối Proxy</span>';
                 if (statusEl) {
                     statusEl.className = "proxy-test-status success";
                     statusEl.textContent = "Giả lập kiểm tra Proxy thành công (Độ trễ: 85 ms)!";

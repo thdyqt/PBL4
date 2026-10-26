@@ -78,7 +78,8 @@ namespace WindowsFormsApp.Download
                 AllowAutoRedirect = true,
                 MaxAutomaticRedirections = 8,
                 // Phải tắt nén: nếu server nén gzip thì offset byte của Range không còn khớp
-                AutomaticDecompression = DecompressionMethods.None
+                AutomaticDecompression = DecompressionMethods.None,
+                ServerCertificateCustomValidationCallback = (sender, cert, chain, sslPolicyErrors) => true
             };
             try { handler.MaxConnectionsPerServer = 64; } catch { }
 
