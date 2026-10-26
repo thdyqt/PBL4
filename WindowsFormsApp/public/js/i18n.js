@@ -680,6 +680,14 @@
 
         // 1. Text content replacement: [data-i18n]
         document.querySelectorAll("[data-i18n]").forEach(el => {
+            // Không ghi đè nhãn tốc độ trên header nếu đang bật giới hạn băng thông
+            if (el.id === "header-speed-limit-label") {
+                const speedBtn = document.getElementById("btn-header-speed-limit");
+                if (speedBtn && speedBtn.classList.contains("is-limited")) {
+                    return;
+                }
+            }
+
             const key = el.getAttribute("data-i18n");
             const translated = t(key);
             if (translated) {
@@ -702,6 +710,9 @@
 
         // 3. Title / tooltip replacement: [data-i18n-title]
         document.querySelectorAll("[data-i18n-title]").forEach(el => {
+            if (el.id === "btn-header-speed-limit" && el.classList.contains("is-limited")) {
+                return;
+            }
             const key = el.getAttribute("data-i18n-title");
             const translated = t(key);
             if (translated) {
@@ -722,11 +733,20 @@
             card.classList.toggle("active", card.dataset.langVal === targetLang);
         });
 
-        // 5. Update header speed label if unlimited
+        // 5. Update header speed label and tooltip
         const speedLabel = document.getElementById("header-speed-limit-label");
         const speedBtn = document.getElementById("btn-header-speed-limit");
-        if (speedLabel && speedBtn && !speedBtn.classList.contains("is-limited")) {
-            speedLabel.textContent = t("header.speed_unlimited");
+        if (speedBtn) {
+            if (speedBtn.classList.contains("is-limited")) {
+                if (speedLabel) {
+                    speedBtn.title = (targetLang === "en")
+                        ? `Bandwidth limit: ${speedLabel.textContent} (Click to adjust)`
+                        : `Giới hạn băng thông: ${speedLabel.textContent} (Nhấp để điều chỉnh)`;
+                }
+            } else {
+                if (speedLabel) speedLabel.textContent = t("header.speed_unlimited");
+                speedBtn.title = t("header.speed_limit_title");
+            }
         }
 
         // 6. Notify subscribers (ui.js, download.js, etc.)

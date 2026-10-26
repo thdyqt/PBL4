@@ -520,19 +520,31 @@ function updateHeaderSpeedLabel(kbps) {
     const label = document.getElementById("header-speed-limit-label");
     if (!btn || !label) return;
 
+    const isEn = window.i18n && window.i18n.getCurrentLanguage && window.i18n.getCurrentLanguage() === "en";
+
     if (kbps && kbps > 0) {
         btn.classList.add("is-limited");
+        label.removeAttribute("data-i18n");
+        btn.removeAttribute("data-i18n-title");
         if (kbps >= 1024) {
             const mb = (kbps / 1024).toFixed(kbps % 1024 === 0 ? 0 : 1);
             label.textContent = `${mb} MB/s`;
         } else {
             label.textContent = `${kbps} KB/s`;
         }
-        btn.title = `Giới hạn băng thông: ${label.textContent} (Nhấp để điều chỉnh)`;
+        btn.title = isEn
+            ? `Bandwidth limit: ${label.textContent} (Click to adjust)`
+            : `Giới hạn băng thông: ${label.textContent} (Nhấp để điều chỉnh)`;
     } else {
         btn.classList.remove("is-limited");
-        label.textContent = "Không giới hạn";
-        btn.title = "Giới hạn băng thông (Nhấp để điều chỉnh)";
+        label.setAttribute("data-i18n", "header.speed_unlimited");
+        btn.setAttribute("data-i18n-title", "header.speed_limit_title");
+        label.textContent = (window.i18n && window.i18n.t)
+            ? window.i18n.t("header.speed_unlimited")
+            : (isEn ? "Unlimited" : "Không giới hạn");
+        btn.title = (window.i18n && window.i18n.t)
+            ? window.i18n.t("header.speed_limit_title")
+            : (isEn ? "Speed limit (Click to adjust)" : "Giới hạn băng thông (Nhấp để điều chỉnh)");
     }
 }
 window.updateHeaderSpeedLabel = updateHeaderSpeedLabel;
