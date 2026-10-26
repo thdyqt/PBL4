@@ -2152,10 +2152,15 @@ html[data-language="en"] .download-actions::before {
 .download-actions .btn-open-file {
     background: linear-gradient(135deg, #1E5173, #1a4563);
     border-color: #1E5173;
-    color: #FFFFFF;
+    color: #FFFFFF !important;
     box-shadow: 0 2px 8px rgba(30, 81, 115, 0.3);
     position: relative;
     overflow: hidden;
+}
+
+.download-actions .btn-open-file,
+.download-actions .btn-open-file * {
+    color: #FFFFFF !important;
 }
 
 .download-actions .btn-open-file::after {
@@ -2177,8 +2182,13 @@ html[data-language="en"] .download-actions::before {
     box-shadow: 0 6px 18px rgba(30, 81, 115, 0.4);
 }
 
+.download-actions .btn-open-file:hover,
+.download-actions .btn-open-file:hover * {
+    color: #FFFFFF !important;
+}
+
 .download-actions .btn-open-file i {
-    color: #FFFFFF;
+    color: #FFFFFF !important;
 }
 
 /* Nút "Mở thư mục" – trắng tinh tế */
@@ -3266,15 +3276,25 @@ html[data-language="en"] .download-actions::before {
     flex-shrink: 0;
 }
 
+.btn-test-proxy,
+.btn-test-proxy * {
+    color: #1e5173;
+}
+
 .btn-test-proxy:hover {
     background: #1e5173;
-    color: #ffffff;
+    color: #ffffff !important;
     transform: translateY(-1px);
     box-shadow: 0 4px 12px rgba(30, 81, 115, 0.25);
 }
 
+.btn-test-proxy:hover,
+.btn-test-proxy:hover * {
+    color: #ffffff !important;
+}
+
 .btn-test-proxy:hover i {
-    color: #ffffff;
+    color: #ffffff !important;
 }
 
 .btn-test-proxy i {
@@ -3282,10 +3302,11 @@ html[data-language="en"] .download-actions::before {
     transition: color 0.25s;
 }
 
-.btn-test-proxy.loading {
+.btn-test-proxy.loading,
+.btn-test-proxy.loading * {
     background: #f1f5f9;
     border-color: #cbd5e1;
-    color: #64748b;
+    color: #64748b !important;
     pointer-events: none;
 }
 
