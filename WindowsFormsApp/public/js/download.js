@@ -269,6 +269,98 @@
         "#84cc16", "#f59e0b", "#10b981", "#3b82f6"
     ];
 
+    function getVirusBadgeHtml(status, result, taskId) {
+        const t = (k, fb) => (window.i18n && window.i18n.t) ? window.i18n.t(k, fb) : fb;
+        const st = (status || "").toLowerCase();
+
+        let badgeClass = "neutral";
+        let iconClass = "fa-shield";
+        let label = t("antivirus.error", "Chưa quét virus");
+        let tooltip = result || t("antivirus.error", "Chưa có thông tin quét mã độc");
+
+        if (st === "safe") {
+            badgeClass = "safe";
+            iconClass = "fa-shield-check";
+            label = t("antivirus.safe", "File an toàn");
+            tooltip = result || t("antivirus.safe_tooltip", "Windows Defender: Không phát hiện mối đe dọa");
+        } else if (st === "scanning") {
+            badgeClass = "scanning";
+            iconClass = "fa-shield-virus fa-spin";
+            label = t("antivirus.scanning", "Đang quét virus...");
+            tooltip = t("antivirus.scanning", "Đang quét virus qua Windows Defender...");
+        } else if (st === "threat") {
+            badgeClass = "threat";
+            iconClass = "fa-triangle-exclamation";
+            label = t("antivirus.threat", "Phát hiện mối đe dọa!");
+            tooltip = result || t("antivirus.threat_tooltip", "Cảnh báo: Windows Defender phát hiện tệp có chứa mối đe dọa tiềm ẩn!");
+        } else if (st === "not_available") {
+            badgeClass = "neutral";
+            iconClass = "fa-shield";
+            label = t("antivirus.not_available", "Defender không khả dụng");
+            tooltip = result || t("antivirus.not_available", "Windows Defender không khả dụng trên máy này");
+        }
+
+        const rescanTitle = t("antivirus.rescan_tooltip", "Quét lại mã độc qua Windows Defender");
+
+        return `
+            <div class="virus-badge ${badgeClass}" id="virus-badge-${taskId}" title="${tooltip}" data-virus-status="${st}">
+                <i class="fa-solid ${iconClass}"></i>
+                <span class="virus-badge-text">${label}</span>
+                <button type="button" class="btn-rescan-virus" data-action="rescan-virus" title="${rescanTitle}">
+                    <i class="fa-solid fa-arrows-rotate"></i>
+                </button>
+            </div>
+        `;
+    }
+
+    function updateItemAntivirusAndActions(item, d, isEn) {
+        let actions = item.querySelector(".download-actions");
+        const openFileText = isEn ? "Open File" : "Mở file";
+        const openFolderText = isEn ? "Open Folder" : "Mở thư mục";
+        const vStatus = d.virusScanStatus || "scanning";
+        const vResult = d.virusScanResult || "";
+        const taskId = d.taskId || item.id;
+
+        item.dataset.virusStatus = vStatus;
+
+        if (!actions) {
+            actions = document.createElement("div");
+            actions.className = "download-actions";
+            actions.innerHTML = `
+                ${getVirusBadgeHtml(vStatus, vResult, taskId)}
+                <button type="button" class="btn-action btn-open-file" data-action="open-file"><i class="fa-solid fa-arrow-up-right-from-square"></i> <span>${openFileText}</span></button>
+                <button type="button" class="btn-action btn-open-folder" data-action="open-folder"><i class="fa-regular fa-folder-open"></i> <span>${openFolderText}</span></button>
+            `;
+            item.appendChild(actions);
+        } else {
+            let badge = actions.querySelector(".virus-badge");
+            const temp = document.createElement("div");
+            temp.innerHTML = getVirusBadgeHtml(vStatus, vResult, taskId);
+            if (badge) {
+                badge.replaceWith(temp.firstElementChild);
+            } else {
+                actions.insertBefore(temp.firstElementChild, actions.firstChild);
+            }
+        }
+
+        // Cập nhật trạng thái nút "Mở file"
+        const btnOpen = actions.querySelector(".btn-open-file");
+        if (btnOpen) {
+            const isScanning = vStatus === "scanning";
+            const isThreat = vStatus === "threat";
+            btnOpen.disabled = isScanning;
+            btnOpen.classList.toggle("is-disabled", isScanning);
+            btnOpen.classList.toggle("is-threat", isThreat);
+            if (isThreat) {
+                btnOpen.title = isEn ? "Warning: Threat detected! Click to confirm before opening." : "Cảnh báo: Tệp chứa mối đe dọa! Bấm để xác nhận trước khi mở.";
+            } else if (isScanning) {
+                btnOpen.title = isEn ? "Scanning with Windows Defender..." : "Đang quét mã độc qua Windows Defender, vui lòng đợi...";
+            } else {
+                btnOpen.title = "";
+            }
+        }
+    }
+
     function ensureExtras(item, segmentCount) {
         let status = item.querySelector(".download-status");
         if (!status) {
@@ -497,16 +589,8 @@
         status.classList.toggle("is-error", d.state === "failed" || d.state === "cancelled");
         status.classList.toggle("is-done", d.state === "completed");
 
-        if (d.state === "completed" && !item.querySelector(".download-actions")) {
-            const actions = document.createElement("div");
-            actions.className = "download-actions";
-            const openFileText = isEn ? "Open File" : "Mở file";
-            const openFolderText = isEn ? "Open Folder" : "Mở thư mục";
-            actions.innerHTML = `
-                <button type="button" class="btn-action btn-open-file" data-action="open-file"><i class="fa-solid fa-arrow-up-right-from-square"></i> <span>${openFileText}</span></button>
-                <button type="button" class="btn-action btn-open-folder" data-action="open-folder"><i class="fa-regular fa-folder-open"></i> <span>${openFolderText}</span></button>
-            `;
-            item.appendChild(actions);
+        if (d.state === "completed") {
+            updateItemAntivirusAndActions(item, d, isEn);
         }
 
         const metadataChanged = (previousState !== d.state) ||
@@ -515,6 +599,32 @@
         if (metadataChanged) {
             syncHeaderPauseButtons();
             if (window.applyFilter) window.applyFilter();
+        }
+    }
+
+    function handleVirusScanResult(msg) {
+        if (!msg || !msg.taskId) return;
+        const item = document.getElementById(msg.taskId);
+        if (!item) return;
+
+        const isEn = window.i18n && window.i18n.getCurrentLanguage && window.i18n.getCurrentLanguage() === "en";
+        updateItemAntivirusAndActions(item, {
+            taskId: msg.taskId,
+            virusScanStatus: msg.status,
+            virusScanResult: msg.message
+        }, isEn);
+
+        if (msg.status === "threat") {
+            const fileName = item.dataset.fileName || "Tệp";
+            const warnMsg = isEn
+                ? `SECURITY WARNING: Threat detected in ${fileName}!`
+                : `CẢNH BÁO MÃ ĐỘC: Windows Defender phát hiện mối đe dọa trong tệp ${fileName}!`;
+            if (window.showAppToast) window.showAppToast(warnMsg);
+        } else if (msg.status === "safe") {
+            if (window.showAppToast) {
+                const safeMsg = isEn ? "Windows Defender: File is safe!" : "Windows Defender: Tệp an toàn, không có mã độc!";
+                window.showAppToast(safeMsg);
+            }
         }
     }
 
@@ -529,12 +639,87 @@
         if (window.applyFilter) window.applyFilter();
     }
 
+    function handleBrowserLinkCaptured(data) {
+        if (!data || !data.url) return;
+
+        // 1. Chuyển sang Tab Home (Tất cả) nếu đang ở tab khác
+        const allNav = document.querySelector('.inner-menu a[data-filter="all"]');
+        if (allNav) {
+            allNav.click();
+        } else if (typeof window.applyFilter === "function") {
+            window.applyFilter("all");
+        }
+
+        // 2. Điền URL vào ô #url
+        const urlInput = document.getElementById("url");
+        if (urlInput) {
+            urlInput.value = data.url;
+            urlInput.dispatchEvent(new Event("input", { bubbles: true }));
+            urlInput.dispatchEvent(new Event("change", { bubbles: true }));
+        }
+
+        // 3. Nếu có gợi ý tên file từ Extension -> điền vào ô #custom-file-name
+        const customNameEl = document.getElementById("custom-file-name");
+        if (customNameEl && data.fileName) {
+            customNameEl.value = data.fileName;
+            customNameEl.dispatchEvent(new Event("input", { bubbles: true }));
+        }
+
+        // 4. Nếu ô lưu file chưa có -> lấy thư mục lưu mặc định
+        const saveInput = document.getElementById("save-path");
+        if (saveInput && !saveInput.value && window.currentSettings && window.currentSettings.defaultSavePath) {
+            saveInput.value = window.currentSettings.defaultSavePath;
+        }
+
+        // 5. Hiệu ứng Visual WOW: Ánh hào quang nổi bật form tải (pulse glow)
+        const inputForm = document.getElementById("input-form");
+        if (inputForm) {
+            inputForm.classList.remove("browser-captured-glow");
+            void inputForm.offsetWidth; // Reflow
+            inputForm.classList.add("browser-captured-glow");
+            setTimeout(() => inputForm.classList.remove("browser-captured-glow"), 3500);
+
+            try {
+                inputForm.scrollIntoView({ behavior: "smooth", block: "center" });
+            } catch (e) { }
+        }
+
+        // 6. Hiển thị thông báo Toast
+        const displayFileName = data.fileName || "Tệp từ trình duyệt";
+        const fileSizeText = (data.totalBytes && data.totalBytes > 0) ? ` (${fmtBytes(data.totalBytes)})` : "";
+        if (window.showAppToast) {
+            window.showAppToast(`🚀 Đã bắt link từ trình duyệt: ${displayFileName}${fileSizeText}`);
+        }
+
+        // 7. Tự động tải nếu người dùng bật AutoStart trong Extension Popup
+        if (data.autoStart) {
+            setTimeout(() => {
+                const downloadBtn = document.querySelector(".inner-download-button");
+                if (downloadBtn) {
+                    downloadBtn.click();
+                }
+            }, 600);
+        }
+    }
+    window.handleBrowserLinkCaptured = handleBrowserLinkCaptured;
+
     if (hasHost) {
         window.chrome.webview.addEventListener("message", (event) => {
             try {
                 const msg = JSON.parse(event.data);
-                if (msg.action === "DOWNLOAD_PROGRESS") applyProgress(msg.data);
+                if (msg.action === "DOWNLOAD_PROGRESS") {
+                    applyProgress(msg.data);
+                    if (window.handleDownloadProgressForChart) {
+                        try { window.handleDownloadProgressForChart(msg.data); } catch (e) { }
+                    }
+                }
                 else if (msg.action === "DOWNLOAD_ERROR") applyError(msg);
+                else if (msg.action === "VIRUS_SCAN_RESULT") {
+                    handleVirusScanResult(msg);
+                }
+                else if (msg.action === "BROWSER_LINK_CAPTURED") {
+                    handleBrowserLinkCaptured(msg.data);
+                }
                 else if (msg.action === "HISTORY_DATA") {
                     if (Array.isArray(msg.data)) {
                         msg.data.forEach(rec => restoreHistoryItem(rec));
@@ -597,6 +782,26 @@
                 post({ action: "OPEN_FILE", taskId: taskId, path: path });
             } else if (action === "open-folder") {
                 post({ action: "OPEN_FOLDER", taskId: taskId, path: path });
+            } else if (action === "rescan-virus") {
+                const badge = item.querySelector(".virus-badge");
+                if (badge) {
+                    badge.className = "virus-badge scanning";
+                    const txt = badge.querySelector(".virus-badge-text");
+                    const isEnLang = window.i18n && window.i18n.getCurrentLanguage && window.i18n.getCurrentLanguage() === "en";
+                    if (txt) txt.textContent = isEnLang ? "Scanning..." : "Đang quét...";
+                    const icon = badge.querySelector("i.fa-solid");
+                    if (icon) icon.className = "fa-solid fa-shield-virus fa-spin";
+                }
+                const btnOpen = item.querySelector(".btn-open-file");
+                if (btnOpen) {
+                    btnOpen.disabled = true;
+                    btnOpen.classList.add("is-disabled");
+                }
+                post({ action: "SCAN_FILE_VIRUS", taskId: taskId, path: path });
+                if (window.showAppToast) {
+                    const isEnLang = window.i18n && window.i18n.getCurrentLanguage && window.i18n.getCurrentLanguage() === "en";
+                    window.showAppToast(isEnLang ? "Triggered Windows Defender virus scan..." : "Đang kích hoạt Windows Defender quét mã độc...");
+                }
             }
             return;
         }
@@ -1086,11 +1291,20 @@
             segmentBarsHtml += `</div>`;
         }
 
-        const openFileText = isEn ? "Open File" : "Mở file";
-        const openFolderText = isEn ? "Open Folder" : "Mở thư mục";
+        const virusStatus = rec.virusScanStatus || "safe";
+        const virusResult = rec.virusScanResult || "";
+        const isThreat = virusStatus === "threat";
+        const isScanning = virusStatus === "scanning";
+        const openThreatClass = isThreat ? "is-threat" : (isScanning ? "is-disabled" : "");
+        const openDisabledAttr = isScanning ? "disabled" : "";
+        const openTitle = isThreat
+            ? (isEn ? "Warning: Threat detected! Click to confirm before opening." : "Cảnh báo: Tệp chứa mối đe dọa! Bấm để xác nhận trước khi mở.")
+            : (isScanning ? (isEn ? "Scanning with Windows Defender..." : "Đang quét mã độc qua Windows Defender, vui lòng đợi...") : "");
+
         const openFileBtn = state === "completed" ? `
             <div class="download-actions">
-                <button type="button" class="btn-action btn-open-file" data-action="open-file">
+                ${getVirusBadgeHtml(virusStatus, virusResult, rec.id)}
+                <button type="button" class="btn-action btn-open-file ${openThreatClass}" data-action="open-file" ${openDisabledAttr} title="${openTitle}">
                     <i class="fa-solid fa-arrow-up-right-from-square"></i> <span>${openFileText}</span>
                 </button>
                 <button type="button" class="btn-action btn-open-folder" data-action="open-folder">

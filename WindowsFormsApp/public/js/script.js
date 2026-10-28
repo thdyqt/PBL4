@@ -846,6 +846,21 @@ document.addEventListener("click", (e) => {
         if (customInput) customInput.value = pill.dataset.kbps;
         return;
     }
+
+    // 6. Thao tác Tab Trình duyệt (Browser Extension)
+    if (e.target.closest("#btn-open-extension-folder")) {
+        if (window.chrome && window.chrome.webview) {
+            window.chrome.webview.postMessage(JSON.stringify({ action: "OPEN_EXTENSION_FOLDER" }));
+        }
+        return;
+    }
+
+    if (e.target.closest("#btn-test-capture")) {
+        if (window.chrome && window.chrome.webview) {
+            window.chrome.webview.postMessage(JSON.stringify({ action: "TEST_CAPTURE_LINK" }));
+        }
+        return;
+    }
 });
 
 // Bật tắt Giới hạn tốc độ

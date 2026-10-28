@@ -70,6 +70,8 @@ namespace WindowsFormsApp.Download
                 // Đảm bảo các cột mới tồn tại cho CSDL cũ đã tạo từ trước
                 EnsureColumn(conn, "download_history", "elapsed_seconds", "REAL NOT NULL DEFAULT 0");
                 EnsureColumn(conn, "download_history", "avg_speed", "TEXT");
+                EnsureColumn(conn, "download_history", "virus_scan_status", "TEXT");
+                EnsureColumn(conn, "download_history", "virus_scan_result", "TEXT");
 
                 // Index tìm nhanh theo trạng thái (ví dụ: tải tất cả bản ghi đang dở)
                 Execute(conn, "CREATE INDEX IF NOT EXISTS idx_state ON download_history(state);");
@@ -126,13 +128,15 @@ namespace WindowsFormsApp.Download
                          total_bytes, downloaded, state, supports_ranges, threads,
                          elapsed_seconds, avg_speed,
                          etag, last_modified, file_hash, error_message, segments_json,
-                         created_at, updated_at, completed_at)
+                         created_at, updated_at, completed_at,
+                         virus_scan_status, virus_scan_result)
                     VALUES
                         (@id, @src, @remote, @name, @path,
                          @total, @dl, @state, @ranges, @threads,
                          @elapsed, @avgspeed,
                          @etag, @lm, @hash, @err, @segs,
-                         @created, @updated, @completed);
+                         @created, @updated, @completed,
+                         @virus_status, @virus_result);
                 ";
                 BindRecord(cmd, record);
                 cmd.ExecuteNonQuery();
@@ -166,7 +170,9 @@ namespace WindowsFormsApp.Download
                         error_message   = @err,
                         segments_json   = @segs,
                         updated_at      = @updated,
-                        completed_at    = @completed
+                        completed_at    = @completed,
+                        virus_scan_status = @virus_status,
+                        virus_scan_result = @virus_result
                     WHERE id = @id;
                 ";
                 cmd.Parameters.AddWithValue("@name", (object)record.FileName ?? DBNull.Value);
@@ -183,6 +189,8 @@ namespace WindowsFormsApp.Download
                 cmd.Parameters.AddWithValue("@segs", (object)record.SegmentsJson ?? DBNull.Value);
                 cmd.Parameters.AddWithValue("@updated", Iso(record.UpdatedAt));
                 cmd.Parameters.AddWithValue("@completed", (object)record.CompletedAt ?? DBNull.Value);
+                cmd.Parameters.AddWithValue("@virus_status", (object)record.VirusScanStatus ?? DBNull.Value);
+                cmd.Parameters.AddWithValue("@virus_result", (object)record.VirusScanResult ?? DBNull.Value);
                 cmd.Parameters.AddWithValue("@id", record.Id);
                 cmd.ExecuteNonQuery();
             }
@@ -313,6 +321,8 @@ namespace WindowsFormsApp.Download
             cmd.Parameters.AddWithValue("@created",  Iso(r.CreatedAt));
             cmd.Parameters.AddWithValue("@updated",  Iso(r.UpdatedAt));
             cmd.Parameters.AddWithValue("@completed",(object)r.CompletedAt  ?? DBNull.Value);
+            cmd.Parameters.AddWithValue("@virus_status", (object)r.VirusScanStatus ?? DBNull.Value);
+            cmd.Parameters.AddWithValue("@virus_result", (object)r.VirusScanResult ?? DBNull.Value);
         }
 
         private static DownloadRecord ReadRecord(SqliteDataReader r)
@@ -353,7 +363,9 @@ namespace WindowsFormsApp.Download
                 SegmentsJson   = r["segments_json"]  as string,
                 CreatedAt      = ParseIso(r["created_at"]   as string),
                 UpdatedAt      = ParseIso(r["updated_at"]   as string),
-                CompletedAt    = completedVn
+                CompletedAt    = completedVn,
+                VirusScanStatus = r["virus_scan_status"] as string,
+                VirusScanResult = r["virus_scan_result"] as string
             };
         }
 
@@ -395,6 +407,8 @@ namespace WindowsFormsApp.Download
         public DateTime  CreatedAt      { get; set; }
         public DateTime  UpdatedAt      { get; set; }
         public string    CompletedAt    { get; set; }
+        public string    VirusScanStatus { get; set; }
+        public string    VirusScanResult { get; set; }
 
         /// <summary>Helper: parse SegmentsJson về List&lt;SegmentMeta&gt;.</summary>
         public List<SegmentMeta> GetSegments()

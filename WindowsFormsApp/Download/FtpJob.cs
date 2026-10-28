@@ -28,7 +28,6 @@ namespace WindowsFormsApp.Download
         private double _speed;
         private long _lastTicks;
         private long _lastBytes;
-        private string _firstError;
 
         public FtpJob(string id, string url, long totalBytes, string targetPath,
                       SpeedLimiter limiter, long resumeOffset = 0)
@@ -49,7 +48,10 @@ namespace WindowsFormsApp.Download
         public DownloadState State { get; private set; }
         public string Error { get; private set; }
         public string FileHash { get; private set; }
+        public string VirusScanStatus { get; private set; } // safe | threat | error | scanning | not_available
+        public string VirusScanResult { get; private set; }
         public long Downloaded => Interlocked.Read(ref _downloaded);
+        public double CurrentSpeed => State == DownloadState.Downloading ? _speed : 0;
 
         public event Action<FtpJob> Changed;
 
@@ -67,7 +69,6 @@ namespace WindowsFormsApp.Download
                 Task previous = _runTask;
 
                 Error = null;
-                _firstError = null;
                 State = DownloadState.Downloading;
                 _activeStopwatch.Start();
                 ResetSpeed();
@@ -142,8 +143,30 @@ namespace WindowsFormsApp.Download
                     State = DownloadState.Completed;
                     _speed = 0;
                     _activeStopwatch.Stop();
+                    VirusScanStatus = "scanning";
+                    VirusScanResult = "Đang quét mã độc qua Windows Defender...";
                 }
                 lock (_metaLock) { MetaStore.Delete(TargetPath); }
+                RaiseChanged();
+
+                // Tự động quét virus qua Windows Defender
+                try
+                {
+                    var scan = await AntivirusScanner.ScanFileAsync(TargetPath, ct).ConfigureAwait(false);
+                    lock (_sync)
+                    {
+                        VirusScanStatus = scan.Status;
+                        VirusScanResult = scan.Message;
+                    }
+                }
+                catch (Exception scanEx)
+                {
+                    lock (_sync)
+                    {
+                        VirusScanStatus = "error";
+                        VirusScanResult = "Lỗi khi quét virus: " + scanEx.Message;
+                    }
+                }
             }
             catch (Exception ex)
             {
@@ -332,6 +355,8 @@ namespace WindowsFormsApp.Download
                 SupportsRanges = false,
                 Error = Error,
                 FileHash = FileHash,
+                VirusScanStatus = VirusScanStatus,
+                VirusScanResult = VirusScanResult,
                 Segments = new System.Collections.Generic.List<SegmentDto>()
             };
         }

@@ -76,7 +76,10 @@ namespace WindowsFormsApp.Download
         public DownloadState State { get; private set; }
         public string Error { get; private set; }
         public string FileHash { get; private set; }  // SHA-256 hex sau khi hoàn thành
+        public string VirusScanStatus { get; private set; } // safe | threat | error | scanning | not_available
+        public string VirusScanResult { get; private set; }
         public long Downloaded => Interlocked.Read(ref _downloaded);
+        public double CurrentSpeed => State == DownloadState.Downloading ? _speed : 0;
 
         public event Action<DownloadJob> Changed;
 
@@ -193,8 +196,30 @@ namespace WindowsFormsApp.Download
                     State = DownloadState.Completed;
                     _speed = 0;
                     _activeStopwatch.Stop();
+                    VirusScanStatus = "scanning";
+                    VirusScanResult = "Đang quét mã độc qua Windows Defender...";
                 }
                 lock (_metaLock) { MetaStore.Delete(TargetPath); }
+                RaiseChanged();
+
+                // Tự động quét mã độc qua Windows Defender ngay sau khi verify SHA-256
+                try
+                {
+                    var scan = await AntivirusScanner.ScanFileAsync(TargetPath, ct).ConfigureAwait(false);
+                    lock (_sync)
+                    {
+                        VirusScanStatus = scan.Status;
+                        VirusScanResult = scan.Message;
+                    }
+                }
+                catch (Exception scanEx)
+                {
+                    lock (_sync)
+                    {
+                        VirusScanStatus = "error";
+                        VirusScanResult = "Lỗi khi quét virus: " + scanEx.Message;
+                    }
+                }
             }
             catch (Exception ex)
             {
@@ -549,6 +574,8 @@ namespace WindowsFormsApp.Download
                 SupportsRanges  = SupportsRanges,
                 Error           = Error,
                 FileHash        = FileHash,
+                VirusScanStatus = VirusScanStatus,
+                VirusScanResult = VirusScanResult,
                 Segments        = Segments.Select(s => new SegmentDto { Downloaded = s.Downloaded, Length = s.Length }).ToList(),
                 SegmentsMetaJson = segsMeta
             };

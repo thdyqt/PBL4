@@ -94,6 +94,13 @@ function getFilterConfig(filterName) {
                 emptyTitle: t("filter.document.emptyTitle", "Không có tệp nén / tài liệu"),
                 emptyDesc: t("filter.document.emptyDesc", "Các tệp .zip, .rar, .pdf, .docx... sẽ hiển thị tại đây.")
             };
+        case "chart":
+            return {
+                label: t("chart.queue_badge", "TIẾN TRÌNH"),
+                title: t("chart.queue_title", "Tác vụ đang tải"),
+                emptyTitle: "",
+                emptyDesc: ""
+            };
         case "device":
             return {
                 label: t("filter.device.label", "HỆ THỐNG"),
@@ -458,12 +465,29 @@ function applyFilter(filterName) {
     const section2 = document.querySelector(".section-2");
     const section3 = document.querySelector(".section-3");
     const sectionDevice = document.getElementById("section-device");
+    const sectionChart = document.getElementById("section-chart");
+    const fileToolbar = document.getElementById("file-toolbar");
 
-    // Nếu chọn mục Thông tin thiết bị: ẩn các section tải file và hiện frame thiết bị giữa trang
-    if (currentFilter === "device") {
+    // Nếu chọn mục Giám sát tốc độ (Chart): hiện frame biểu đồ phía trên, ẩn toolbar tìm kiếm/sắp xếp
+    if (currentFilter === "chart") {
+        if (section1) section1.style.display = "";
+        if (section2) section2.style.display = "none";
+        if (sectionDevice) sectionDevice.style.display = "none";
+        if (sectionChart) sectionChart.style.display = "block";
+        if (fileToolbar) fileToolbar.style.display = "none";
+
+        window.scrollTo({ top: 0, behavior: "smooth" });
+
+        if (window.initSpeedCharts) {
+            window.initSpeedCharts();
+        }
+    } else if (currentFilter === "device") {
+        // Nếu chọn mục Thông tin thiết bị: ẩn các section tải file và hiện frame thiết bị giữa trang
         if (section1) section1.style.display = "none";
         if (section2) section2.style.display = "none";
         if (section3) section3.style.display = "none";
+        if (sectionChart) sectionChart.style.display = "none";
+        if (fileToolbar) fileToolbar.style.display = "none";
         if (sectionDevice) sectionDevice.style.display = "block";
 
         if (window.fetchDeviceInfo) {
@@ -472,6 +496,8 @@ function applyFilter(filterName) {
         return;
     } else {
         if (sectionDevice) sectionDevice.style.display = "none";
+        if (sectionChart) sectionChart.style.display = "none";
+        if (fileToolbar) fileToolbar.style.display = "";
         if (section1) section1.style.display = "";
         if (section2) section2.style.display = currentFilter === "home" ? "" : "none";
         if (section3) section3.style.display = "";
@@ -531,6 +557,7 @@ function applyFilter(filterName) {
             const category = item.dataset.category || "other";
             switch (currentFilter) {
                 case "all": return true;
+                case "chart": return (state === "downloading" || state === "preparing" || state === "queued" || state === "paused");
                 case "downloading": return (state === "downloading" || state === "preparing" || state === "queued" || state === "paused");
                 case "completed": return (state === "completed");
                 case "audio": return (category === "audio");
@@ -630,7 +657,13 @@ function applyFilter(filterName) {
         }
     } else {
         if (searchEmptyState) searchEmptyState.style.display = "none";
-        if (categoryItems.length === 0) {
+        if (currentFilter === "chart") {
+            // Trong tab Giám sát tốc độ: không hiển thị ô rỗng
+            // Nếu không có tệp nào đang tải (hoặc sau khi tất cả đã tải xong): ẩn hoàn toàn section-3, chỉ hiện biểu đồ
+            // Nếu có tệp đang tải: hiển thị section-3 bên dưới biểu đồ
+            if (emptyState) emptyState.style.display = "none";
+            if (section3) section3.style.display = categoryItems.length > 0 ? "" : "none";
+        } else if (categoryItems.length === 0) {
             if (emptyState) {
                 emptyState.style.display = "";
                 const h3 = emptyState.querySelector("h3");

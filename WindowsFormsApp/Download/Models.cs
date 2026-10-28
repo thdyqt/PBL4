@@ -65,6 +65,8 @@ namespace WindowsFormsApp.Download
         public string FileHash { get; set; }      // SHA-256 hex (64 ký tự) sau khi hoàn thành
         public string AvgSpeed { get; set; }       // Tốc độ trung bình (chuỗi hiển thị)
         public string CompletedAt { get; set; }    // Thời điểm hoàn thành theo giờ VN
+        public string VirusScanStatus { get; set; } // safe | threat | error | scanning | not_available
+        public string VirusScanResult { get; set; } // Mô tả kết quả quét từ Windows Defender
         public List<SegmentDto> Segments { get; set; }
 
         /// <summary>
@@ -79,5 +81,19 @@ namespace WindowsFormsApp.Download
     {
         public long Downloaded { get; set; }
         public long Length { get; set; }
+    }
+
+    /// <summary>Dữ liệu đo đạc hiệu năng thời gian thực gửi lên giao diện vẽ biểu đồ (Chart.js)</summary>
+    public sealed class PerformanceMetricsDto
+    {
+        public double TotalSpeed { get; set; }           // byte/giây (tổng băng thông tải về)
+        public int ActiveThreads { get; set; }           // tổng số luồng mạng đang mở
+        public int ActiveJobs { get; set; }              // số tác vụ đang ở trạng thái Downloading
+        public long TotalDownloaded { get; set; }        // tổng số byte đã tải trong phiên
+        public double CpuPercent { get; set; }           // mức sử dụng CPU của tiến trình (%)
+        public long RamUsedBytes { get; set; }           // RAM WorkingSet của app (byte)
+        public long TotalRamBytes { get; set; }          // Tổng RAM vật lý hệ thống (byte)
+        public int ProcessorCount { get; set; }          // Số nhân luồng logic CPU
+        public long Timestamp { get; set; }              // Unix timestamp (ms)
     }
 }

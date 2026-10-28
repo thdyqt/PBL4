@@ -22,6 +22,15 @@ namespace WindowsFormsApp.IPC
         private readonly System.Collections.Generic.Dictionary<string, DownloadRecord> _dbCache
             = new System.Collections.Generic.Dictionary<string, DownloadRecord>(StringComparer.Ordinal);
 
+        // Biến phục vụ tính toán tài nguyên CPU / RAM cho biểu đồ thời gian thực (Chart.js)
+        private static readonly System.Diagnostics.Process _currentProcess = System.Diagnostics.Process.GetCurrentProcess();
+        private TimeSpan _lastCpuTime = TimeSpan.Zero;
+        private DateTime _lastCpuSample = DateTime.MinValue;
+        private double _cachedCpuUsage = 0;
+        private readonly object _cpuLock = new object();
+        private long _cachedTotalRamBytes = 0;
+        private readonly System.Threading.Timer _metricsTimer;
+
         public MessageHandler(Form1 mainForm)
         {
             _mainForm = mainForm;
@@ -31,11 +40,17 @@ namespace WindowsFormsApp.IPC
 
             _manager = new DownloadManager();
             _manager.ProgressChanged += OnProgressChanged;
+
+            _cachedTotalRamBytes = GetTotalSystemRam();
+
+            // Phát số liệu hiệu năng (tốc độ, CPU, RAM, threads) mỗi 500ms cho biểu đồ
+            _metricsTimer = new System.Threading.Timer(OnMetricsTick, null, 500, 500);
         }
 
         /// <summary>Gọi khi đóng form: dừng các luồng tải và lưu tiến độ để lần sau Resume.</summary>
         public void Shutdown()
         {
+            try { _metricsTimer?.Dispose(); } catch { }
             _manager.ProgressChanged -= OnProgressChanged;
             _manager.Shutdown();
         }
@@ -197,6 +212,10 @@ namespace WindowsFormsApp.IPC
                             HandleOpenFolder(GetString(root, "taskId"), GetString(root, "path"));
                             break;
 
+                        case "SCAN_FILE_VIRUS":
+                            _ = HandleScanFileVirusAsync(root);
+                            break;
+
                         case "VERIFY_HASH":
                             _ = HandleVerifyHashAsync(root);
                             break;
@@ -217,6 +236,18 @@ namespace WindowsFormsApp.IPC
 
                         case "GET_SYSTEM_INFO":
                             HandleGetSystemInfo();
+                            break;
+
+                        case "GET_PERFORMANCE_METRICS":
+                            SendPerformanceMetrics();
+                            break;
+
+                        case "OPEN_EXTENSION_FOLDER":
+                            HandleOpenExtensionFolder();
+                            break;
+
+                        case "TEST_CAPTURE_LINK":
+                            HandleTestCaptureLink();
                             break;
                     }
                 }
@@ -500,6 +531,108 @@ namespace WindowsFormsApp.IPC
             }
         }
 
+        // ==================================================================
+        // Biểu đồ thời gian thực (Real-time Speed & System Metrics)
+        // ==================================================================
+
+        private void OnMetricsTick(object state)
+        {
+            SendPerformanceMetrics();
+        }
+
+        private void SendPerformanceMetrics()
+        {
+            try
+            {
+                _manager.GetAggregateMetrics(out double totalSpeed, out int activeThreads, out int activeJobs, out long totalDownloaded);
+                double cpuPercent = CalculateCpuUsage();
+                _currentProcess.Refresh();
+                long ramUsed = _currentProcess.WorkingSet64;
+
+                if (_cachedTotalRamBytes <= 0)
+                {
+                    _cachedTotalRamBytes = GetTotalSystemRam();
+                }
+
+                var dto = new PerformanceMetricsDto
+                {
+                    TotalSpeed = Math.Round(totalSpeed, 2),
+                    ActiveThreads = activeThreads,
+                    ActiveJobs = activeJobs,
+                    TotalDownloaded = totalDownloaded,
+                    CpuPercent = Math.Round(cpuPercent, 1),
+                    RamUsedBytes = ramUsed,
+                    TotalRamBytes = _cachedTotalRamBytes,
+                    ProcessorCount = Environment.ProcessorCount,
+                    Timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()
+                };
+
+                Send(new
+                {
+                    action = "PERFORMANCE_METRICS",
+                    data = dto
+                });
+            }
+            catch { }
+        }
+
+        private double CalculateCpuUsage()
+        {
+            lock (_cpuLock)
+            {
+                var now = DateTime.UtcNow;
+                var cpuTime = _currentProcess.TotalProcessorTime;
+                if (_lastCpuSample == DateTime.MinValue)
+                {
+                    _lastCpuSample = now;
+                    _lastCpuTime = cpuTime;
+                    return 0;
+                }
+                var elapsedMs = (now - _lastCpuSample).TotalMilliseconds;
+                if (elapsedMs >= 400)
+                {
+                    var cpuMs = (cpuTime - _lastCpuTime).TotalMilliseconds;
+                    _lastCpuSample = now;
+                    _lastCpuTime = cpuTime;
+                    double pct = (cpuMs / (elapsedMs * Environment.ProcessorCount)) * 100.0;
+                    _cachedCpuUsage = Math.Max(0.0, Math.Min(100.0, pct));
+                }
+                return _cachedCpuUsage;
+            }
+        }
+
+        [System.Runtime.InteropServices.StructLayout(System.Runtime.InteropServices.LayoutKind.Sequential, CharSet = System.Runtime.InteropServices.CharSet.Auto)]
+        private class MEMORYSTATUSEX
+        {
+            public uint dwLength;
+            public uint dwMemoryLoad;
+            public ulong ullTotalPhys;
+            public ulong ullAvailPhys;
+            public ulong ullTotalPageFile;
+            public ulong ullAvailPageFile;
+            public ulong ullTotalVirtual;
+            public ulong ullAvailVirtual;
+            public ulong ullAvailExtendedVirtual;
+            public MEMORYSTATUSEX() { this.dwLength = (uint)System.Runtime.InteropServices.Marshal.SizeOf(typeof(MEMORYSTATUSEX)); }
+        }
+
+        [System.Runtime.InteropServices.DllImport("kernel32.dll", CharSet = System.Runtime.InteropServices.CharSet.Auto, SetLastError = true)]
+        private static extern bool GlobalMemoryStatusEx([System.Runtime.InteropServices.In, System.Runtime.InteropServices.Out] MEMORYSTATUSEX lpBuffer);
+
+        private static long GetTotalSystemRam()
+        {
+            try
+            {
+                var memStatus = new MEMORYSTATUSEX();
+                if (GlobalMemoryStatusEx(memStatus) && memStatus.ullTotalPhys > 0)
+                {
+                    return (long)memStatus.ullTotalPhys;
+                }
+            }
+            catch { }
+            return 8L * 1024 * 1024 * 1024; // fallback 8GB
+        }
+
         private void HandleGetSettings()
         {
             var settings = SettingsManager.Current;
@@ -629,6 +762,16 @@ namespace WindowsFormsApp.IPC
                     rec.TargetPath     = dto.TargetPath ?? rec.TargetPath;
                     rec.SupportsRanges = dto.SupportsRanges;
                     rec.Threads        = dto.Threads;
+
+                    if (!string.IsNullOrEmpty(dto.VirusScanStatus))
+                        rec.VirusScanStatus = dto.VirusScanStatus;
+                    else if (!string.IsNullOrEmpty(rec.VirusScanStatus))
+                        dto.VirusScanStatus = rec.VirusScanStatus;
+
+                    if (!string.IsNullOrEmpty(dto.VirusScanResult))
+                        rec.VirusScanResult = dto.VirusScanResult;
+                    else if (!string.IsNullOrEmpty(rec.VirusScanResult))
+                        dto.VirusScanResult = rec.VirusScanResult;
 
                     // Lưu đầy đủ thông tin segment để có thể resume sau crash
                     if (!string.IsNullOrEmpty(dto.SegmentsMetaJson))
@@ -849,6 +992,42 @@ namespace WindowsFormsApp.IPC
                     return;
                 }
 
+                DownloadRecord rec = null;
+                if (!string.IsNullOrEmpty(taskId))
+                {
+                    _dbCache.TryGetValue(taskId, out rec);
+                    if (rec == null) rec = DatabaseHelper.GetById(taskId);
+                }
+
+                if (rec != null && rec.VirusScanStatus == "threat")
+                {
+                    DialogResult confirm = MessageBox.Show(
+                        "CẢNH BÁO MÃ ĐỘC TỪ WINDOWS DEFENDER!\n\n" +
+                        $"Tệp: {Path.GetFileName(targetPath)}\n" +
+                        "Bộ quét mã độc của Windows đã phát hiện tệp này chứa mối đe dọa an ninh tiềm ẩn.\n\n" +
+                        "Việc mở tệp này có thể gây nguy hiểm cho hệ điều hành và thiết bị của bạn.\n" +
+                        "Bạn có chắc chắn muốn bỏ qua cảnh báo bảo mật và tiếp tục mở tệp không?",
+                        "Cảnh báo bảo mật hệ thống",
+                        MessageBoxButtons.YesNo,
+                        MessageBoxIcon.Warning,
+                        MessageBoxDefaultButton.Button2);
+
+                    if (confirm != DialogResult.Yes) return;
+                }
+                else if (rec != null && rec.VirusScanStatus == "scanning")
+                {
+                    DialogResult waitConfirm = MessageBox.Show(
+                        "Windows Defender đang trong quá trình quét mã độc tệp này.\n\n" +
+                        "Bạn có muốn chờ quét xong để đảm bảo an toàn tuyệt đối trước khi mở không?\n" +
+                        "(Chọn Yes để chờ quét xong, No để mở ngay)",
+                        "Đang kiểm tra an toàn tệp",
+                        MessageBoxButtons.YesNo,
+                        MessageBoxIcon.Information,
+                        MessageBoxDefaultButton.Button1);
+
+                    if (waitConfirm == DialogResult.Yes) return;
+                }
+
                 System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
                 {
                     FileName = targetPath,
@@ -897,6 +1076,120 @@ namespace WindowsFormsApp.IPC
             catch (Exception ex)
             {
                 MessageBox.Show("Không thể mở thư mục: " + ex.Message, "Lỗi", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        private async Task HandleScanFileVirusAsync(JsonElement root)
+        {
+            string taskId = GetString(root, "taskId");
+            string path = GetString(root, "path");
+
+            try
+            {
+                if (string.IsNullOrEmpty(path) && !string.IsNullOrEmpty(taskId))
+                {
+                    path = _manager.GetTargetPath(taskId);
+                    if (string.IsNullOrEmpty(path))
+                    {
+                        var recDb = DatabaseHelper.GetById(taskId);
+                        if (recDb != null) path = recDb.TargetPath;
+                    }
+                }
+
+                if (string.IsNullOrEmpty(path) || !File.Exists(path))
+                {
+                    Send(new { action = "VIRUS_SCAN_RESULT", taskId = taskId, status = "error", message = "Tệp không tồn tại hoặc đã bị xóa." });
+                    return;
+                }
+
+                // Phát tín hiệu đang quét lên Web
+                Send(new { action = "VIRUS_SCAN_RESULT", taskId = taskId, status = "scanning", message = "Đang quét virus qua Windows Defender..." });
+
+                var scan = await AntivirusScanner.ScanFileAsync(path).ConfigureAwait(false);
+
+                // Cập nhật CSDL SQLite
+                if (!string.IsNullOrEmpty(taskId))
+                {
+                    DownloadRecord rec;
+                    if (!_dbCache.TryGetValue(taskId, out rec))
+                    {
+                        rec = DatabaseHelper.GetById(taskId);
+                        if (rec != null) _dbCache[taskId] = rec;
+                    }
+
+                    if (rec != null)
+                    {
+                        rec.VirusScanStatus = scan.Status;
+                        rec.VirusScanResult = scan.Message;
+                        DatabaseHelper.UpdateProgress(rec);
+                    }
+                }
+
+                Send(new
+                {
+                    action = "VIRUS_SCAN_RESULT",
+                    taskId = taskId,
+                    status = scan.Status,
+                    message = scan.Message,
+                    exitCode = scan.ExitCode,
+                    rawOutput = scan.RawOutput
+                });
+            }
+            catch (Exception ex)
+            {
+                Send(new { action = "VIRUS_SCAN_RESULT", taskId = taskId, status = "error", message = "Lỗi quét mã độc: " + ex.Message });
+            }
+        }
+
+        private void HandleOpenExtensionFolder()
+        {
+            try
+            {
+                string baseDir = AppDomain.CurrentDomain.BaseDirectory;
+                string candidate1 = Path.GetFullPath(Path.Combine(baseDir, @"..\..\..\BrowserExtension"));
+                string candidate2 = Path.GetFullPath(Path.Combine(baseDir, "BrowserExtension"));
+                string candidate3 = @"c:\PBL4-Branch\BrowserExtension";
+
+                string target = Directory.Exists(candidate1) ? candidate1 :
+                                Directory.Exists(candidate3) ? candidate3 :
+                                Directory.Exists(candidate2) ? candidate2 : baseDir;
+
+                System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+                {
+                    FileName = "explorer.exe",
+                    Arguments = $"\"{target}\"",
+                    UseShellExecute = true
+                });
+            }
+            catch (Exception ex)
+            {
+                Send(new { action = "SHOW_TOAST", message = "Không mở được thư mục: " + ex.Message });
+            }
+        }
+
+        private void HandleTestCaptureLink()
+        {
+            try
+            {
+                var dummy = new CapturedLinkDto
+                {
+                    Url = "https://proof.ovh.net/files/100Mb.dat",
+                    FileName = "100Mb.dat",
+                    Referrer = "https://proof.ovh.net/",
+                    TotalBytes = 104857600,
+                    AutoStart = false
+                };
+
+                _mainForm.BringToFrontAndRestore();
+                Send(new
+                {
+                    action = "BROWSER_LINK_CAPTURED",
+                    data = dummy
+                });
+            }
+            catch (Exception ex)
+            {
+                Send(new { action = "SHOW_TOAST", message = "Lỗi thử nghiệm link: " + ex.Message });
             }
         }
     }

@@ -704,5 +704,44 @@ namespace WindowsFormsApp.Download
             if (handler == null) return;
             try { handler(dto); } catch { }
         }
+
+        /// <summary>
+        /// Thu thập số liệu hiệu năng tổng hợp (tốc độ tổng, số luồng active, số tệp đang tải)
+        /// phục vụ vẽ biểu đồ giám sát thời gian thực.
+        /// </summary>
+        public void GetAggregateMetrics(out double totalSpeed, out int activeThreads, out int activeJobs, out long totalDownloaded)
+        {
+            totalSpeed = 0;
+            activeThreads = 0;
+            activeJobs = 0;
+            totalDownloaded = 0;
+
+            foreach (DownloadJob job in _jobs.Values)
+            {
+                totalDownloaded += job.Downloaded;
+                if (job.State == DownloadState.Downloading)
+                {
+                    job.UpdateSpeed();
+                    totalSpeed += job.CurrentSpeed;
+                    int th = (job.SupportsRanges && job.Segments != null && job.Segments.Count > 0)
+                        ? job.Segments.Count
+                        : 1;
+                    activeThreads += th;
+                    activeJobs++;
+                }
+            }
+
+            foreach (FtpJob job in _ftpJobs.Values)
+            {
+                totalDownloaded += job.Downloaded;
+                if (job.State == DownloadState.Downloading)
+                {
+                    job.UpdateSpeed();
+                    totalSpeed += job.CurrentSpeed;
+                    activeThreads += 1;
+                    activeJobs++;
+                }
+            }
+        }
     }
 }

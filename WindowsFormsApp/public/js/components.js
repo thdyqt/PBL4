@@ -116,6 +116,11 @@ class Sider extends HTMLElement {
                     </li>
                     <li class="menu-divider-item"></li>
                     <li>
+                        <a href="#" data-filter="chart" class="menu-chart-link">
+                            <i class="fa-solid fa-chart-line"></i> <span data-i18n="sider.chart">Giám sát tốc độ</span>
+                        </a>
+                    </li>
+                    <li>
                         <a href="#" data-filter="device" class="menu-device-link">
                             <i class="fa-solid fa-laptop"></i> <span data-i18n="sider.device">Thông tin thiết bị</span>
                         </a>

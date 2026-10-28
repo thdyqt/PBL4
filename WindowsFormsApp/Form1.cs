@@ -5,6 +5,7 @@ using System.Data;
 using System.Drawing;
 using System.IO;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
@@ -16,7 +17,21 @@ namespace WindowsFormsApp
 {
     public partial class Form1 : Form
     {
+        // --- Win32 Native API: Đưa cửa sổ ứng dụng lên đầu khi bắt link từ trình duyệt ---
+        [DllImport("user32.dll")]
+        private static extern bool SetForegroundWindow(IntPtr hWnd);
+
+        [DllImport("user32.dll")]
+        private static extern bool ShowWindow(IntPtr hWnd, int nCmdShow);
+
+        [DllImport("user32.dll")]
+        private static extern bool IsIconic(IntPtr hWnd);
+
+        private const int SW_RESTORE = 9;
+        private const int SW_SHOW = 5;
+
         private MessageHandler _messageHandler;
+        private BrowserExtensionServer _extensionServer;
 
         public Form1()
         {
@@ -64,10 +79,85 @@ namespace WindowsFormsApp
         private void Form1_Load(object sender, EventArgs e)
         {
             InitializeWebView();
+            InitializeBrowserExtensionServer();
+        }
+
+        /// <summary>
+        /// Khởi động Local Loopback HTTP Web Server trên http://127.0.0.1:8989/
+        /// để giao tiếp IPC với Chrome / Edge Extension.
+        /// </summary>
+        private void InitializeBrowserExtensionServer()
+        {
+            try
+            {
+                _extensionServer = new BrowserExtensionServer();
+                _extensionServer.LinkCaptured += OnBrowserLinkCaptured;
+                _extensionServer.Start();
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[ExtensionServer] Init failed: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// Xử lý sự kiện khi Extension bắt được link tải từ trình duyệt:
+        /// 1. Tự động phục hồi và đưa cửa sổ C# lên trên cùng màn hình (Win32 API).
+        /// 2. Gửi thông điệp BROWSER_LINK_CAPTURED sang WebView2 để điền URL vào form tải.
+        /// </summary>
+        private void OnBrowserLinkCaptured(CapturedLinkDto link)
+        {
+            BringToFrontAndRestore();
+
+            var payload = new
+            {
+                action = "BROWSER_LINK_CAPTURED",
+                data = link
+            };
+
+            SendToWeb(JsonSerializer.Serialize(payload));
+        }
+
+        /// <summary>
+        /// Khôi phục cửa sổ nếu đang thu nhỏ (Minimized) và đưa lên tiền cảnh (Foreground).
+        /// </summary>
+        public void BringToFrontAndRestore()
+        {
+            if (InvokeRequired)
+            {
+                try { BeginInvoke(new Action(BringToFrontAndRestore)); } catch { }
+                return;
+            }
+
+            try
+            {
+                if (WindowState == FormWindowState.Minimized || IsIconic(this.Handle))
+                {
+                    ShowWindow(this.Handle, SW_RESTORE);
+                    WindowState = FormWindowState.Normal;
+                }
+                else
+                {
+                    ShowWindow(this.Handle, SW_SHOW);
+                }
+
+                this.Activate();
+                this.BringToFront();
+                SetForegroundWindow(this.Handle);
+            }
+            catch { }
         }
 
         protected override void OnFormClosing(FormClosingEventArgs e)
         {
+            // Dừng Local Loopback Server của Extension
+            try
+            {
+                _extensionServer?.Stop();
+                _extensionServer?.Dispose();
+            }
+            catch { }
+
             // Dừng các luồng tải và lưu tiến độ (file .dlmeta) để lần sau tiếp tục được
             _messageHandler.Shutdown();
             base.OnFormClosing(e);
@@ -103,3 +193,4 @@ namespace WindowsFormsApp
         }
     }
 }
+

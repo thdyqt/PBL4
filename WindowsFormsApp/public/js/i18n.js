@@ -33,7 +33,49 @@
             "sider.audio": "Âm thanh",
             "sider.video": "Video",
             "sider.document": "Nén / Tài liệu",
+            "sider.chart": "Giám sát tốc độ",
             "sider.device": "Thông tin thiết bị",
+
+            // Real-Time Speed & Performance Chart
+            "chart.badge": "GIÁM SÁT HIỆU NĂNG",
+            "chart.main_title": "Biểu đồ Tốc độ tải & Tài nguyên hệ thống",
+            "chart.main_desc": "Theo dõi biến thiên tốc độ tải về theo thời gian thực (500ms), mức sử dụng CPU và bộ nhớ RAM của ứng dụng.",
+            "chart.live": "TRỰC TIẾP",
+            "chart.paused_badge": "ĐÃ TẠM DỪNG VẼ",
+            "chart.btn_pause": "Tạm dừng vẽ",
+            "chart.btn_resume": "Tiếp tục vẽ",
+            "chart.btn_clear": "Xóa dữ liệu",
+            "chart.range_30s": "30 giây",
+            "chart.range_60s": "60 giây",
+            "chart.range_120s": "2 phút",
+            "chart.speed_card": "Tốc độ tải hiện tại",
+            "chart.speed_peak": "Đỉnh: {0}",
+            "chart.speed_idle": "Đang nhàn rỗi (0 B/s)",
+            "chart.cpu_card": "Mức sử dụng CPU",
+            "chart.cpu_sub": "Tiến trình trên {0} nhân logic",
+            "chart.ram_card": "Bộ nhớ RAM tiêu thụ",
+            "chart.ram_sub": "Working Set ({0}% RAM máy)",
+            "chart.threads_card": "Luồng mạng đang chạy",
+            "chart.threads_sub": "{0} tệp đang kết nối",
+            "chart.session_card": "Dữ liệu tải trong phiên",
+            "chart.speed_chart_title": "Băng thông tải về (Download Throughput)",
+            "chart.speed_chart_subtitle": "Đo đạc lưu lượng mạng thực tế gửi từ máy chủ theo từng giây",
+            "chart.cpu_chart_title": "Tiêu thụ CPU tiến trình (%)",
+            "chart.ram_chart_title": "Bộ nhớ RAM làm việc (MB)",
+            "chart.queue_badge": "TIẾN TRÌNH",
+            "chart.queue_title": "Tác vụ đang tải",
+
+            // Antivirus Integration (Windows Defender)
+            "antivirus.scanning": "Đang quét virus qua Windows Defender...",
+            "antivirus.safe": "File an toàn",
+            "antivirus.safe_tooltip": "Windows Defender: Không phát hiện mối đe dọa",
+            "antivirus.threat": "Phát hiện mối đe dọa!",
+            "antivirus.threat_tooltip": "Cảnh báo: Windows Defender phát hiện tệp có chứa mối đe dọa tiềm ẩn!",
+            "antivirus.error": "Chưa quét virus",
+            "antivirus.not_available": "Defender không khả dụng",
+            "antivirus.btn_rescan": "Quét lại",
+            "antivirus.rescan_tooltip": "Quét lại mã độc tệp qua Windows Defender",
+            "antivirus.opening_warning": "Tệp này bị cảnh báo chứa mối đe dọa mã độc!",
 
             // Section 1: Add Download Link
             "add.title": "Thêm liên kết tải về",
@@ -156,6 +198,7 @@
             "settings.tab.queue": "Hàng đợi (Queue)",
             "settings.tab.bandwidth": "Băng thông (Speed)",
             "settings.tab.proxy": "Proxy",
+            "settings.tab.browser": "Trình duyệt (Browser)",
             "settings.tab.other": "Cài đặt khác",
 
             // Settings Tab 1: Queue
@@ -215,7 +258,21 @@
             "settings.proxy.test_btn": "Kiểm tra kết nối Proxy",
             "settings.proxy.test_hint": "Gửi yêu cầu thử nghiệm để đo độ trễ và kiểm tra tính khả dụng",
 
-            // Settings Tab 4: Other Settings
+            // Settings Tab 4: Browser Integration
+            "settings.browser.status_title": "Cổng IPC Local Loopback đang lắng nghe",
+            "settings.browser.status_ready": "SẴN SÀNG",
+            "settings.browser.status_desc": "Trình duyệt Chrome / Edge sẽ tự động gửi URL và tên file qua cổng này ngay khi người dùng nhấn tải file trên web.",
+            "settings.browser.guide_title": "Hướng dẫn cài đặt Extension cho Chrome / Edge (3 bước)",
+            "settings.browser.step1_title": "Mở trang quản lý Tiện ích mở rộng của Trình duyệt",
+            "settings.browser.step1_desc": "Mở Chrome và truy cập chrome://extensions hoặc Edge edge://extensions, sau đó bật công tắc 'Chế độ dành cho nhà phát triển' (Developer mode) ở góc trên bên phải.",
+            "settings.browser.step2_title": "Nạp tiện ích đã giải nén (Load Unpacked)",
+            "settings.browser.step2_desc": "Bấm nút 'Tải tiện ích đã giải nén' (Load unpacked) và chọn thư mục BrowserExtension của dự án.",
+            "settings.browser.step3_title": "Trải nghiệm bắt link tự động",
+            "settings.browser.step3_desc": "Bấm vào bất kỳ link tải tệp (.zip, .iso, .exe, .mp4, .pdf...) hoặc nhấp chuột phải chọn 'Tải bằng DUT Download Accelerator', liên kết sẽ được tự động chuyển ngay về app!",
+            "settings.browser.btn_open_folder": "Mở thư mục Extension",
+            "settings.browser.btn_test_capture": "Bắn link thử nghiệm (Test)",
+
+            // Settings Tab 5: Other Settings
             "settings.theme.title": "Giao diện hiển thị (Theme)",
             "settings.theme.desc": "Tùy chỉnh chế độ sáng, tối hoặc tự động theo thiết lập hệ thống Windows (Mặc định: Chế độ sáng).",
             "settings.theme.light": "Chế độ sáng",
@@ -347,7 +404,49 @@
             "sider.audio": "Audio",
             "sider.video": "Video",
             "sider.document": "Archives & Docs",
+            "sider.chart": "Speed & Metrics",
             "sider.device": "Device Info",
+
+            // Real-Time Speed & Performance Chart
+            "chart.badge": "PERFORMANCE MONITOR",
+            "chart.main_title": "Real-Time Download Speed & System Resources",
+            "chart.main_desc": "Monitor real-time network throughput fluctuation (500ms updates), application CPU utilization and RAM memory footprint.",
+            "chart.live": "LIVE STREAM",
+            "chart.paused_badge": "STREAM PAUSED",
+            "chart.btn_pause": "Pause Stream",
+            "chart.btn_resume": "Resume Stream",
+            "chart.btn_clear": "Clear History",
+            "chart.range_30s": "30 Seconds",
+            "chart.range_60s": "60 Seconds",
+            "chart.range_120s": "2 Minutes",
+            "chart.speed_card": "Live Download Speed",
+            "chart.speed_peak": "Peak: {0}",
+            "chart.speed_idle": "Idle (0 B/s)",
+            "chart.cpu_card": "App CPU Usage",
+            "chart.cpu_sub": "Process across {0} logical cores",
+            "chart.ram_card": "RAM Memory Footprint",
+            "chart.ram_sub": "Working Set ({0}% system RAM)",
+            "chart.threads_card": "Active Network Threads",
+            "chart.threads_sub": "{0} active downloading tasks",
+            "chart.session_card": "Session Data Downloaded",
+            "chart.speed_chart_title": "Download Throughput History",
+            "chart.speed_chart_subtitle": "Actual network data transfer rate received from server per second",
+            "chart.cpu_chart_title": "Process CPU Utilization (%)",
+            "chart.ram_chart_title": "Process Working Set Memory (MB)",
+            "chart.queue_badge": "ACTIVE QUEUE",
+            "chart.queue_title": "Active Downloading Tasks",
+
+            // Antivirus Integration (Windows Defender)
+            "antivirus.scanning": "Scanning for viruses (Windows Defender)...",
+            "antivirus.safe": "Safe File",
+            "antivirus.safe_tooltip": "Windows Defender: No threats detected",
+            "antivirus.threat": "Threat Detected!",
+            "antivirus.threat_tooltip": "Warning: Windows Defender detected potential threats in this file!",
+            "antivirus.error": "Scan Not Available",
+            "antivirus.not_available": "Defender Not Found",
+            "antivirus.btn_rescan": "Rescan",
+            "antivirus.rescan_tooltip": "Rescan file with Windows Defender",
+            "antivirus.opening_warning": "This file was flagged with potential security threats!",
 
             // Section 1: Add Download Link
             "add.title": "Add Download Link",
@@ -470,6 +569,7 @@
             "settings.tab.queue": "Queue",
             "settings.tab.bandwidth": "Bandwidth",
             "settings.tab.proxy": "Proxy",
+            "settings.tab.browser": "Browser Integration",
             "settings.tab.other": "Other Settings",
 
             // Settings Tab 1: Queue
@@ -529,7 +629,21 @@
             "settings.proxy.test_btn": "Test Proxy Connection",
             "settings.proxy.test_hint": "Send test ping to measure latency and verify server availability",
 
-            // Settings Tab 4: Other Settings
+            // Settings Tab 4: Browser Integration
+            "settings.browser.status_title": "Local Loopback IPC Port Listening",
+            "settings.browser.status_ready": "READY",
+            "settings.browser.status_desc": "Chrome and Edge browsers will automatically forward URLs and filenames to this port whenever a web download starts.",
+            "settings.browser.guide_title": "Chrome / Edge Extension Setup Guide (3 steps)",
+            "settings.browser.step1_title": "Open Browser Extensions Manager",
+            "settings.browser.step1_desc": "Open Chrome and navigate to chrome://extensions or Edge edge://extensions, then turn on 'Developer mode' in the top-right corner.",
+            "settings.browser.step2_title": "Load Unpacked Extension",
+            "settings.browser.step2_desc": "Click 'Load unpacked' and select the BrowserExtension folder from the project directory.",
+            "settings.browser.step3_title": "Experience Automatic Download Capture",
+            "settings.browser.step3_desc": "Click any downloadable file link (.zip, .iso, .exe, .mp4, .pdf...) or right-click and choose 'Download with DUT Download Accelerator' to instantly intercept!",
+            "settings.browser.btn_open_folder": "Open Extension Folder",
+            "settings.browser.btn_test_capture": "Send Test Capture Link",
+
+            // Settings Tab 5: Other Settings
             "settings.theme.title": "Display Theme",
             "settings.theme.desc": "Choose Light, Dark or automatically sync with Windows System appearance (Default: Light).",
             "settings.theme.light": "Light Mode",

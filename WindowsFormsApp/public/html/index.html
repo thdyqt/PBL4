@@ -96,6 +96,170 @@
             </form>
         </div>
 
+        <!-- Section-Chart: Frame biểu đồ tốc độ & tài nguyên thời gian thực -->
+        <div class="section-chart" id="section-chart" style="display: none;">
+            <div class="chart-frame-header">
+                <div class="chart-frame-title-wrap">
+                    <div class="chart-frame-badge">
+                        <i class="fa-solid fa-chart-line"></i> <span data-i18n="chart.badge">GIÁM SÁT HIỆU NĂNG</span>
+                    </div>
+                    <div class="chart-title-row">
+                        <h2 class="chart-frame-title" data-i18n="chart.main_title">Biểu đồ Tốc độ tải & Tài nguyên hệ thống</h2>
+                        <div class="chart-live-indicator" id="chart-live-indicator">
+                            <span class="live-pulse-dot"></span>
+                            <span class="live-text" data-i18n="chart.live">TRỰC TIẾP</span>
+                        </div>
+                    </div>
+                    <p class="chart-frame-desc" data-i18n="chart.main_desc">Theo dõi biến thiên tốc độ tải về theo thời gian thực (500ms), mức sử dụng CPU và bộ nhớ RAM của ứng dụng.</p>
+                </div>
+                <div class="chart-frame-actions">
+                    <div class="chart-time-range-group" role="group" aria-label="Time range">
+                        <button type="button" class="btn-time-range active" data-range="30">
+                            <span data-i18n="chart.range_30s">30 giây</span>
+                        </button>
+                        <button type="button" class="btn-time-range" data-range="60">
+                            <span data-i18n="chart.range_60s">60 giây</span>
+                        </button>
+                        <button type="button" class="btn-time-range" data-range="120">
+                            <span data-i18n="chart.range_120s">2 phút</span>
+                        </button>
+                    </div>
+                    <button type="button" class="btn-chart-action" id="btn-toggle-chart-stream" title="Tạm dừng / Tiếp tục cập nhật dữ liệu">
+                        <i class="fa-solid fa-pause" id="chart-pause-icon"></i>
+                        <span id="chart-pause-text" data-i18n="chart.btn_pause">Tạm dừng vẽ</span>
+                    </button>
+                    <button type="button" class="btn-chart-action secondary" id="btn-clear-chart-data" title="Xóa dữ liệu cũ và vẽ lại từ đầu">
+                        <i class="fa-solid fa-rotate-left"></i>
+                        <span data-i18n="chart.btn_clear">Xóa dữ liệu</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- KPI Metric Cards Grid -->
+            <div class="chart-kpi-grid">
+                <!-- Card 1: Live Download Speed -->
+                <div class="chart-kpi-card highlight-speed">
+                    <div class="kpi-card-header">
+                        <span class="kpi-label" data-i18n="chart.speed_card">Tốc độ tải hiện tại</span>
+                        <div class="kpi-icon-wrap icon-speed">
+                            <i class="fa-solid fa-gauge-high"></i>
+                        </div>
+                    </div>
+                    <div class="kpi-value-wrap">
+                        <span class="kpi-value" id="kpi-live-speed">0 B/s</span>
+                        <span class="kpi-trend" id="kpi-speed-trend"><i class="fa-solid fa-arrow-trend-up"></i></span>
+                    </div>
+                    <div class="kpi-footer">
+                        <span class="kpi-subtext" id="kpi-speed-peak">Đỉnh: 0 B/s</span>
+                    </div>
+                </div>
+
+                <!-- Card 2: CPU Utilization -->
+                <div class="chart-kpi-card">
+                    <div class="kpi-card-header">
+                        <span class="kpi-label" data-i18n="chart.cpu_card">Mức sử dụng CPU</span>
+                        <div class="kpi-icon-wrap icon-cpu">
+                            <i class="fa-solid fa-microchip"></i>
+                        </div>
+                    </div>
+                    <div class="kpi-value-wrap">
+                        <span class="kpi-value" id="kpi-live-cpu">0.0%</span>
+                    </div>
+                    <div class="kpi-footer">
+                        <div class="kpi-mini-bar">
+                            <div class="kpi-mini-bar-fill fill-cpu" id="kpi-cpu-bar" style="width: 0%;"></div>
+                        </div>
+                        <span class="kpi-subtext" id="kpi-cpu-sub">Tiến trình ứng dụng</span>
+                    </div>
+                </div>
+
+                <!-- Card 3: RAM Working Set -->
+                <div class="chart-kpi-card">
+                    <div class="kpi-card-header">
+                        <span class="kpi-label" data-i18n="chart.ram_card">Bộ nhớ RAM tiêu thụ</span>
+                        <div class="kpi-icon-wrap icon-ram">
+                            <i class="fa-solid fa-memory"></i>
+                        </div>
+                    </div>
+                    <div class="kpi-value-wrap">
+                        <span class="kpi-value" id="kpi-live-ram">0 MB</span>
+                    </div>
+                    <div class="kpi-footer">
+                        <div class="kpi-mini-bar">
+                            <div class="kpi-mini-bar-fill fill-ram" id="kpi-ram-bar" style="width: 0%;"></div>
+                        </div>
+                        <span class="kpi-subtext" id="kpi-ram-sub">Working Set</span>
+                    </div>
+                </div>
+
+                <!-- Card 4: Active Threads & Jobs -->
+                <div class="chart-kpi-card">
+                    <div class="kpi-card-header">
+                        <span class="kpi-label" data-i18n="chart.threads_card">Luồng mạng đang chạy</span>
+                        <div class="kpi-icon-wrap icon-threads">
+                            <i class="fa-solid fa-network-wired"></i>
+                        </div>
+                    </div>
+                    <div class="kpi-value-wrap">
+                        <span class="kpi-value" id="kpi-live-threads">0 luồng</span>
+                    </div>
+                    <div class="kpi-footer">
+                        <span class="kpi-subtext" id="kpi-threads-sub">0 tệp đang kết nối</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Main Speed Chart Container -->
+            <div class="chart-panel-main">
+                <div class="chart-panel-header">
+                    <div>
+                        <h3 class="chart-panel-title">
+                            <i class="fa-solid fa-bolt"></i>
+                            <span data-i18n="chart.speed_chart_title">Băng thông tải về (Download Throughput)</span>
+                        </h3>
+                        <p class="chart-panel-subtitle" data-i18n="chart.speed_chart_subtitle">Đo đạc lưu lượng mạng thực tế gửi từ máy chủ theo từng giây</p>
+                    </div>
+                    <div class="chart-panel-meta">
+                        <span class="chart-meta-pill" id="chart-speed-meta-pill">Độ trễ mẫu: 500ms</span>
+                    </div>
+                </div>
+                <div class="chart-canvas-wrapper speed-canvas-wrap">
+                    <canvas id="speed-chart-canvas"></canvas>
+                </div>
+            </div>
+
+            <!-- Sub Resource Charts: 2-column Grid (CPU & RAM) -->
+            <div class="chart-sub-grid">
+                <!-- CPU Chart -->
+                <div class="chart-panel-sub">
+                    <div class="chart-panel-header">
+                        <h4 class="chart-sub-title">
+                            <i class="fa-solid fa-microchip icon-cpu-color"></i>
+                            <span data-i18n="chart.cpu_chart_title">Tiêu thụ CPU tiến trình (%)</span>
+                        </h4>
+                        <span class="chart-badge-pill" id="chart-cpu-pill">0%</span>
+                    </div>
+                    <div class="chart-canvas-wrapper sub-canvas-wrap">
+                        <canvas id="cpu-chart-canvas"></canvas>
+                    </div>
+                </div>
+
+                <!-- RAM Chart -->
+                <div class="chart-panel-sub">
+                    <div class="chart-panel-header">
+                        <h4 class="chart-sub-title">
+                            <i class="fa-solid fa-memory icon-ram-color"></i>
+                            <span data-i18n="chart.ram_chart_title">Bộ nhớ RAM làm việc (MB)</span>
+                        </h4>
+                        <span class="chart-badge-pill" id="chart-ram-pill">0 MB</span>
+                    </div>
+                    <div class="chart-canvas-wrapper sub-canvas-wrap">
+                        <canvas id="ram-chart-canvas"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Section-3 -->
         <div class="section-3" data-aos="fade-up" data-aos-duration="800" data-aos-delay="300">
             <div class="inner-head">
@@ -231,6 +395,9 @@
                 </button>
                 <button type="button" class="settings-tab-btn" data-tab="tab-proxy">
                     <i class="fa-solid fa-shield-halved"></i> <span data-i18n="settings.tab.proxy">Proxy</span>
+                </button>
+                <button type="button" class="settings-tab-btn" data-tab="tab-browser">
+                    <i class="fa-solid fa-puzzle-piece"></i> <span data-i18n="settings.tab.browser">Trình duyệt (Browser)</span>
                 </button>
                 <button type="button" class="settings-tab-btn" data-tab="tab-other">
                     <i class="fa-solid fa-gear"></i> <span data-i18n="settings.tab.other">Cài đặt khác</span>
@@ -455,7 +622,74 @@
                     </div>
                 </div>
 
-                <!-- Tab 4: Other Settings -->
+                <!-- Tab 4: Browser Integration / Extension -->
+                <div class="settings-tab-content" id="tab-browser">
+                    <!-- Status Banner -->
+                    <div class="browser-server-card">
+                        <div class="browser-server-header">
+                            <div class="browser-server-info">
+                                <div class="server-status-dot online"></div>
+                                <div>
+                                    <div class="server-name" data-i18n="settings.browser.status_title">Cổng IPC Local Loopback đang lắng nghe</div>
+                                    <div class="server-endpoint">http://127.0.0.1:8989/</div>
+                                </div>
+                            </div>
+                            <span class="server-badge" data-i18n="settings.browser.status_ready">SẴN SÀNG</span>
+                        </div>
+                        <p class="server-desc" data-i18n="settings.browser.status_desc">
+                            Trình duyệt Chrome / Edge sẽ tự động gửi URL và tên file qua cổng này ngay khi người dùng nhấn tải file trên web.
+                        </p>
+                    </div>
+
+                    <!-- Steps Guide -->
+                    <div class="browser-guide-title">
+                        <i class="fa-solid fa-circle-info"></i> <span data-i18n="settings.browser.guide_title">Hướng dẫn cài đặt Extension cho Chrome / Edge (3 bước)</span>
+                    </div>
+
+                    <div class="browser-steps-list">
+                        <div class="browser-step-item">
+                            <div class="step-num">1</div>
+                            <div class="step-content">
+                                <div class="step-title" data-i18n="settings.browser.step1_title">Mở trang quản lý Tiện ích mở rộng của Trình duyệt</div>
+                                <div class="step-desc" data-i18n="settings.browser.step1_desc">
+                                    Mở Chrome và truy cập <code class="browser-code">chrome://extensions</code> hoặc Edge <code class="browser-code">edge://extensions</code>, sau đó bật công tắc <b>"Chế độ dành cho nhà phát triển" (Developer mode)</b> ở góc trên bên phải.
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="browser-step-item">
+                            <div class="step-num">2</div>
+                            <div class="step-content">
+                                <div class="step-title" data-i18n="settings.browser.step2_title">Nạp tiện ích đã giải nén (Load Unpacked)</div>
+                                <div class="step-desc" data-i18n="settings.browser.step2_desc">
+                                    Bấm nút <b>"Tải tiện ích đã giải nén" (Load unpacked)</b> và chọn thư mục <code class="browser-code">BrowserExtension</code> của dự án.
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="browser-step-item">
+                            <div class="step-num">3</div>
+                            <div class="step-content">
+                                <div class="step-title" data-i18n="settings.browser.step3_title">Trải nghiệm bắt link tự động</div>
+                                <div class="step-desc" data-i18n="settings.browser.step3_desc">
+                                    Bấm vào bất kỳ link tải tệp (<code class="browser-code">.zip, .iso, .exe, .mp4, .pdf...</code>) hoặc nhấp chuột phải chọn <b>"Tải bằng DUT Download Accelerator"</b>, liên kết sẽ được tự động chuyển ngay về app!
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Action buttons -->
+                    <div class="browser-actions-row">
+                        <button type="button" class="btn-browser-action primary" id="btn-open-extension-folder">
+                            <i class="fa-solid fa-folder-open"></i> <span data-i18n="settings.browser.btn_open_folder">Mở thư mục Extension</span>
+                        </button>
+                        <button type="button" class="btn-browser-action secondary" id="btn-test-capture">
+                            <i class="fa-solid fa-paper-plane"></i> <span data-i18n="settings.browser.btn_test_capture">Bắn link thử nghiệm (Test)</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Tab 5: Other Settings -->
                 <div class="settings-tab-content" id="tab-other">
                     <!-- Theme Settings Card -->
                     <div class="theme-settings-section">
@@ -739,6 +973,8 @@
     <!-- Scripts -->
     <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
     <script src="https://unpkg.com/just-validate@latest/dist/just-validate.production.min.js"></script>
+    <script src="../js/chart.min.js"></script>
+    <script src="../js/chart-monitor.js"></script>
     <script src="../js/i18n.js"></script>
     <script src="../js/components.js"></script>
     <script src="../js/script.js"></script>

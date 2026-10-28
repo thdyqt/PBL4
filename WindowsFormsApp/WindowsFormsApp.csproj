@@ -102,6 +102,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="DatabaseHelper.cs" />
+    <Compile Include="Download\AntivirusScanner.cs" />
     <Compile Include="Download\AppSettings.cs" />
     <Compile Include="Download\ChecksumHelper.cs" />
     <Compile Include="Download\DownloadJob.cs" />
@@ -119,10 +120,11 @@
     <Compile Include="Form1.Designer.cs">
       <DependentUpon>Form1.cs</DependentUpon>
     </Compile>
+    <Compile Include="IPC\BrowserExtensionServer.cs" />
+    <Compile Include="IPC\CapturedLinkDto.cs" />
     <Compile Include="IPC\MessageHandler.cs">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Compile>
-    <Compile Include="obj\Debug\.NETFramework,Version=v4.8.AssemblyAttributes.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <EmbeddedResource Include="Form1.resx">
@@ -247,7 +249,7 @@
     <Content Include="packages\Microsoft.Web.WebView2.1.0.4191.47\tools\wv2winrt\zh-Hant\System.CommandLine.resources.dll" />
     <Content Include="packages\Microsoft.Web.WebView2.1.0.4191.47\WebView2.idl" />
     <Content Include="public\**\*">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
   <ItemGroup>
