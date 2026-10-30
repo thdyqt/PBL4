@@ -1,3 +1,7 @@
 ﻿bin/
 obj/
 .vs/
+.agents/
+graphify-out/
+WindowsFormsApp/obj/Debug/DesignTimeResolveAssemblyReferencesInput.cache
+WindowsFormsApp/obj/Debug/WindowsFormsApp.csproj.AssemblyReference.cache
