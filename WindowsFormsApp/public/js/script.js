@@ -758,7 +758,7 @@ function addDownloadTask(url, savePath, thread, customFileName = "") {
 
 
 
-    const prepText = isEn ? "Preparing..." : "?ang chu?n b?...";
+    const prepText = (window.i18n && window.i18n.t) ? window.i18n.t("state.preparing") : (isEn ? "Preparing..." : "Đang chuẩn bị...");
 
     const downloadHTML = `
 
@@ -2066,23 +2066,8 @@ if (btnTestProxy) {
 
     btnTestProxy.addEventListener("click", () => {
 
-        // Tự động bật toggle Proxy nếu người dùng đã nhập thông số nhưng quên bật công tắc
-
-        const proxyToggle = document.getElementById("setting-proxy-enable");
-
-        if (proxyToggle && !proxyToggle.checked) {
-
-            proxyToggle.checked = true;
-
-            const sub = document.getElementById("proxy-sub-wrap");
-
-            if (sub) sub.style.display = "flex";
-
-        }
-
-
-
         const proxyConfig = collectProxyFromForm();
+        proxyConfig.enabled = true; // Luôn kiểm tra thông số người dùng vừa nhập
 
 
 

@@ -135,12 +135,12 @@ namespace WindowsFormsApp.Download
     {
         public static async Task<ProxyTestResult> TestConnectionAsync(ProxySettings proxy, string testUrl = "https://www.google.com")
         {
-            if (proxy == null || !proxy.Enabled)
+            if (proxy == null)
             {
                 return new ProxyTestResult
                 {
                     Success = false,
-                    Message = "Proxy chưa được kích hoạt."
+                    Message = "Thông số Proxy không hợp lệ."
                 };
             }
 

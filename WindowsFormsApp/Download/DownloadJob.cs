@@ -559,12 +559,21 @@ namespace WindowsFormsApp.Download
                         stall.CancelAfter(Timeout.Infinite);               // đọc xong: ngừng đếm
                         if (n == 0) break;
 
+                        // [BẢO VỆ ĐA LUỒNG]: Ngăn ngừa Worker khác TrySplit() lấn byte khi đang đọc mạng
+                        if (seg != null)
+                        {
+                            long maxAllowed = seg.End - seg.NextByte + 1;
+                            if (maxAllowed <= 0) break;
+                            if (n > maxAllowed) n = (int)maxAllowed;
+                        }
+
                         if (_limiter != null) await _limiter.WaitAsync(n, ct).ConfigureAwait(false);
                         await dest.WriteAsync(buffer, 0, n, ct).ConfigureAwait(false);
 
                         if (seg != null) seg.Add(n);
                         Interlocked.Add(ref _downloaded, n);
                         total += n;
+                        if (seg != null && seg.NextByte > seg.End) break;
                     }
                 }
                 catch (Exception) when (ct.IsCancellationRequested)
@@ -588,7 +597,7 @@ namespace WindowsFormsApp.Download
             {
                 foreach (Segment s in Segments)
                 {
-                    if (!s.Finished || s.Downloaded != s.Length)
+                    if (!s.Finished || s.Downloaded < s.Length)
                         throw new DownloadException("Phân đoạn #" + s.Index + " chưa tải đủ dữ liệu (" + s.Downloaded + "/" + s.Length + " byte).");
                 }
                 sorted = Segments.OrderBy(s => s.Start).ToList();

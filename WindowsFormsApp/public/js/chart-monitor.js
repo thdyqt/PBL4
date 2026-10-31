@@ -648,7 +648,7 @@
             // Update thread subtext
             const threadsSub = document.getElementById("kpi-threads-sub");
             if (threadsSub) {
-                threadsSub.textContent = t("chart.threads_sub", "{0} t?p ?ang k?t n?i").replace("{0}", activeTasksMap.size);
+                threadsSub.textContent = t("chart.threads_sub", "{0} tệp đang kết nối").replace("{0}", activeTasksMap.size);
             }
 
             // Update stream pause/resume button label

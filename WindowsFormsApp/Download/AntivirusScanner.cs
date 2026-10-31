@@ -127,10 +127,11 @@ namespace WindowsFormsApp.Download
 
             // Tham số dòng lệnh chính thức: -Scan -ScanType 3 -File "duong_dan_file"
             // ScanType 3 = Custom file scan (quét tệp riêng lẻ)
+            string safeFilePath = filePath.Replace("\"", "\\\"");
             var psi = new ProcessStartInfo
             {
                 FileName = exePath,
-                Arguments = $"-Scan -ScanType 3 -File \"{filePath}\"",
+                Arguments = $"-Scan -ScanType 3 -File \"{safeFilePath}\"",
                 CreateNoWindow = true,
                 UseShellExecute = false,
                 RedirectStandardOutput = true,
@@ -167,18 +168,17 @@ namespace WindowsFormsApp.Download
                     process.BeginOutputReadLine();
                     process.BeginErrorReadLine();
 
-                    // Đợi tiến trình hoàn tất với timeout 60 giây (tránh treo khi file quá lớn)
-                    var waitTask = Task.Run(() => process.WaitForExit(), ct);
-                    var timeoutTask = Task.Delay(60000, ct);
-
-                    var completed = await Task.WhenAny(waitTask, timeoutTask).ConfigureAwait(false);
-                    if (completed == timeoutTask)
+                    // Chờ an toàn tránh rò rỉ Task nền và tránh dispose Process khi luồng khác đang wait
+                    bool exited = await Task.Run(() => process.WaitForExit(60000), ct).ConfigureAwait(false);
+                    if (!exited)
                     {
                         try { if (!process.HasExited) process.Kill(); } catch { }
                         result.Status = "error";
                         result.Message = "Quá thời gian quét virus (Timeout 60s).";
                         return result;
                     }
+
+                    process.WaitForExit();
 
                     result.ExitCode = process.ExitCode;
                     string fullOutput = (outputBuilder.ToString() + "\n" + errorBuilder.ToString()).Trim();

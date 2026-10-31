@@ -133,7 +133,9 @@ namespace WindowsFormsApp.Download
         public void UpdateProxy(ProxySettings proxy)
         {
             _currentProxy = proxy ?? new ProxySettings();
+            var oldClient = _http;
             _http = CreateHttpClient(_currentProxy);
+            try { oldClient?.Dispose(); } catch { }
         }
 
         public void ApplySettings(AppSettings settings)
@@ -655,12 +657,14 @@ namespace WindowsFormsApp.Download
             DownloadJob job;
             if (_jobs.TryGetValue(taskId, out job))
             {
+                job.Changed -= OnJobChanged;
                 lock (_targetLock) { _activeTargets.Remove(job.TargetPath); }
                 await job.CancelAsync().ConfigureAwait(false);
             }
             FtpJob ftpJob;
             if (_ftpJobs.TryGetValue(taskId, out ftpJob))
             {
+                ftpJob.Changed -= OnFtpJobChanged;
                 lock (_targetLock) { _activeTargets.Remove(ftpJob.TargetPath); }
                 await ftpJob.CancelAsync().ConfigureAwait(false);
             }
@@ -676,12 +680,14 @@ namespace WindowsFormsApp.Download
             DownloadJob job;
             if (_jobs.TryRemove(taskId, out job))
             {
+                job.Changed -= OnJobChanged;
                 lock (_targetLock) { _activeTargets.Remove(job.TargetPath); }
                 await job.CancelAsync().ConfigureAwait(false);
             }
             FtpJob ftpJob;
             if (_ftpJobs.TryRemove(taskId, out ftpJob))
             {
+                ftpJob.Changed -= OnFtpJobChanged;
                 lock (_targetLock) { _activeTargets.Remove(ftpJob.TargetPath); }
                 await ftpJob.CancelAsync().ConfigureAwait(false);
             }

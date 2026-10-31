@@ -19,6 +19,14 @@ namespace WindowsFormsApp.Download
         public static string DbPath { get; private set; }
 
         private static string _connectionString;
+        private static readonly object _dbLock = new object();
+        private static readonly TimeZoneInfo VnTimeZone = ResolveVnTimeZone();
+
+        private static TimeZoneInfo ResolveVnTimeZone()
+        {
+            try { return TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time"); }
+            catch { return TimeZoneInfo.CreateCustomTimeZone("VN_UTC7", TimeSpan.FromHours(7), "Vietnam Time", "Vietnam Time"); }
+        }
 
         // ------------------------------------------------------------------ khởi tạo
 
@@ -30,11 +38,12 @@ namespace WindowsFormsApp.Download
         {
             string dir = appDirectory ?? System.Windows.Forms.Application.StartupPath;
             DbPath = Path.Combine(dir, "downloads.db");
-            _connectionString = $"Data Source={DbPath};";
+            _connectionString = $"Data Source={DbPath};Default Timeout=30;";
 
             // Khởi động SQLitePCL (bắt buộc với Microsoft.Data.Sqlite trên .NET Framework)
             SQLitePCL.Batteries_V2.Init();
 
+            lock (_dbLock)
             using (var conn = Open())
             {
                 // WAL mode: ghi nhanh hơn, an toàn hơn khi crash
@@ -96,16 +105,8 @@ namespace WindowsFormsApp.Download
         public static string GetVietnamTimeString(DateTime? utc = null)
         {
             DateTime u = utc ?? DateTime.UtcNow;
-            try
-            {
-                TimeZoneInfo tz = TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time");
-                DateTime vnTime = TimeZoneInfo.ConvertTimeFromUtc(u, tz);
-                return vnTime.ToString("dd/MM/yyyy HH:mm:ss");
-            }
-            catch
-            {
-                return u.AddHours(7).ToString("dd/MM/yyyy HH:mm:ss");
-            }
+            DateTime vnTime = TimeZoneInfo.ConvertTimeFromUtc(u, VnTimeZone);
+            return vnTime.ToString("dd/MM/yyyy HH:mm:ss");
         }
 
         // ------------------------------------------------------------------ CRUD
@@ -119,6 +120,7 @@ namespace WindowsFormsApp.Download
             if (record == null) throw new ArgumentNullException("record");
             record.CreatedAt = record.UpdatedAt = DateTime.UtcNow;
 
+            lock (_dbLock)
             using (var conn = Open())
             using (var cmd = conn.CreateCommand())
             {
@@ -152,6 +154,7 @@ namespace WindowsFormsApp.Download
             if (record == null) return;
             record.UpdatedAt = DateTime.UtcNow;
 
+            lock (_dbLock)
             using (var conn = Open())
             using (var cmd = conn.CreateCommand())
             {
@@ -199,6 +202,7 @@ namespace WindowsFormsApp.Download
         /// <summary>Xóa toàn bộ bản ghi khỏi CSDL.</summary>
         public static int DeleteAll()
         {
+            lock (_dbLock)
             using (var conn = Open())
             using (var cmd = conn.CreateCommand())
             {
@@ -211,6 +215,7 @@ namespace WindowsFormsApp.Download
         public static void Delete(string taskId)
         {
             if (string.IsNullOrWhiteSpace(taskId)) return;
+            lock (_dbLock)
             using (var conn = Open())
             using (var cmd = conn.CreateCommand())
             {
@@ -273,6 +278,7 @@ namespace WindowsFormsApp.Download
         /// <summary>Xóa tất cả bản ghi đã hoàn thành hoặc đã hủy (dọn lịch sử).</summary>
         public static int ClearCompleted()
         {
+            lock (_dbLock)
             using (var conn = Open())
             using (var cmd = conn.CreateCommand())
             {

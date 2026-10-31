@@ -76,8 +76,32 @@ namespace WindowsFormsApp.IPC
             var req = context.Request;
             var res = context.Response;
 
-            // Thiết lập CORS Headers chuẩn để Chrome/Edge Extension không bị chặn Cross-Origin
-            res.Headers.Add("Access-Control-Allow-Origin", "*");
+            // [BẢO MẬT CORS]: Chỉ cho phép Extension và nội bộ loopback, chặn đứng website internet
+            string origin = req.Headers["Origin"];
+            if (!string.IsNullOrEmpty(origin))
+            {
+                bool isAllowed = origin.StartsWith("chrome-extension://", StringComparison.OrdinalIgnoreCase) ||
+                                 origin.StartsWith("moz-extension://", StringComparison.OrdinalIgnoreCase) ||
+                                 origin.StartsWith("edge-extension://", StringComparison.OrdinalIgnoreCase) ||
+                                 origin.StartsWith("http://localhost", StringComparison.OrdinalIgnoreCase) ||
+                                 origin.StartsWith("http://127.0.0.1", StringComparison.OrdinalIgnoreCase);
+                if (isAllowed)
+                {
+                    res.Headers.Add("Access-Control-Allow-Origin", origin);
+                }
+                else
+                {
+                    res.StatusCode = 403;
+                    byte[] errBytes = Encoding.UTF8.GetBytes("{\"error\":\"Forbidden: Cross-origin access denied\"}");
+                    await res.OutputStream.WriteAsync(errBytes, 0, errBytes.Length);
+                    res.Close();
+                    return;
+                }
+            }
+            else
+            {
+                res.Headers.Add("Access-Control-Allow-Origin", "http://127.0.0.1");
+            }
             res.Headers.Add("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
             res.Headers.Add("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Requested-With");
             res.ContentType = "application/json; charset=utf-8";

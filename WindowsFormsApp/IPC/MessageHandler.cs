@@ -40,11 +40,11 @@ namespace WindowsFormsApp.IPC
 
         // Cache local để tránh query DB mỗi 400ms: taskId -> DownloadRecord
 
-        // Chỉ đọc/ghi từ luồng event ProgressChanged (single-threaded qua message pump)
+        private readonly System.Collections.Concurrent.ConcurrentDictionary<string, DownloadRecord> _dbCache
 
-        private readonly System.Collections.Generic.Dictionary<string, DownloadRecord> _dbCache
+            = new System.Collections.Concurrent.ConcurrentDictionary<string, DownloadRecord>(StringComparer.Ordinal);
 
-            = new System.Collections.Generic.Dictionary<string, DownloadRecord>(StringComparer.Ordinal);
+        private int _progressSaveCounter = 0;
 
 
 
@@ -998,7 +998,7 @@ namespace WindowsFormsApp.IPC
 
                     }
 
-                    _dbCache.Remove(taskId);
+                    _dbCache.TryRemove(taskId, out _);
 
                 }
 
@@ -1032,7 +1032,7 @@ namespace WindowsFormsApp.IPC
 
                 // Xóa khỏi cache và xóa khỏi CSDL
 
-                _dbCache.Remove(taskId);
+                _dbCache.TryRemove(taskId, out _);
 
                 DatabaseHelper.Delete(taskId);
 
@@ -1694,6 +1694,8 @@ namespace WindowsFormsApp.IPC
 
                 {
 
+                    string oldState = rec.State;
+
                     bool changed = rec.State != dto.State
 
                                 || rec.Downloaded != dto.Downloaded
@@ -1826,9 +1828,21 @@ namespace WindowsFormsApp.IPC
 
 
 
-                    // Luôn ghi (UpdateProgress đã set UpdatedAt mới)
+                    // Giảm áp lực ghi SQLite: chỉ ghi khi đổi trạng thái, tải xong/lỗi, hoặc định kỳ mỗi 5 tick (~2 giây)
 
-                    DatabaseHelper.UpdateProgress(rec);
+                    bool stateChanged = oldState != rec.State;
+
+                    bool isTerminal = rec.State == "completed" || rec.State == "failed" || rec.State == "cancelled";
+
+                    bool isPeriodicSave = (System.Threading.Interlocked.Increment(ref _progressSaveCounter) % 5) == 0;
+
+                    if (stateChanged || isTerminal || isPeriodicSave)
+
+                    {
+
+                        DatabaseHelper.UpdateProgress(rec);
+
+                    }
 
                 }
 
