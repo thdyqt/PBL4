@@ -106,6 +106,12 @@
 
                         </div>
 
+                        <!-- Real-time Pattern Detector Badge -->
+                        <div class="url-pattern-detector" id="url-pattern-detector" style="display: none;">
+                            <i class="fa-solid fa-wand-magic-sparkles"></i>
+                            <span id="url-pattern-detector-text">Phát hiện URL quy luật: Sẽ tự động sinh các tác vụ tải và đưa vào hàng đợi.</span>
+                        </div>
+
                     </div>
 
                     <div class="filename-row">
@@ -2117,7 +2123,28 @@
 
                     </div>
 
-                    <textarea id="batch-urls-input" class="form-textarea" rows="6" data-i18n-placeholder="batch.textarea_placeholder" placeholder="https://example.com/file1.zip&#10;https://example.com/file2.mp4&#10;https://example.com/file3.iso"></textarea>
+
+                    <div class="batch-textarea-toolbar">
+
+                        <button type="button" id="btn-import-batch-file" class="btn-batch-tool" title="Nhập danh sách URL từ file .txt hoặc .csv">
+
+                            <i class="fa-solid fa-file-import"></i> <span data-i18n="batch.import_btn">Nhập từ file .txt/.csv</span>
+
+                        </button>
+
+                        <button type="button" id="btn-clear-batch" class="btn-batch-tool btn-batch-clear" title="Xóa toàn bộ danh sách URL">
+
+                            <i class="fa-solid fa-trash-can"></i> <span data-i18n="batch.clear_btn">Xóa danh sách</span>
+
+                        </button>
+
+                    </div>
+
+                    <textarea id="batch-urls-input" class="form-textarea" rows="6"
+
+                              data-i18n-placeholder="batch.textarea_placeholder"
+
+                              placeholder="https://example.com/file1.zip&#10;https://example.com/file2.mp4&#10;https://example.com/file3.iso"></textarea>
 
                 </div>
 

@@ -718,7 +718,8 @@ function addDownloadTask(url, savePath, thread, customFileName = "") {
 
 
 
-    const taskId = 'task-' + Date.now() + '-' + Math.floor(Math.random() * 1000);
+    if (typeof window.globalTaskSeq === 'undefined') window.globalTaskSeq = 0;
+    const taskId = 'task-' + Date.now() + '-' + (++window.globalTaskSeq) + '-' + Math.random().toString(36).substring(2, 8);
 
 
 
@@ -912,6 +913,158 @@ function addDownloadTask(url, savePath, thread, customFileName = "") {
 
 window.addDownloadTask = addDownloadTask;
 
+/**
+ * Kiểm tra nhanh xem URL hoặc chuỗi có chứa cú pháp quy luật [...] hay không.
+ */
+function hasUrlPattern(url) {
+    if (!url || typeof url !== "string") return false;
+    const bracketRegex = /\[\s*([^\]]+?)\s*\]/g;
+    let m;
+    while ((m = bracketRegex.exec(url)) !== null) {
+        const inner = m[1].trim();
+        if (/^\d+\s*-\s*\d+(?:\s*:\s*\d+)?$/.test(inner)) return true;
+        if (/^[a-zA-Z]\s*-\s*[a-zA-Z](?:\s*:\s*\d+)?$/.test(inner)) return true;
+        if (inner.includes(",") && !inner.includes("::")) return true;
+    }
+    return false;
+}
+window.hasUrlPattern = hasUrlPattern;
+
+/**
+ * Thêm danh sách nhiều tác vụ tải hàng loạt vào giao diện và gửi xuống C# (Queue Scheduling).
+ * Tránh nghẽn card mạng bằng cách điều phối qua hàng đợi của DownloadManager.
+ */
+function addBatchDownloadTasks(urls, savePath, thread, customFileNamePattern = "") {
+    if (!Array.isArray(urls) || urls.length === 0 || !savePath) return [];
+
+    const isEn = window.i18n && window.i18n.getCurrentLanguage && window.i18n.getCurrentLanguage() === "en";
+    const emptyState = document.getElementById("empty-state");
+    if (emptyState) emptyState.style.display = "none";
+
+    let expandedCustomNames = [];
+    if (customFileNamePattern && hasUrlPattern(customFileNamePattern)) {
+        const exp = expandUrlPattern(customFileNamePattern);
+        if (!exp.error && exp.urls.length > 0) expandedCustomNames = exp.urls;
+    }
+
+    if (typeof window.globalTaskSeq === 'undefined') window.globalTaskSeq = 0;
+
+    const taskList = [];
+    for (let i = 0; i < urls.length; i++) {
+        const u = urls[i];
+        let customName = "";
+        if (expandedCustomNames.length > i) {
+            customName = expandedCustomNames[i];
+        } else if (customFileNamePattern && !hasUrlPattern(customFileNamePattern)) {
+            customName = (i === 0) ? customFileNamePattern : "";
+        }
+        let fileName = (customName && customName.trim()) ? customName.trim() : (extractFileNameFromUrl(u) || `task_file_${i + 1}`);
+        const taskId = 'task-' + Date.now() + '-' + (++window.globalTaskSeq) + '-' + Math.random().toString(36).substring(2, 8);
+        taskList.push({ taskId, url: u, fileName, customFileName: customName, savePath, thread });
+    }
+
+    // Chèn vào giao diện DOM:
+    // Chèn ngược từ task cuối lên task đầu với 'afterbegin' để Task 1 nằm trên cùng!
+    const downloadList = document.getElementById("download-list");
+    if (downloadList) {
+        for (let i = taskList.length - 1; i >= 0; i--) {
+            const item = taskList[i];
+            const category = window.getFileCategory ? window.getFileCategory(item.fileName) : "other";
+            let iconClass = "fa-solid fa-file";
+            if (category === "audio") iconClass = "fa-solid fa-music";
+            else if (category === "video") iconClass = "fa-solid fa-video";
+            else if (category === "document") iconClass = "fa-solid fa-file-zipper";
+
+            const now = Date.now();
+            const safeFileName = item.fileName.replace(/"/g, '&quot;');
+            const safeUrl = item.url.replace(/"/g, '&quot;');
+            const safeSavePath = (savePath || "").replace(/"/g, '&quot;');
+            const titleForce = isEn ? "Start now (Bypass queue)" : "Bắt đầu tải ngay (Bỏ qua hàng đợi)";
+            const titlePause = isEn ? "Pause" : "Tạm dừng";
+            const titleCancel = isEn ? "Cancel download" : "Hủy tải";
+            const titleDelete = isEn ? "Delete" : "Xóa";
+            const speedLabel = isEn ? "Speed:" : "Tốc độ:";
+            const downloadedLabel = isEn ? "Downloaded:" : "Đã tải:";
+            const etaLabel = isEn ? "ETA:" : "Còn lại:";
+            const queueText = (window.i18n && window.i18n.t) ? window.i18n.t("state.queued") : (isEn ? "Queued" : "Chờ tải (Trong hàng đợi)");
+
+            const downloadHTML = `
+                <div class="download-item" id="${item.taskId}"
+                     role="article"
+                     aria-labelledby="${item.taskId}-filename"
+                     data-state="queued"
+                     data-category="${category}"
+                     data-file-name="${safeFileName}"
+                     data-created-at="${now}"
+                     data-start-time="${now}"
+                     data-total-bytes="0"
+                     data-downloaded-bytes="0"
+                     data-elapsed-time="0"
+                     data-speed="0"
+                     data-source-url="${safeUrl}"
+                     data-target-path="${safeSavePath}">
+                    <div class="progress-header">
+                        <div class="file-info">
+                            <i class="${iconClass}" aria-hidden="true"></i>
+                            <span class="file-name" id="${item.taskId}-filename" title="${safeFileName}">${safeFileName}</span>
+                            <span class="status-pill status-pill-queued" id="${item.taskId}-status-pill">${queueText}</span>
+                        </div>
+                        <div class="header-right">
+                            <div class="item-actions">
+                                <button type="button" class="btn-item-action btn-force-start" title="${titleForce}" aria-label="${titleForce}" data-item-action="force-start">
+                                    <i class="fa-solid fa-bolt" aria-hidden="true"></i>
+                                </button>
+                                <button type="button" class="btn-item-action btn-pause-resume" title="${titlePause}" aria-label="${titlePause}" data-item-action="toggle-pause" style="display: none;">
+                                    <i class="fa-solid fa-pause" aria-hidden="true"></i>
+                                </button>
+                                <button type="button" class="btn-item-action btn-cancel" title="${titleCancel}" aria-label="${titleCancel}" data-item-action="cancel">
+                                    <i class="fa-solid fa-ban" aria-hidden="true"></i>
+                                </button>
+                                <button type="button" class="btn-item-action btn-delete" title="${titleDelete}" aria-label="${titleDelete}" data-item-action="delete">
+                                    <i class="fa-solid fa-trash" aria-hidden="true"></i>
+                                </button>
+                            </div>
+                            <div class="progress-percentage" id="${item.taskId}-percent">Chờ...</div>
+                        </div>
+                    </div>
+                    <div class="progress-bar-container" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" id="${item.taskId}-progress-container">
+                        <div class="progress-bar-fill" id="${item.taskId}-progress" style="width: 0%;"></div>
+                    </div>
+                    <div class="progress-stats">
+                        <span class="stat-item"><span id="${item.taskId}-speed-label">${speedLabel}</span> <b id="${item.taskId}-speed">${isEn ? "Waiting..." : "Chờ đến lượt"}</b></span>
+                        <span class="stat-item"><span id="${item.taskId}-downloaded-label">${downloadedLabel}</span> <b id="${item.taskId}-downloaded">0 B / --</b></span>
+                        <span class="stat-item"><span id="${item.taskId}-eta-label">${etaLabel}</span> <b id="${item.taskId}-eta">--:--</b></span>
+                    </div>
+                </div>
+            `;
+            downloadList.insertAdjacentHTML('afterbegin', downloadHTML);
+        }
+    }
+
+    if (window.applyFilter) window.applyFilter();
+    else if (window.updateTaskCounter) window.updateTaskCounter();
+
+    // Gửi START_BATCH_DOWNLOAD xuống C# để bắt đầu tải theo hàng đợi (Socket Control)
+    const payload = JSON.stringify({
+        action: "START_BATCH_DOWNLOAD",
+        tasks: taskList.map(t => ({
+            taskId: t.taskId,
+            url: t.url,
+            savePath: t.savePath,
+            threads: t.thread,
+            thread: t.thread,
+            customFileName: t.customFileName
+        }))
+    });
+
+    if (window.chrome && window.chrome.webview) {
+        window.chrome.webview.postMessage(payload);
+    }
+
+    return taskList.map(t => t.taskId);
+}
+window.addBatchDownloadTasks = addBatchDownloadTasks;
+
 
 
 // Form nhập link tải đơn lẻ
@@ -978,11 +1131,19 @@ function setupMainValidator() {
 
                 validator: (value) => {
 
+                    if (typeof hasUrlPattern === "function" && hasUrlPattern(value)) {
+
+                        const res = expandUrlPattern(value);
+
+                        return !res.error && res.urls.length > 0;
+
+                    }
+
                     try {
 
                         const u = new URL(value);
 
-                        return u.protocol === "http:" || u.protocol === "https:";
+                        return u.protocol === "http:" || u.protocol === "https:" || u.protocol === "ftp:";
 
                     } catch (e) {
 
@@ -1032,6 +1193,70 @@ function setupMainValidator() {
 
 
 
+            const isPattern = typeof hasUrlPattern === "function" && hasUrlPattern(url);
+
+            if (isPattern) {
+
+                const result = expandUrlPattern(url);
+
+                if (result.error) {
+
+                    if (window.showAppToast) window.showAppToast("Lỗi quy luật: " + result.error);
+
+                    return;
+
+                }
+
+
+
+                addBatchDownloadTasks(result.urls, savePath, thread, customFileName);
+
+
+
+                const isEn = window.i18n && window.i18n.getCurrentLanguage && window.i18n.getCurrentLanguage() === "en";
+
+                if (window.showAppToast) {
+
+                    window.showAppToast(isEn
+
+                        ? `Pattern detected! Added ${result.urls.length} tasks to download queue.`
+
+                        : `Đã phát hiện URL quy luật! Tự động sinh ${result.urls.length} tác vụ tải và đưa vào hàng đợi.`);
+
+                }
+
+
+
+                if (urlInput) {
+
+                    urlInput.value = '';
+
+                    urlInput.classList.remove("just-validate-success-field", "just-validate-error-field");
+
+                }
+
+                const det = document.getElementById("url-pattern-detector");
+
+                if (det) { det.style.display = "none"; det.classList.remove("show"); }
+
+                if (customNameEl) {
+
+                    customNameEl.value = '';
+
+                    customNameEl.placeholder = (window.i18n && window.i18n.t)
+
+                        ? window.i18n.t("add.custom_name_placeholder")
+
+                        : "Tự động nhận diện từ liên kết (hoặc nhập tên bạn muốn đổi)";
+
+                }
+
+                return;
+
+            }
+
+
+
             addDownloadTask(url, savePath, thread, customFileName);
 
 
@@ -1043,6 +1268,10 @@ function setupMainValidator() {
                 urlInput.classList.remove("just-validate-success-field", "just-validate-error-field");
 
             }
+
+            const det = document.getElementById("url-pattern-detector");
+
+            if (det) { det.style.display = "none"; det.classList.remove("show"); }
 
             if (customNameEl) {
 
@@ -1091,6 +1320,40 @@ window.setupMainValidator = setupMainValidator;
 // Khởi tạo validator lần đầu
 
 setupMainValidator();
+
+// Lắng nghe phát hiện quy luật URL thời gian thực trên ô nhập liên kết chính
+const urlInputMain = document.getElementById("url");
+const patternDetector = document.getElementById("url-pattern-detector");
+const patternDetectorText = document.getElementById("url-pattern-detector-text");
+
+function checkUrlPatternDetector() {
+    if (!urlInputMain || !patternDetector) return;
+    const val = (urlInputMain.value || "").trim();
+    if (typeof hasUrlPattern === "function" && hasUrlPattern(val)) {
+        const res = expandUrlPattern(val);
+        if (!res.error && res.urls.length > 0) {
+            const isEn = window.i18n && window.i18n.getCurrentLanguage && window.i18n.getCurrentLanguage() === "en";
+            const sampleFirst = res.urls[0].split("/").pop().split("?")[0];
+            const sampleLast = res.urls[res.urls.length - 1].split("/").pop().split("?")[0];
+            if (patternDetectorText) {
+                patternDetectorText.innerHTML = isEn
+                    ? `Pattern detected: <b>${res.urls.length} files</b> (${sampleFirst} ... ${sampleLast}). Click Download to queue sequentially.`
+                    : `Phát hiện URL quy luật: <b>${res.urls.length} tệp</b> (${sampleFirst} ... ${sampleLast}). Nhấn Bắt đầu tải để tự động đưa vào hàng đợi.`;
+            }
+            patternDetector.style.display = "flex";
+            patternDetector.classList.add("show");
+            return;
+        }
+    }
+    patternDetector.style.display = "none";
+    patternDetector.classList.remove("show");
+}
+
+if (urlInputMain) {
+    urlInputMain.addEventListener("input", checkUrlPatternDetector);
+    urlInputMain.addEventListener("paste", () => setTimeout(checkUrlPatternDetector, 50));
+}
+
 
 
 
@@ -2365,8 +2628,13 @@ function openBatchModal() {
 
 
 
+    // Nếu ô nhập URL chính đang có nội dung và danh sách đang trống, tự động đưa sang ô danh sách
+    const mainUrlInput = document.getElementById("url");
     const textarea = document.getElementById("batch-urls-input");
-
+    if (mainUrlInput && textarea && !textarea.value.trim() && mainUrlInput.value.trim()) {
+        textarea.value = mainUrlInput.value.trim();
+        updateBatchCount();
+    }
     if (textarea) textarea.focus();
 
 }
@@ -2383,37 +2651,186 @@ function closeBatchModal() {
 
 
 
+/**
+ * Sinh danh sách URL từ cú pháp quy luật (Pattern Matching).
+ * Hỗ trợ các cú pháp:
+ * 1. Dải số nguyên có đệm 0 và bước nhảy: [01-20], [1-50:5], [20-01]
+ * 2. Dải chữ cái: [a-z], [A-Z], [a-e:2], [z-a]
+ * 3. Danh sách phân tách dấu phẩy: [en,vi,fr], [1080p,720p]
+ * 4. Nhiều quy luật lồng nhau (Tích Descartes): vol_[1-2]/ep_[01-03].mp4
+ */
+function expandUrlPattern(pattern) {
+    if (!pattern || !pattern.trim()) return { urls: [], error: "Vui lòng nhập URL mẫu." };
+    const trimmed = pattern.trim();
+    const bracketRegex = /\[\s*([^\]]+?)\s*\]/;
+
+    function expandRecursive(current, maxCount = 500) {
+        const match = current.match(bracketRegex);
+        if (!match) return [current];
+
+        const inner = match[1].trim();
+        const fullBracket = match[0];
+        const replacements = [];
+
+        // 1. Dải số nguyên: [01-20] hoặc [1-20:2] hoặc [20-01]
+        const numMatch = inner.match(/^(\d+)\s*-\s*(\d+)(?:\s*:\s*(\d+))?$/);
+        if (numMatch) {
+            const rawStart = numMatch[1], rawEnd = numMatch[2], rawStep = numMatch[3];
+            const start = parseInt(rawStart, 10);
+            const end = parseInt(rawEnd, 10);
+            const step = rawStep ? Math.max(1, parseInt(rawStep, 10)) : 1;
+            const padLen = (rawStart.startsWith("0") || rawEnd.startsWith("0"))
+                ? Math.max(rawStart.length, rawEnd.length)
+                : 0;
+
+            if (start <= end) {
+                for (let i = start; i <= end; i += step) {
+                    replacements.push(padLen > 0 ? String(i).padStart(padLen, "0") : String(i));
+                    if (replacements.length > maxCount) break;
+                }
+            } else {
+                for (let i = start; i >= end; i -= step) {
+                    replacements.push(padLen > 0 ? String(i).padStart(padLen, "0") : String(i));
+                    if (replacements.length > maxCount) break;
+                }
+            }
+        } else {
+            // 2. Dải chữ cái: [a-z], [A-Z], [a-e:2], [z-a]
+            const letterMatch = inner.match(/^([a-zA-Z])\s*-\s*([a-zA-Z])(?:\s*:\s*(\d+))?$/);
+            if (letterMatch) {
+                const startCode = letterMatch[1].charCodeAt(0);
+                const endCode = letterMatch[2].charCodeAt(0);
+                const step = letterMatch[3] ? Math.max(1, parseInt(letterMatch[3], 10)) : 1;
+                if (startCode <= endCode) {
+                    for (let c = startCode; c <= endCode; c += step) {
+                        replacements.push(String.fromCharCode(c));
+                        if (replacements.length > maxCount) break;
+                    }
+                } else {
+                    for (let c = startCode; c >= endCode; c -= step) {
+                        replacements.push(String.fromCharCode(c));
+                        if (replacements.length > maxCount) break;
+                    }
+                }
+            } else if (inner.includes(",") && !inner.includes("::")) {
+                // 3. Danh sách phân tách phẩy: [en,vi,fr]
+                const parts = inner.split(",").map(p => p.trim()).filter(p => p.length > 0);
+                replacements.push(...parts);
+            } else {
+                return [current];
+            }
+        }
+
+        if (replacements.length === 0) return [current];
+
+        const results = [];
+        for (const rep of replacements) {
+            const nextStr = current.replace(fullBracket, rep);
+            const subResults = expandRecursive(nextStr, maxCount);
+            results.push(...subResults);
+            if (results.length > maxCount) break;
+        }
+        return results;
+    }
+
+    let expanded;
+    try {
+        expanded = expandRecursive(trimmed, 500);
+    } catch (e) {
+        return { urls: [], error: "Lỗi phân tích quy luật URL: " + e.message };
+    }
+
+    if (expanded.length === 1 && expanded[0] === trimmed && !bracketRegex.test(trimmed)) {
+        try {
+            const u = new URL(trimmed);
+            if (u.protocol === "http:" || u.protocol === "https:" || u.protocol === "ftp:") {
+                return { urls: [trimmed], error: null };
+            }
+        } catch (e) {
+            return { urls: [], error: "URL không hợp lệ. Cú pháp: [start-end] hoặc [start-end:step]" };
+        }
+    }
+
+    if (expanded.length > 500) {
+        return { urls: [], error: `Số lượng URL sinh ra quá lớn (${expanded.length}). Giới hạn 500 URL mỗi lần.` };
+    }
+
+    const validUrls = [];
+    for (const u of expanded) {
+        if (/^(https?|ftp):\/\/[^\s]+$/i.test(u)) {
+            validUrls.push(u);
+        } else {
+            return { urls: [], error: `URL sau khi sinh không đúng định dạng: ${u}` };
+        }
+    }
+
+    return { urls: validUrls, error: null };
+}
+window.expandUrlPattern = expandUrlPattern;
+
+/**
+ * Trích xuất toàn bộ URL hợp lệ từ chuỗi văn bản (hỗ trợ .txt, .csv),
+ * tự động nhận diện và mở rộng mọi URL theo quy luật [01-20].
+ */
 function parseValidUrlsFromText(text) {
-
     if (!text) return [];
-
     const lines = text.split(/\r?\n/);
-
     const valid = [];
+    const seen = new Set();
+    const urlRegex = /(?:https?|ftp):\/\/[^\s",;<>]+/gi;
 
     lines.forEach(line => {
-
         const trimmed = line.trim();
+        if (!trimmed || trimmed.startsWith("#") || trimmed.startsWith("//")) return;
 
-        if (!trimmed) return;
+        let m;
+        urlRegex.lastIndex = 0;
+        let foundInLine = false;
 
-        try {
+        while ((m = urlRegex.exec(trimmed)) !== null) {
+            foundInLine = true;
+            let candidate = m[0].replace(/^[\"']|[\"\',;)]+$/g, "").trim();
+            if (!candidate) continue;
 
-            const u = new URL(trimmed);
-
-            if (u.protocol === "http:" || u.protocol === "https:") {
-
-                valid.push(trimmed);
-
+            if (typeof hasUrlPattern === "function" && hasUrlPattern(candidate)) {
+                const res = expandUrlPattern(candidate);
+                if (!res.error && res.urls.length > 0) {
+                    res.urls.forEach(u => {
+                        if (!seen.has(u)) { seen.add(u); valid.push(u); }
+                    });
+                } else if (!seen.has(candidate)) {
+                    seen.add(candidate);
+                    valid.push(candidate);
+                }
+            } else {
+                try {
+                    const u = new URL(candidate);
+                    if (u.protocol === "http:" || u.protocol === "https:" || u.protocol === "ftp:") {
+                        if (!seen.has(candidate)) {
+                            seen.add(candidate);
+                            valid.push(candidate);
+                        }
+                    }
+                } catch (e) { }
             }
+        }
 
-        } catch (e) { }
-
+        if (!foundInLine) {
+            const cleaned = trimmed.replace(/^[\"']|[\"\',;)]+$/g, "").trim();
+            if (typeof hasUrlPattern === "function" && hasUrlPattern(cleaned)) {
+                const res = expandUrlPattern(cleaned);
+                if (!res.error && res.urls.length > 0) {
+                    res.urls.forEach(u => {
+                        if (!seen.has(u)) { seen.add(u); valid.push(u); }
+                    });
+                }
+            }
+        }
     });
 
     return valid;
-
 }
+window.parseValidUrlsFromText = parseValidUrlsFromText;
 
 
 
@@ -2507,6 +2924,32 @@ document.addEventListener("click", (e) => {
 
         requestBrowseFolder(true);
 
+        return;
+
+    }
+
+    // Nhập từ file .txt/.csv
+    if (e.target.closest("#btn-import-batch-file")) {
+
+        if (window.chrome && window.chrome.webview) {
+
+            window.chrome.webview.postMessage(JSON.stringify({ action: "IMPORT_BATCH_FILE" }));
+
+        }
+
+        return;
+
+    }
+
+    // Xóa toàn bộ danh sách URL
+    if (e.target.closest("#btn-clear-batch")) {
+
+        const ta = document.getElementById("batch-urls-input");
+
+        if (ta) { ta.value = ""; updateBatchCount(); }
+
+        return;
+
     }
 
 });
@@ -2571,13 +3014,8 @@ if (btnSubmitBatch) {
 
 
 
-        // Thêm từng tác vụ vào giao diện và gửi xuống C#
-
-        urls.forEach(url => {
-
-            addDownloadTask(url, savePath, thread);
-
-        });
+        // Thêm hàng loạt vào giao diện và gửi xuống C# với cơ chế điều phối hàng đợi (Queue Scheduling)
+        addBatchDownloadTasks(urls, savePath, thread);
 
 
 
@@ -2596,6 +3034,8 @@ if (btnSubmitBatch) {
     });
 
 }
+
+
 
 
 

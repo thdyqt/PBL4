@@ -12,6 +12,20 @@ using System.Threading.Tasks;
 namespace WindowsFormsApp.Download
 {
     /// <summary>
+    /// Thông tin tác vụ tải đang chờ trong hàng đợi trước khi mở socket probe dò thông tin file.
+    /// Kiểm soát tài nguyên socket, tránh làm nghẽn card mạng khi thêm hàng chục / hàng trăm task cùng lúc.
+    /// </summary>
+    public sealed class PendingDownloadItem
+    {
+        public string TaskId { get; set; }
+        public string Url { get; set; }
+        public string Folder { get; set; }
+        public int Threads { get; set; }
+        public string CustomFileName { get; set; }
+        public DateTime EnqueuedAt { get; set; } = DateTime.UtcNow;
+    }
+
+    /// <summary>
     /// Quản lý nhiều tác vụ tải: tạo job (khâu 1-2), phát tiến độ định kỳ (khâu 4),
     /// nhận lệnh Pause/Resume/Remove và giới hạn tốc độ.
     /// ProgressChanged được gọi từ luồng nền: nơi nhận phải tự chuyển về luồng giao diện.
@@ -25,8 +39,10 @@ namespace WindowsFormsApp.Download
         private readonly HashSet<string> _activeTargets = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         private readonly object _targetLock = new object();
         private readonly List<string> _queue = new List<string>();
+        private readonly List<PendingDownloadItem> _pendingQueue = new List<PendingDownloadItem>();
         private readonly object _queueLock = new object();
         private int _maxConcurrentDownloads = 2; // 0 = Không giới hạn
+        private int _activePreparingCount = 0;
         private ProxySettings _currentProxy;
         private readonly System.Threading.Timer _timer;
         private int _tickBusy;
@@ -72,6 +88,16 @@ namespace WindowsFormsApp.Download
                      + _ftpJobs.Values.Count(j => j.State == DownloadState.Downloading || j.State == DownloadState.Preparing);
             }
         }
+
+        public int QueuedCount
+        {
+            get
+            {
+                lock (_queueLock) { return _queue.Count + _pendingQueue.Count; }
+            }
+        }
+
+        public int ActivePreparingCount => Volatile.Read(ref _activePreparingCount);
 
         public static HttpClient CreateHttpClient(ProxySettings proxy)
         {
@@ -156,19 +182,79 @@ namespace WindowsFormsApp.Download
                 (uri.Scheme != Uri.UriSchemeHttp && uri.Scheme != Uri.UriSchemeHttps && uri.Scheme != Uri.UriSchemeFtp))
                 throw new DownloadException("Chỉ hỗ trợ liên kết HTTP, HTTPS hoặc FTP hợp lệ.");
 
-            if (uri.Scheme == Uri.UriSchemeFtp)
-            {
-                await StartFtpAsync(taskId, url, folder, customFileName).ConfigureAwait(false);
-                return;
-            }
             if (string.IsNullOrWhiteSpace(folder))
                 throw new DownloadException("Bạn chưa chọn nơi lưu tệp.");
-            if (_jobs.ContainsKey(taskId)) return;
+            if (HasJob(taskId)) return;
 
             Directory.CreateDirectory(folder);
             threads = Math.Max(1, Math.Min(threads, SegmentPlanner.MaxThreads));
 
-            // Khâu 1: dò thông tin file
+            // Kiểm soát socket và điều phối hàng đợi (Queue Scheduling & Socket Control):
+            // Nếu hàng đợi đã đầy và không phải ForceStart, đưa vào _pendingQueue mà KHÔNG mở socket probe từ xa!
+            // Điều này ngăn chặn hiện tượng nghẽn card mạng và cạn kiệt socket khi người dùng thêm hàng chục/hàng trăm task.
+            lock (_queueLock)
+            {
+                int activeTotal = ActiveDownloadingCount + Volatile.Read(ref _activePreparingCount);
+                if (!forceStart && _maxConcurrentDownloads > 0 && activeTotal >= _maxConcurrentDownloads)
+                {
+                    var pending = new PendingDownloadItem
+                    {
+                        TaskId = taskId,
+                        Url = url,
+                        Folder = folder,
+                        Threads = threads,
+                        CustomFileName = customFileName
+                    };
+                    _pendingQueue.Add(pending);
+
+                    string estimatedName = !string.IsNullOrWhiteSpace(customFileName)
+                        ? SanitizeFileName(customFileName.Trim())
+                        : GetFileNameFromUrl(url);
+
+                    var queuedDto = new ProgressDto
+                    {
+                        TaskId = taskId,
+                        State = DownloadState.Queued.ToString().ToLowerInvariant(),
+                        FileName = estimatedName,
+                        TargetPath = Path.Combine(folder, estimatedName),
+                        TotalBytes = 0,
+                        Downloaded = 0,
+                        Speed = 0,
+                        EtaSeconds = -1,
+                        Threads = threads,
+                        SupportsRanges = false
+                    };
+
+                    Raise(queuedDto);
+                    return;
+                }
+                else
+                {
+                    Interlocked.Increment(ref _activePreparingCount);
+                }
+            }
+
+            try
+            {
+                if (uri.Scheme == Uri.UriSchemeFtp)
+                {
+                    await StartFtpAsync(taskId, url, folder, customFileName).ConfigureAwait(false);
+                }
+                else
+                {
+                    await ExecuteStartHttpAsync(taskId, url, folder, threads, customFileName).ConfigureAwait(false);
+                }
+            }
+            finally
+            {
+                Interlocked.Decrement(ref _activePreparingCount);
+                CheckAndProcessQueue();
+            }
+        }
+
+        private async Task ExecuteStartHttpAsync(string taskId, string url, string folder, int threads, string customFileName)
+        {
+            // Khâu 1: dò thông tin file (chỉ thực hiện khi đã được cấp socket / slot tải)
             RemoteFileInfo info = await RemoteProbe.InspectAsync(_http, url, CancellationToken.None).ConfigureAwait(false);
 
             // Đổi tên tệp nếu người dùng chỉ định trước khi tải
@@ -232,30 +318,12 @@ namespace WindowsFormsApp.Download
             }
 
             DownloadJob job;
-            bool shouldQueue;
             try
             {
-                lock (_queueLock)
-                {
-                    shouldQueue = !forceStart && _maxConcurrentDownloads > 0 && ActiveDownloadingCount >= _maxConcurrentDownloads;
-                    job = new DownloadJob(taskId, url, info, target, threads, ranges, segments, _http, _limiter, queued: shouldQueue);
-                    job.Changed += OnJobChanged;
-                    _jobs[taskId] = job;
-
-                    if (shouldQueue)
-                    {
-                        if (!_queue.Contains(taskId)) _queue.Add(taskId);
-                    }
-                }
-
-                if (shouldQueue)
-                {
-                    Raise(job.Snapshot());
-                }
-                else
-                {
-                    job.Start();
-                }
+                job = new DownloadJob(taskId, url, info, target, threads, ranges, segments, _http, _limiter, queued: false);
+                job.Changed += OnJobChanged;
+                _jobs[taskId] = job;
+                job.Start();
             }
             catch
             {
@@ -511,9 +579,29 @@ namespace WindowsFormsApp.Download
         /// </summary>
         public void PauseAll()
         {
+            List<PendingDownloadItem> pendingList;
             lock (_queueLock)
             {
                 _queue.Clear();
+                pendingList = _pendingQueue.ToList();
+                _pendingQueue.Clear();
+            }
+
+            foreach (var p in pendingList)
+            {
+                string fn = !string.IsNullOrWhiteSpace(p.CustomFileName) ? p.CustomFileName : GetFileNameFromUrl(p.Url);
+                var pausedDto = new ProgressDto
+                {
+                    TaskId = p.TaskId,
+                    State = DownloadState.Paused.ToString().ToLowerInvariant(),
+                    FileName = fn,
+                    TargetPath = Path.Combine(p.Folder, fn),
+                    TotalBytes = 0,
+                    Downloaded = 0,
+                    Speed = 0,
+                    EtaSeconds = -1
+                };
+                Raise(pausedDto);
             }
 
             foreach (var job in _jobs.Values)
@@ -535,9 +623,35 @@ namespace WindowsFormsApp.Download
 
         public void Pause(string taskId)
         {
+            PendingDownloadItem pending = null;
             lock (_queueLock)
             {
                 _queue.Remove(taskId);
+                int idx = _pendingQueue.FindIndex(p => string.Equals(p.TaskId, taskId, StringComparison.Ordinal));
+                if (idx >= 0)
+                {
+                    pending = _pendingQueue[idx];
+                    _pendingQueue.RemoveAt(idx);
+                }
+            }
+
+            if (pending != null)
+            {
+                string fn = !string.IsNullOrWhiteSpace(pending.CustomFileName) ? pending.CustomFileName : GetFileNameFromUrl(pending.Url);
+                var pausedDto = new ProgressDto
+                {
+                    TaskId = pending.TaskId,
+                    State = DownloadState.Paused.ToString().ToLowerInvariant(),
+                    FileName = fn,
+                    TargetPath = Path.Combine(pending.Folder, fn),
+                    TotalBytes = 0,
+                    Downloaded = 0,
+                    Speed = 0,
+                    EtaSeconds = -1
+                };
+                Raise(pausedDto);
+                CheckAndProcessQueue();
+                return;
             }
 
             DownloadJob job;
@@ -555,12 +669,24 @@ namespace WindowsFormsApp.Download
 
         public void Resume(string taskId)
         {
+            PendingDownloadItem pending = null;
+            lock (_queueLock)
+            {
+                pending = _pendingQueue.FirstOrDefault(p => string.Equals(p.TaskId, taskId, StringComparison.Ordinal));
+            }
+            if (pending != null)
+            {
+                CheckAndProcessQueue();
+                return;
+            }
+
             DownloadJob job;
             if (_jobs.TryGetValue(taskId, out job))
             {
                 lock (_queueLock)
                 {
-                    if (_maxConcurrentDownloads > 0 && ActiveDownloadingCount >= _maxConcurrentDownloads)
+                    int activeTotal = ActiveDownloadingCount + Volatile.Read(ref _activePreparingCount);
+                    if (_maxConcurrentDownloads > 0 && activeTotal >= _maxConcurrentDownloads)
                     {
                         if (!_queue.Contains(taskId)) _queue.Add(taskId);
                         job.SetQueued();
@@ -581,9 +707,52 @@ namespace WindowsFormsApp.Download
         /// <summary>Bắt đầu ngay một tác vụ đang chờ trong hàng đợi (bỏ qua giới hạn hàng đợi).</summary>
         public void ForceStart(string taskId)
         {
+            PendingDownloadItem pending = null;
             lock (_queueLock)
             {
                 _queue.Remove(taskId);
+                int idx = _pendingQueue.FindIndex(p => string.Equals(p.TaskId, taskId, StringComparison.Ordinal));
+                if (idx >= 0)
+                {
+                    pending = _pendingQueue[idx];
+                    _pendingQueue.RemoveAt(idx);
+                }
+            }
+
+            if (pending != null)
+            {
+                Interlocked.Increment(ref _activePreparingCount);
+                _ = Task.Run(async () =>
+                {
+                    try
+                    {
+                        Uri u;
+                        if (Uri.TryCreate(pending.Url, UriKind.Absolute, out u) && u.Scheme == Uri.UriSchemeFtp)
+                        {
+                            await StartFtpAsync(pending.TaskId, pending.Url, pending.Folder, pending.CustomFileName).ConfigureAwait(false);
+                        }
+                        else
+                        {
+                            await ExecuteStartHttpAsync(pending.TaskId, pending.Url, pending.Folder, pending.Threads, pending.CustomFileName).ConfigureAwait(false);
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        var errDto = new ProgressDto
+                        {
+                            TaskId = pending.TaskId,
+                            State = DownloadState.Failed.ToString().ToLowerInvariant(),
+                            Error = ex.Message
+                        };
+                        Raise(errDto);
+                    }
+                    finally
+                    {
+                        Interlocked.Decrement(ref _activePreparingCount);
+                        CheckAndProcessQueue();
+                    }
+                });
+                return;
             }
 
             DownloadJob job;
@@ -615,23 +784,69 @@ namespace WindowsFormsApp.Download
         {
             lock (_queueLock)
             {
-                while (_maxConcurrentDownloads <= 0 || ActiveDownloadingCount < _maxConcurrentDownloads)
+                while (_maxConcurrentDownloads <= 0 || (ActiveDownloadingCount + Volatile.Read(ref _activePreparingCount)) < _maxConcurrentDownloads)
                 {
-                    if (_queue.Count == 0) break;
-                    string nextTaskId = _queue[0];
-                    _queue.RemoveAt(0);
-
-                    DownloadJob nextJob;
-                    if (_jobs.TryGetValue(nextTaskId, out nextJob) && nextJob.State == DownloadState.Queued)
+                    // 1. Kiểm tra các job đã tạo nhưng đang Queued (ví dụ do Resume)
+                    if (_queue.Count > 0)
                     {
-                        nextJob.Start();
+                        string nextTaskId = _queue[0];
+                        _queue.RemoveAt(0);
+
+                        DownloadJob nextJob;
+                        if (_jobs.TryGetValue(nextTaskId, out nextJob) && nextJob.State == DownloadState.Queued)
+                        {
+                            nextJob.Start();
+                            continue;
+                        }
                     }
+
+                    // 2. Kiểm tra các task trong pending queue (chưa mở socket probe)
+                    if (_pendingQueue.Count > 0)
+                    {
+                        var nextPending = _pendingQueue[0];
+                        _pendingQueue.RemoveAt(0);
+
+                        Interlocked.Increment(ref _activePreparingCount);
+                        _ = Task.Run(async () =>
+                        {
+                            try
+                            {
+                                Uri nextUri;
+                                if (Uri.TryCreate(nextPending.Url, UriKind.Absolute, out nextUri) && nextUri.Scheme == Uri.UriSchemeFtp)
+                                {
+                                    await StartFtpAsync(nextPending.TaskId, nextPending.Url, nextPending.Folder, nextPending.CustomFileName).ConfigureAwait(false);
+                                }
+                                else
+                                {
+                                    await ExecuteStartHttpAsync(nextPending.TaskId, nextPending.Url, nextPending.Folder, nextPending.Threads, nextPending.CustomFileName).ConfigureAwait(false);
+                                }
+                            }
+                            catch (Exception ex)
+                            {
+                                var errDto = new ProgressDto
+                                {
+                                    TaskId = nextPending.TaskId,
+                                    State = DownloadState.Failed.ToString().ToLowerInvariant(),
+                                    Error = ex.Message
+                                };
+                                Raise(errDto);
+                            }
+                            finally
+                            {
+                                Interlocked.Decrement(ref _activePreparingCount);
+                                CheckAndProcessQueue();
+                            }
+                        });
+                        continue;
+                    }
+
+                    break;
                 }
             }
 
             int queuedCount;
-            lock (_queueLock) { queuedCount = _queue.Count; }
-            int active = ActiveDownloadingCount;
+            lock (_queueLock) { queuedCount = _queue.Count + _pendingQueue.Count; }
+            int active = ActiveDownloadingCount + Volatile.Read(ref _activePreparingCount);
             if (active > 0)
             {
                 _wasDownloading = true;
@@ -646,13 +861,41 @@ namespace WindowsFormsApp.Download
                     try { AllDownloadsCompleted?.Invoke(); } catch { }
                 }
             }
-
         }
 
         /// <summary>Hủy tác vụ tải: dừng luồng, xóa file dở dang và .dlmeta.</summary>
         public async Task CancelAsync(string taskId)
         {
-            lock (_queueLock) { _queue.Remove(taskId); }
+            PendingDownloadItem pending = null;
+            lock (_queueLock)
+            {
+                _queue.Remove(taskId);
+                int idx = _pendingQueue.FindIndex(p => string.Equals(p.TaskId, taskId, StringComparison.Ordinal));
+                if (idx >= 0)
+                {
+                    pending = _pendingQueue[idx];
+                    _pendingQueue.RemoveAt(idx);
+                }
+            }
+
+            if (pending != null)
+            {
+                string fn = !string.IsNullOrWhiteSpace(pending.CustomFileName) ? pending.CustomFileName : GetFileNameFromUrl(pending.Url);
+                var cancelDto = new ProgressDto
+                {
+                    TaskId = pending.TaskId,
+                    State = DownloadState.Cancelled.ToString().ToLowerInvariant(),
+                    FileName = fn,
+                    TargetPath = Path.Combine(pending.Folder, fn),
+                    TotalBytes = 0,
+                    Downloaded = 0,
+                    Speed = 0,
+                    EtaSeconds = -1
+                };
+                Raise(cancelDto);
+                CheckAndProcessQueue();
+                return;
+            }
 
             DownloadJob job;
             if (_jobs.TryGetValue(taskId, out job))
@@ -675,7 +918,23 @@ namespace WindowsFormsApp.Download
         /// <summary>Gỡ tác vụ. Chưa xong -> xóa file dở; đã xong -> giữ file.</summary>
         public async Task RemoveAsync(string taskId)
         {
-            lock (_queueLock) { _queue.Remove(taskId); }
+            PendingDownloadItem pending = null;
+            lock (_queueLock)
+            {
+                _queue.Remove(taskId);
+                int idx = _pendingQueue.FindIndex(p => string.Equals(p.TaskId, taskId, StringComparison.Ordinal));
+                if (idx >= 0)
+                {
+                    pending = _pendingQueue[idx];
+                    _pendingQueue.RemoveAt(idx);
+                }
+            }
+
+            if (pending != null)
+            {
+                CheckAndProcessQueue();
+                return;
+            }
 
             DownloadJob job;
             if (_jobs.TryRemove(taskId, out job))
@@ -695,22 +954,50 @@ namespace WindowsFormsApp.Download
             CheckAndProcessQueue();
         }
 
-
         /// <summary>Kiểm tra xem tác vụ có đang tồn tại trong bộ nhớ không.</summary>
         public bool HasJob(string taskId)
         {
             if (string.IsNullOrEmpty(taskId)) return false;
+            lock (_queueLock)
+            {
+                if (_pendingQueue.Any(p => string.Equals(p.TaskId, taskId, StringComparison.Ordinal)))
+                    return true;
+            }
             return _jobs.ContainsKey(taskId) || _ftpJobs.ContainsKey(taskId);
         }
 
         /// <summary>Lấy đường dẫn tệp đích của tác vụ theo taskId.</summary>
         public string GetTargetPath(string taskId)
         {
+            lock (_queueLock)
+            {
+                var p = _pendingQueue.FirstOrDefault(x => string.Equals(x.TaskId, taskId, StringComparison.Ordinal));
+                if (p != null)
+                {
+                    string fn = !string.IsNullOrWhiteSpace(p.CustomFileName) ? p.CustomFileName : GetFileNameFromUrl(p.Url);
+                    return Path.Combine(p.Folder, fn);
+                }
+            }
             DownloadJob job;
             if (_jobs.TryGetValue(taskId, out job)) return job.TargetPath;
             FtpJob ftpJob;
             if (_ftpJobs.TryGetValue(taskId, out ftpJob)) return ftpJob.TargetPath;
             return null;
+        }
+
+        public static string GetFileNameFromUrl(string url)
+        {
+            try
+            {
+                if (string.IsNullOrWhiteSpace(url)) return "download";
+                string clean = url.Split('?')[0].TrimEnd('/');
+                string fn = Path.GetFileName(clean);
+                return string.IsNullOrWhiteSpace(fn) ? "download" : fn;
+            }
+            catch
+            {
+                return "download";
+            }
         }
 
         public void Shutdown()

@@ -1,0 +1,34 @@
+{
+  "manifest_version": 3,
+  "name": "DUT Download Accelerator Integration",
+  "version": "1.0.0",
+  "description": "Tự động bắt link tải tệp (ZIP, RAR, ISO, EXE, MP4...) gửi thẳng tới ứng dụng DUT Download Accelerator qua Local IPC Socket.",
+  "permissions": [
+    "downloads",
+    "storage",
+    "contextMenus",
+    "notifications"
+  ],
+  "host_permissions": [
+    "http://127.0.0.1:8989/*",
+    "http://localhost:8989/*",
+    "<all_urls>"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "DUT Download Accelerator",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
+  },
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  }
+}

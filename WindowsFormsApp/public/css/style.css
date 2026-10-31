@@ -7569,3 +7569,79 @@ html[data-theme="dark"] .countdown-preset-pill.active {
 .btn-browser-action.primary:hover {
     color: #ffffff !important;
 }
+
+
+/* ===== Batch Textarea Toolbar ===== */
+.batch-textarea-toolbar {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 8px;
+    flex-wrap: wrap;
+}
+
+.btn-batch-tool {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 5px 12px;
+    background: var(--input-bg, #f3f4f6);
+    color: var(--text-color, #374151);
+    border: 1px solid var(--border-color, #d1d5db);
+    border-radius: 6px;
+    font-size: 0.78rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s;
+}
+
+.btn-batch-tool:hover {
+    background: var(--primary-color, #6366f1);
+    color: #fff;
+    border-color: var(--primary-color, #6366f1);
+}
+
+.btn-batch-clear:hover {
+    background: #ef4444;
+    border-color: #ef4444;
+    color: #fff;
+}
+
+[data-theme="dark"] .btn-batch-tool {
+    background: rgba(255,255,255,0.07);
+    border-color: rgba(255,255,255,0.12);
+    color: #e5e7eb;
+}
+
+/* ===== Real-time URL Pattern Detector (Main Input) ===== */
+.url-pattern-detector {
+    display: none;
+    align-items: center;
+    gap: 8px;
+    margin-top: 8px;
+    padding: 8px 12px;
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(168, 85, 247, 0.1));
+    border: 1px solid rgba(99, 102, 241, 0.28);
+    border-radius: 8px;
+    font-size: 0.82rem;
+    color: var(--primary-color, #6366f1);
+    animation: fadeInDown 0.25s ease-out;
+}
+.url-pattern-detector.show {
+    display: flex;
+}
+.url-pattern-detector i {
+    font-size: 0.95rem;
+    color: #8b5cf6;
+}
+.url-pattern-detector b {
+    color: #4f46e5;
+    font-weight: 600;
+}
+[data-theme="dark"] .url-pattern-detector {
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.18), rgba(168, 85, 247, 0.18));
+    border-color: rgba(99, 102, 241, 0.4);
+    color: #c7d2fe;
+}
+[data-theme="dark"] .url-pattern-detector b {
+    color: #a5b4fc;
+}

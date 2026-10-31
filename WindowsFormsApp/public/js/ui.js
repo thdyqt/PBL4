@@ -310,8 +310,21 @@ function matchesSearch(item, queryRaw) {
     return tokens.every(token => haystack.includes(token));
 }
 
+function isTaskActive(state) {
+    return state === "downloading" || state === "preparing" || state === "queued" || state === "paused";
+}
+
 // So sánh 2 tệp theo tiêu chí sắp xếp
 function compareItems(a, b, criteria, direction) {
+    // BẮT BUỘC: Các tác vụ đang tải / hàng đợi luôn luôn nằm ở TRÊN CÙNG.
+    // Các tác vụ ĐÃ TẢI XONG (hoàn thành) hoặc đã hủy luôn luôn nằm ở DƯỚI CÙNG.
+    // Không bao giờ để file đã tải chen ngang giữa các file đang tải!
+    const activeA = isTaskActive(a.dataset.state);
+    const activeB = isTaskActive(b.dataset.state);
+
+    if (activeA && !activeB) return -1; // a đang tải, b đã tải -> a luôn ở trên
+    if (!activeA && activeB) return 1;  // a đã tải, b đang tải -> b luôn ở trên (a xuống dưới)
+
     let result = 0;
     const isAsc = direction === "asc";
 

@@ -1,4 +1,4 @@
-// Xử lý tiến độ tải, các tác vụ Tạm dừng / Tiếp tục / Hủy / Xóa.
+﻿// Xử lý tiến độ tải, các tác vụ Tạm dừng / Tiếp tục / Hủy / Xóa.
 // Nhận thông điệp từ C# (DOWNLOAD_PROGRESS, DOWNLOAD_ERROR), gửi lệnh xuống C#.
 (function () {
     const hasHost = !!(window.chrome && window.chrome.webview);
@@ -303,12 +303,9 @@
 
     // ---------- cập nhật giao diện tác vụ ----------
     // Bảng màu phân biệt cho từng luồng (tối đa 16 luồng)
-    const SEG_PALETTE = [
-        "#1E5173", "#0ea5e9", "#6366f1", "#8b5cf6",
-        "#ec4899", "#f97316", "#eab308", "#22c55e",
-        "#14b8a6", "#06b6d4", "#a855f7", "#f43f5e",
-        "#84cc16", "#f59e0b", "#10b981", "#3b82f6"
-    ];
+    // Màu đồng nhất cho tất cả các luồng phân đoạn (không dùng dải màu khác nhau gây rối mắt)
+    const UNIFORM_SEG_COLOR = "#2563eb";
+    const COMPLETED_SEG_COLOR = "#10b981";
 
     function getVirusBadgeHtml(status, result, taskId) {
         const t = (k, fb) => (window.i18n && window.i18n.t) ? window.i18n.t(k, fb) : fb;
@@ -421,13 +418,12 @@
                 // Hỗ trợ Dynamic Segment Splitting: cập nhật số thanh luồng khi có phân đoạn mới được cắt đôi
                 wrap.innerHTML = "";
                 for (let i = 0; i < segmentCount; i++) {
-                    const color = SEG_PALETTE[i % SEG_PALETTE.length];
                     const bar = document.createElement("div");
                     bar.className = "segment-bar";
                     bar.title = `Luồng ${i + 1}: 0%`;
                     const fill = document.createElement("div");
                     fill.className = "segment-fill";
-                    fill.style.setProperty("--seg-color", color);
+                    fill.style.setProperty("--seg-color", UNIFORM_SEG_COLOR);
                     bar.appendChild(fill);
                     wrap.appendChild(bar);
                 }
@@ -632,7 +628,7 @@
 
         let text = getStateText(d.state);
         const segLen = (d.segments || []).length;
-        const thCount = segLen > 0 ? segLen : (d.threads || 1);
+        const thCount = d.threads || (segLen > 0 ? segLen : 1);
         const threadWord = isEn ? (thCount > 1 ? "threads" : "thread") : "luồng";
         if (d.state === "downloading") {
             const splitNotice = (segLen > 0 && item.dataset.initialSegments && segLen > parseInt(item.dataset.initialSegments, 10))
@@ -647,6 +643,11 @@
         } else if (d.state === "queued") {
             text += ` — ${thCount} ${threadWord}`;
         } else if (d.state === "completed") {
+            const fills = item.querySelectorAll(".segment-fill");
+            fills.forEach(f => f.style.setProperty("--seg-color", COMPLETED_SEG_COLOR));
+            if (previousState !== "completed" && window.applyFilter) {
+                setTimeout(window.applyFilter, 80);
+            }
             const elapsedSec = (typeof d.elapsedSeconds === "number" && d.elapsedSeconds > 0)
                 ? d.elapsedSeconds.toFixed(1)
                 : item.dataset.elapsedTime;
@@ -795,6 +796,26 @@
                 }
                 else if (msg.action === "BROWSER_LINK_CAPTURED") {
                     handleBrowserLinkCaptured(msg.data);
+                }
+                else if (msg.action === "BATCH_FILE_IMPORTED") {
+                    const ta = document.getElementById("batch-urls-input");
+                    const isEn = window.i18n && window.i18n.getCurrentLanguage && window.i18n.getCurrentLanguage() === "en";
+                    if (msg.error) {
+                        if (window.showAppToast) window.showAppToast((isEn ? "File import error: " : "Lỗi đọc file: ") + msg.error);
+                        return;
+                    }
+                    if (ta && Array.isArray(msg.urls) && msg.urls.length > 0) {
+                        const existing = ta.value.trim();
+                        ta.value = existing ? existing + "\n" + msg.urls.join("\n") : msg.urls.join("\n");
+                        // Trigger updateBatchCount if available
+                        if (typeof updateBatchCount === "function") updateBatchCount();
+                    }
+                    if (window.showAppToast) {
+                        const toastMsg = isEn
+                            ? `Imported ${msg.validCount} valid URLs from "${msg.fileName}" (${msg.totalLines} lines total).`
+                            : `Đã nhập ${msg.validCount} URL hợp lệ từ "${msg.fileName}" (${msg.totalLines} dòng).`;
+                        window.showAppToast(toastMsg);
+                    }
                 }
                 else if (msg.action === "HISTORY_DATA") {
                     if (Array.isArray(msg.data)) {
@@ -1366,11 +1387,10 @@
         if (state === "completed" && threadCount >= 1) {
             segmentBarsHtml = `<div class="segment-bars">`;
             for (let i = 0; i < threadCount; i++) {
-                const color = SEG_PALETTE[i % SEG_PALETTE.length];
                 const segTitle = isEn ? `Thread ${i + 1}: 100%` : `Luồng ${i + 1}: 100%`;
                 segmentBarsHtml += `
                     <div class="segment-bar" title="${segTitle}">
-                        <div class="segment-fill" style="width: 100%; --seg-color: ${color};"></div>
+                        <div class="segment-fill" style="width: 100%; --seg-color: ${COMPLETED_SEG_COLOR};"></div>
                     </div>`;
             }
             segmentBarsHtml += `</div>`;

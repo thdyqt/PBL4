@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DUT Download Accelerator</title>
+    <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+    <div class="popup-container">
+        <!-- Header -->
+        <header class="popup-header">
+            <div class="brand">
+                <img src="icons/icon48.png" alt="DUT Logo" class="brand-logo">
+                <div>
+                    <h1 class="brand-title">DUT Accelerator</h1>
+                    <span class="brand-sub">Browser Integration v1.0</span>
+                </div>
+            </div>
+            <div class="status-indicator" id="connection-status" title="Kiểm tra kết nối tới ứng dụng">
+                <span class="status-dot"></span>
+                <span class="status-text" id="status-text">Đang kiểm tra...</span>
+            </div>
+        </header>
+
+        <!-- Main Body -->
+        <main class="popup-body">
+            <!-- Toggle 1: Auto Capture -->
+            <div class="setting-item">
+                <div class="setting-info">
+                    <span class="setting-title">Tự động bắt link tải</span>
+                    <span class="setting-desc">Chặn tải trên trình duyệt và chuyển sang app</span>
+                </div>
+                <label class="switch">
+                    <input type="checkbox" id="toggle-enable" checked>
+                    <span class="slider"></span>
+                </label>
+            </div>
+
+            <!-- Toggle 2: Auto Start -->
+            <div class="setting-item">
+                <div class="setting-info">
+                    <span class="setting-title">Tự động bắt đầu tải</span>
+                    <span class="setting-desc">Tải ngay khi bắt link (không chờ bấm)</span>
+                </div>
+                <label class="switch">
+                    <input type="checkbox" id="toggle-autostart">
+                    <span class="slider"></span>
+                </label>
+            </div>
+
+            <!-- Monitored Extensions -->
+            <div class="ext-section">
+                <div class="ext-header">
+                    <span class="setting-title">Định dạng tệp tự động bắt:</span>
+                    <button type="button" class="btn-link" id="btn-reset-exts">Mặc định</button>
+                </div>
+                <div class="ext-tags-container" id="ext-tags"></div>
+                <div class="ext-input-wrap">
+                    <input type="text" id="input-new-ext" placeholder="Thêm đuôi mở rộng (vd: mkv, torrent)...">
+                    <button type="button" class="btn-add-ext" id="btn-add-ext">+</button>
+                </div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="action-buttons">
+                <button type="button" class="btn-primary" id="btn-ping-test">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+                    <span>Kiểm tra kết nối</span>
+                </button>
+            </div>
+        </main>
+
+        <!-- Footer -->
+        <footer class="popup-footer">
+            <span>DUT Download Accelerator • Cổng 127.0.0.1:8989</span>
+        </footer>
+    </div>
+
+    <script src="popup.js"></script>
+</body>
+</html>

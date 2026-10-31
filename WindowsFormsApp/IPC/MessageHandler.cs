@@ -8,6 +8,9 @@ using System.Threading.Tasks;
 
 using System.Windows.Forms;
 
+using System.Collections.Generic;
+using System.Linq;
+using System.Text.RegularExpressions;
 using WindowsFormsApp.Download;
 
 
@@ -227,6 +230,14 @@ namespace WindowsFormsApp.IPC
                         case "BROWSE_FOLDER":
 
                             HandleBrowseFolder();
+
+                            break;
+
+
+
+                        case "IMPORT_BATCH_FILE":
+
+                            HandleImportBatchFile();
 
                             break;
 
@@ -669,6 +680,27 @@ namespace WindowsFormsApp.IPC
         {
 
             _notifiedCompletedTasks.Remove(taskId);
+
+            // Kiểm tra và tự động sinh task nếu URL có cú pháp quy luật (Pattern Matching e.g. [01-20])
+            if (UrlPatternExpander.HasPattern(url))
+            {
+                try
+                {
+                    var expandedUrls = UrlPatternExpander.Expand(url);
+                    if (expandedUrls.Count > 1)
+                    {
+                        for (int i = 0; i < expandedUrls.Count; i++)
+                        {
+                            string subUrl = expandedUrls[i];
+                            string subTaskId = i == 0 ? taskId : "task-" + DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() + "-" + (i + 1) + "-" + Guid.NewGuid().ToString("N").Substring(0, 6);
+                            string subCustomName = UrlPatternExpander.ExpandCustomName(customFileName, i, subUrl);
+                            _ = HandleStartDownloadAsync(subTaskId, subUrl, folder, threads, subCustomName);
+                        }
+                        return;
+                    }
+                }
+                catch { }
+            }
 
             // Ghi trước vào DB để không mất task khi crash (ngay cả khi chưa biết tên file thật)
 
@@ -2109,6 +2141,93 @@ namespace WindowsFormsApp.IPC
                 {
 
                     SendError("", "Không thể mở hộp thoại chọn thư mục: " + ex.Message);
+
+                }
+
+            }));
+
+        }
+
+        private void HandleImportBatchFile()
+
+        {
+
+            _mainForm.BeginInvoke(new Action(() =>
+
+            {
+
+                try
+
+                {
+
+                    _mainForm.Activate();
+
+                    using (OpenFileDialog dlg = new OpenFileDialog())
+
+                    {
+
+                        dlg.Title = "Chọn file danh sách URL (.txt hoặc .csv)";
+
+                        dlg.Filter = "Text / CSV files (*.txt;*.csv)|*.txt;*.csv|All files (*.*)|*.*";
+
+                        dlg.FilterIndex = 1;
+
+                        dlg.Multiselect = false;
+
+                        if (dlg.ShowDialog(_mainForm) == DialogResult.OK)
+
+                        {
+
+                            string filePath = dlg.FileName;
+
+                            try
+
+                            {
+
+                                string content = File.ReadAllText(filePath, System.Text.Encoding.UTF8);
+
+                                string[] rawLines = File.ReadAllLines(filePath, System.Text.Encoding.UTF8);
+
+                                // Trích xuất tất cả URL từ text/csv và tự động giải mã mở rộng các URL theo quy luật [01-20]
+                                var urls = UrlPatternExpander.ExtractUrlsFromContent(content);
+
+                                Send(new
+
+                                {
+
+                                    action = "BATCH_FILE_IMPORTED",
+
+                                    urls = urls,
+
+                                    fileName = Path.GetFileName(filePath),
+
+                                    totalLines = rawLines.Length,
+
+                                    validCount = urls.Count
+
+                                });
+
+                            }
+
+                            catch (Exception ex)
+
+                            {
+
+                                Send(new { action = "BATCH_FILE_IMPORTED", urls = new string[0], error = ex.Message });
+
+                            }
+
+                        }
+
+                    }
+
+                }
+
+                catch (Exception ex)
+
+                {
+
+                    Send(new { action = "DOWNLOAD_ERROR", taskId = "", message = "Lỗi mở file: " + ex.Message });
 
                 }
 

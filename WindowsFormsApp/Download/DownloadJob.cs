@@ -307,7 +307,7 @@ namespace WindowsFormsApp.Download
                     seg = Segments.FirstOrDefault(s => !s.Finished && !_activeSegments.Contains(s));
 
                     // 3. Ưu tiên 2: Cắt đôi phân đoạn động (Dynamic Segment Splitting / Work Stealing kiểu IDM)
-                    if (seg == null && Segments.Count < SegmentPlanner.MaxDynamicSegments)
+                    if (seg == null && Segments.Count < RequestedThreads)
                     {
                         Segment longest = null;
                         long maxRemaining = 0;
@@ -728,7 +728,7 @@ namespace WindowsFormsApp.Download
                         catch { }
 
                         segDtos = Segments.Select(s => new SegmentDto { Downloaded = s.Downloaded, Length = s.Length }).ToList();
-                        threadCount = Segments.Count;
+                        threadCount = RequestedThreads;
                     }
                 }
             }
