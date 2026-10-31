@@ -409,21 +409,29 @@
             status.className = "download-status";
             item.appendChild(status);
         }
-        if (segmentCount >= 1 && !item.querySelector(".segment-bars")) {
-            const wrap = document.createElement("div");
-            wrap.className = "segment-bars";
-            for (let i = 0; i < segmentCount; i++) {
-                const color = SEG_PALETTE[i % SEG_PALETTE.length];
-                const bar = document.createElement("div");
-                bar.className = "segment-bar";
-                bar.title = `Luồng ${i + 1}: 0%`;
-                const fill = document.createElement("div");
-                fill.className = "segment-fill";
-                fill.style.setProperty("--seg-color", color);
-                bar.appendChild(fill);
-                wrap.appendChild(bar);
+        if (segmentCount >= 1) {
+            let wrap = item.querySelector(".segment-bars");
+            if (!wrap) {
+                wrap = document.createElement("div");
+                wrap.className = "segment-bars";
+                item.insertBefore(wrap, status);
             }
-            item.insertBefore(wrap, status);
+            const currentBars = wrap.querySelectorAll(".segment-bar");
+            if (currentBars.length !== segmentCount) {
+                // Hỗ trợ Dynamic Segment Splitting: cập nhật số thanh luồng khi có phân đoạn mới được cắt đôi
+                wrap.innerHTML = "";
+                for (let i = 0; i < segmentCount; i++) {
+                    const color = SEG_PALETTE[i % SEG_PALETTE.length];
+                    const bar = document.createElement("div");
+                    bar.className = "segment-bar";
+                    bar.title = `Luồng ${i + 1}: 0%`;
+                    const fill = document.createElement("div");
+                    fill.className = "segment-fill";
+                    fill.style.setProperty("--seg-color", color);
+                    bar.appendChild(fill);
+                    wrap.appendChild(bar);
+                }
+            }
         }
         return status;
     }
@@ -623,11 +631,18 @@
         });
 
         let text = getStateText(d.state);
-        const thCount = d.threads || 1;
+        const segLen = (d.segments || []).length;
+        const thCount = segLen > 0 ? segLen : (d.threads || 1);
         const threadWord = isEn ? (thCount > 1 ? "threads" : "thread") : "luồng";
         if (d.state === "downloading") {
+            const splitNotice = (segLen > 0 && item.dataset.initialSegments && segLen > parseInt(item.dataset.initialSegments, 10))
+                ? (isEn ? " [Dynamic Split]" : " [Chia nhỏ động]")
+                : "";
+            if (segLen > 0 && !item.dataset.initialSegments) {
+                item.dataset.initialSegments = segLen;
+            }
             text += d.supportsRanges
-                ? ` — ${thCount} ${threadWord}`
+                ? ` — ${thCount} ${threadWord}${splitNotice}`
                 : (isEn ? " — 1 thread (server doesn't support Range)" : " — 1 luồng (server không hỗ trợ Range)");
         } else if (d.state === "queued") {
             text += ` — ${thCount} ${threadWord}`;

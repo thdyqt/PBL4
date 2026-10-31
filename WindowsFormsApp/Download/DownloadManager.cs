@@ -504,6 +504,33 @@ namespace WindowsFormsApp.Download
 
         // ------------------------------------------------------------------ điều khiển
 
+        /// <summary>
+        /// Tạm dừng tất cả các tác vụ tải đang chạy hoặc đang nằm trong hàng đợi.
+        /// </summary>
+        public void PauseAll()
+        {
+            lock (_queueLock)
+            {
+                _queue.Clear();
+            }
+
+            foreach (var job in _jobs.Values)
+            {
+                if (job.State == DownloadState.Downloading || job.State == DownloadState.Preparing || job.State == DownloadState.Queued)
+                {
+                    try { job.Pause(); } catch { }
+                }
+            }
+
+            foreach (var ftpJob in _ftpJobs.Values)
+            {
+                if (ftpJob.State == DownloadState.Downloading || ftpJob.State == DownloadState.Preparing || ftpJob.State == DownloadState.Queued)
+                {
+                    try { ftpJob.Pause(); } catch { }
+                }
+            }
+        }
+
         public void Pause(string taskId)
         {
             lock (_queueLock)

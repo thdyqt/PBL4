@@ -42,6 +42,9 @@ namespace WindowsFormsApp.Download
         public string Theme { get; set; } = "light"; // "light", "dark", "system"
         public string Language { get; set; } = "vi"; // "vi", "en"
         public ScheduleSettings Schedule { get; set; } = new ScheduleSettings();
+        public bool StartWithWindows { get; set; } = false;
+        public bool MinimizeToTrayOnClose { get; set; } = true;
+        public bool ShowToastOnCompletion { get; set; } = true;
     }
 
     public class ProxyTestResult
@@ -90,6 +93,11 @@ namespace WindowsFormsApp.Download
                             if (settings.Proxy == null) settings.Proxy = new ProxySettings();
                             if (settings.Schedule == null) settings.Schedule = new ScheduleSettings();
                             if (string.IsNullOrWhiteSpace(settings.Language)) settings.Language = "vi";
+                            try
+                            {
+                                settings.StartWithWindows = ShellIntegrationHelper.IsRunOnStartupEnabled();
+                            }
+                            catch { }
                             _current = settings;
                             return _current;
                         }
@@ -98,6 +106,11 @@ namespace WindowsFormsApp.Download
                 catch { }
 
                 _current = new AppSettings();
+                try
+                {
+                    _current.StartWithWindows = ShellIntegrationHelper.IsRunOnStartupEnabled();
+                }
+                catch { }
                 return _current;
             }
         }

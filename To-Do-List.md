@@ -21,7 +21,7 @@ Dưới đây là các chức năng được phân loại theo mức độ giá 
   - *Đọc Exit Code và Standard Output:* Đọc dữ liệu của tiến trình để hiển thị trạng thái trên giao diện: "File an toàn" hoặc "Phát hiện mối đe dọa!".
 - **Độ khó:** ⭐⭐ *(Rất dễ cài đặt, tính ứng dụng thực tế cực cao).*
 
-### 3. Tích hợp sâu vào Windows Shell (System Tray, Toast Notification, Run on Startup)
+### 3. [x] Tích hợp sâu vào Windows Shell (System Tray, Toast Notification, Run on Startup) - ĐÃ HOÀN THÀNH
 - **Mô tả:**
   - Khi bấm dấu X tắt app, app thu nhỏ xuống khay hệ thống (System Tray Icon) chứ không tắt hẳn để tải ngầm.
   - Khi tải xong một file, bắn Windows Toast Notification ở góc dưới màn hình (kèm nút "Mở file").
@@ -44,12 +44,14 @@ Dưới đây là các chức năng được phân loại theo mức độ giá 
   - *Cơ chế IPC / Local Loopback:* Extension dùng `chrome.downloads.onCreated` để chặn lượt tải, sau đó gửi URL qua một Local HTTP Web Server / WebSocket chạy ngầm ngay trong C# (ví dụ cổng `http://127.0.0.1:8989`), hoặc sử dụng chuẩn Chrome Native Messaging (giao tiếp qua stdin/stdout giữa extension và file `.exe` qua Registry).
 - **Độ khó:** ⭐⭐⭐⭐ *(Khó hơn một chút nhưng nếu làm được thì đề tài này đạt điểm tuyệt đối 9.5 - 10).*
 
-### 5. Chia nhỏ luồng động (Dynamic Segment Splitting - Thuật toán đỉnh cao của IDM)
-- **Mô tả:** Hiện tại app của bạn chia đều file từ đầu (ví dụ 4 luồng chia 4 phần bằng nhau). Nhưng giả sử luồng 1, 2, 3 tải xong trước mà luồng 4 gặp mạng chậm còn lại 100MB -> Luồng 1, 2, 3 sẽ bị ngồi chơi (idle).
-- **Bản chất:**
-  - Khi một luồng tải xong, nó không dừng lại mà tìm luồng đang có đoạn dở dang dài nhất, "cắt đôi" đoạn dở đó ra để hỗ trợ tải tiếp.
-  - Tận dụng tối đa băng thông liên tục cho đến byte cuối cùng.
-- **Độ khó:** ⭐⭐⭐⭐ *(Thuật toán đồng bộ hóa luồng phức tạp hơn, nhưng phản biện trước hội đồng thì cực kỳ thuyết phục).*
+### 5. [x] Chia nhỏ luồng động (Dynamic Segment Splitting - Thuật toán đỉnh cao của IDM) - ĐÃ HOÀN THÀNH
+- **Mô tả:** Ban đầu app chia đều file từ đầu (ví dụ 4 luồng chia 4 phần bằng nhau). Khi luồng 1, 2, 3 tải xong trước mà luồng 4 gặp mạng chậm còn dở dang -> Luồng 1, 2, 3 không ngồi chơi mà tự động cắt đôi phân đoạn của luồng 4 để gánh tải.
+- **Bản chất kỹ thuật:**
+  - *Cơ chế Work Stealing & Dynamic Truncation:* Luồng rảnh rỗi tìm kiếm phân đoạn dở dang dài nhất (`Remaining >= 512 KB`), thực hiện `TrySplit` nguyên tử có khóa đồng bộ `lock(_lock)`. Phân đoạn cũ thu hẹp `End = splitPoint - 1`, phân đoạn mới gánh `[splitPoint, oldEnd]`.
+  - *Bảo toàn toàn vẹn dữ liệu:* Trong quá trình truyền dữ liệu mạng (`PumpAsync`), nếu phân đoạn bị thu hẹp, luồng tải hiện tại dừng đúng byte cắt và đóng kết nối HTTP. Luồng mới tiếp quản nửa sau liền mạch.
+  - *Xác minh toán học khắt khe:* Hàm `VerifyIntegrity()` tự động sắp xếp toàn bộ phân đoạn theo `Start`, kiểm tra tính liên tục tuyệt đối `segments[i].End + 1 == segments[i+1].Start`, không có byte chồng lấn, không có khe hở và tổng độ dài khớp 100% `TotalBytes`.
+  - *Trực quan hóa thời gian thực (Frontend UI):* Giao diện WebView2 tự động mở rộng thêm các thanh tiến độ luồng khi có phân đoạn mới được cắt đôi kèm huy hiệu `[Chia nhỏ động]`.
+- **Độ khó:** ⭐⭐⭐⭐ *(Thuật toán đồng bộ hóa luồng đỉnh cao của Internet Download Manager, ghi điểm tối đa trước hội đồng).*
 
 ### 6. Tải hàng loạt theo quy luật (Batch Download / Pattern Matching)
 - **Mô tả:**

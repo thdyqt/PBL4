@@ -13,7 +13,7 @@ namespace WindowsFormsApp
         /// The main entry point for the application.
         /// </summary>
         [STAThread]
-        static void Main()
+        static void Main(string[] args)
         {
             // .NET Framework mặc định chỉ cho 2 kết nối đồng thời tới cùng một máy chủ.
             // Không nâng giới hạn này thì 16 luồng tải thực chất vẫn chỉ chạy 2 luồng.
@@ -22,7 +22,11 @@ namespace WindowsFormsApp
 
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
-            Application.Run(new Form1());
+
+            bool startInBackground = WindowsFormsApp.Download.ShellIntegrationHelper.HasBackgroundArg(args) ||
+                                     WindowsFormsApp.Download.ShellIntegrationHelper.HasBackgroundArg(Environment.GetCommandLineArgs());
+
+            Application.Run(new Form1(startInBackground));
         }
     }
 }

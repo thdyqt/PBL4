@@ -110,6 +110,7 @@
     <Compile Include="Download\DownloadMeta.cs" />
     <Compile Include="Download\DownloadScheduler.cs" />
     <Compile Include="Download\PowerManagementHelper.cs" />
+    <Compile Include="Download\ShellIntegrationHelper.cs" />
     <Compile Include="Download\FtpJob.cs" />
     <Compile Include="Download\FtpProbe.cs" />
     <Compile Include="Download\Models.cs" />

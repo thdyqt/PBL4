@@ -545,34 +545,44 @@ a {
 }
 
 .sys-card-icon {
-    width: 44px;
-    height: 44px;
-    border-radius: 12px;
+    width: 46px;
+    height: 46px;
+    border-radius: 13px;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 18px;
+    font-size: 20px;
     flex-shrink: 0;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+}
+
+/* Đổi màu icon thông tin thiết bị sang màu trắng sáng có đổ bóng nhẹ, hoàn toàn thay thế màu đen */
+.sys-card-icon i,
+.sys-card-icon *,
+.device-sys-card .sys-card-icon i {
+    color: #ffffff !important;
+    font-size: 20px !important;
+    filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.25));
 }
 
 .sys-card-icon.machine {
-    background: linear-gradient(135deg, #3b82f6, #1d4ed8);
-    color: #ffffff;
+    background: linear-gradient(135deg, #2563eb, #1d4ed8);
+    box-shadow: 0 4px 14px rgba(37, 99, 235, 0.32);
 }
 
 .sys-card-icon.os {
     background: linear-gradient(135deg, #0284c7, #0369a1);
-    color: #ffffff;
+    box-shadow: 0 4px 14px rgba(2, 132, 199, 0.32);
 }
 
 .sys-card-icon.cpu {
     background: linear-gradient(135deg, #8b5cf6, #6d28d9);
-    color: #ffffff;
+    box-shadow: 0 4px 14px rgba(139, 92, 246, 0.32);
 }
 
 .sys-card-icon.ram {
     background: linear-gradient(135deg, #10b981, #047857);
-    color: #ffffff;
+    box-shadow: 0 4px 14px rgba(16, 185, 129, 0.32);
 }
 
 .sys-card-data {
@@ -747,6 +757,7 @@ a {
 .drive-badge-letter i {
     font-size: 13px;
     margin-bottom: 2px;
+    color: inherit !important;
 }
 
 .drive-info-meta {
@@ -1704,20 +1715,44 @@ a {
     background-color: #f0f6ff;
 }
 
-.section-2 .save-path-row .inner-browse-button {
+.section-2 .save-path-row .inner-browse-button,
+#btn-browse-folder {
     border: 0;
     cursor: pointer;
     border-radius: 10px;
-    padding: 15px 10px;
+    padding: 15px 14px;
     background-color: #d2dbecc8;
-    color: var(--blue);
+    color: var(--blue, #1E5173);
     font-weight: 600;
     font-size: 12px;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.25s ease;
 }
 
-.section-2 .save-path-row .inner-browse-button:hover {
-    background-color: var(--blue);
-    color: white;
+.section-2 .save-path-row .inner-browse-button i,
+.section-2 .save-path-row .inner-browse-button span,
+#btn-browse-folder i,
+#btn-browse-folder span {
+    color: var(--blue, #1E5173);
+    transition: color 0.25s ease;
+}
+
+.section-2 .save-path-row .inner-browse-button:hover,
+#btn-browse-folder:hover {
+    background-color: var(--blue, #1E5173) !important;
+    color: #ffffff !important;
+    box-shadow: 0 4px 14px rgba(30, 81, 115, 0.3);
+}
+
+.section-2 .save-path-row .inner-browse-button:hover i,
+.section-2 .save-path-row .inner-browse-button:hover span,
+.section-2 .save-path-row .inner-browse-button:hover *,
+#btn-browse-folder:hover i,
+#btn-browse-folder:hover span,
+#btn-browse-folder:hover * {
+    color: #ffffff !important;
 }
 
 .section-2 .thread-row {
@@ -2996,21 +3031,26 @@ html[data-language="en"] .download-actions::before {
 }
 
 #settings-modal .modal-card {
-    max-width: 820px;
+    max-width: 920px;
+    width: 94%;
 }
 
 #settings-modal .modal-header {
-    padding: 22px 32px;
+    padding: 20px 28px;
 }
 
 #settings-modal .settings-tabs {
     display: flex;
     flex-wrap: nowrap;
     overflow-x: auto;
-    overflow-y: hidden;
-    padding: 0 28px;
+    overflow-y: visible;
+    padding: 8px 24px;
     gap: 8px;
     white-space: nowrap;
+    min-height: 52px;
+    align-items: center;
+    background: #f8fafc;
+    border-bottom: 1px solid #e2e8f0;
     scrollbar-width: thin;
     scrollbar-color: #cbd5e1 transparent;
     -webkit-overflow-scrolling: touch;
@@ -3989,8 +4029,10 @@ html[data-language="en"] .download-actions::before {
     color: #ffffff;
 }
 
-.modal-batch .batch-save-control .inner-browse-button:hover {
+.modal-batch .batch-save-control .inner-browse-button:hover,
+.modal-batch .batch-save-control .inner-browse-button:hover * {
     background: #173e58;
+    color: #ffffff !important;
     box-shadow: 0 5px 12px rgba(30, 81, 115, 0.3);
     transform: translateY(-1px);
 }
@@ -6479,9 +6521,6 @@ html[data-theme="dark"] .btn-browser-action.secondary:hover {
 /* 1. Global WCAG 2.1 AA Keyboard Focus Visibility */
 button:focus-visible,
 a:focus-visible,
-input:focus-visible,
-select:focus-visible,
-textarea:focus-visible,
 .btn-item-action:focus-visible,
 .btn-time-range:focus-visible,
 .btn-chart-action:focus-visible {
@@ -6491,14 +6530,33 @@ textarea:focus-visible,
 
 html[data-theme="dark"] button:focus-visible,
 html[data-theme="dark"] a:focus-visible,
-html[data-theme="dark"] input:focus-visible,
-html[data-theme="dark"] select:focus-visible,
-html[data-theme="dark"] textarea:focus-visible,
 html[data-theme="dark"] .btn-item-action:focus-visible,
 html[data-theme="dark"] .btn-time-range:focus-visible,
 html[data-theme="dark"] .btn-chart-action:focus-visible {
     outline: 2px solid #60A5FA !important;
     outline-offset: 2px !important;
+}
+
+/* Loại bỏ viền khung xanh khó chịu khi focus vào input / textarea */
+input,
+select,
+textarea,
+input:focus,
+select:focus,
+textarea:focus,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+.inner-input,
+.inner-input:focus,
+.inner-input:focus-visible,
+.form-input,
+.form-input:focus,
+.form-input:focus-visible,
+.search-input,
+.search-input:focus,
+.search-input:focus-visible {
+    outline: none !important;
 }
 
 /* 2. Header Instant Language Switcher */
@@ -7283,4 +7341,231 @@ html[data-theme="dark"] .btn-now-power {
 html[data-theme="dark"] .btn-now-power:hover {
     background: #334155 !important;
     color: #f8fafc !important;
+}
+
+
+/* ============================================================
+   COUNTDOWN CARD & STEPPER STYLING (Spacious & Modern)
+   ============================================================ */
+.countdown-card-wrap {
+    margin: 28px 0 24px 0;
+    padding: 24px 28px;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    transition: all 0.2s ease;
+}
+
+.countdown-card-header {
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+}
+
+.countdown-icon-box {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    background: #e0f2fe;
+    color: #0284c7;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    flex-shrink: 0;
+}
+
+.countdown-header-text .form-label {
+    font-size: 14.5px;
+    font-weight: 700;
+    color: #1e293b;
+    margin-bottom: 4px;
+}
+
+.countdown-header-text .form-desc {
+    font-size: 13px;
+    color: #64748b;
+    line-height: 1.5;
+}
+
+.countdown-input-row {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 24px;
+    margin-top: 4px;
+}
+
+.countdown-stepper-wrap {
+    display: inline-flex;
+    align-items: center;
+    background: #ffffff;
+    border: 1px solid #cbd5e1;
+    border-radius: 10px;
+    padding: 4px 6px;
+    min-height: 44px;
+    gap: 4px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.btn-stepper {
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    background: #f1f5f9;
+    color: #334155;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 13px;
+    transition: all 0.15s ease;
+}
+
+.btn-stepper:hover {
+    background: #e2e8f0;
+    color: #0f172a;
+}
+
+.countdown-input-box {
+    display: flex;
+    align-items: center;
+    padding: 0 12px;
+    gap: 8px;
+}
+
+.countdown-number-input {
+    width: 62px;
+    border: none !important;
+    outline: none !important;
+    font-size: 17px;
+    font-weight: 700;
+    color: #0f172a;
+    text-align: center;
+    background: transparent;
+    -moz-appearance: textfield;
+}
+
+.countdown-number-input::-webkit-outer-spin-button,
+.countdown-number-input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+.countdown-unit-badge {
+    font-size: 13px;
+    font-weight: 600;
+    color: #64748b;
+}
+
+.countdown-presets-pills {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.countdown-preset-pill {
+    padding: 8px 18px;
+    border-radius: 20px;
+    border: 1px solid #e2e8f0;
+    background: #ffffff;
+    color: #475569;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.countdown-preset-pill:hover {
+    background: #f1f5f9;
+    border-color: #cbd5e1;
+    color: #0f172a;
+}
+
+.countdown-preset-pill.active {
+    background: #0284c7;
+    border-color: #0284c7;
+    color: #ffffff;
+    box-shadow: 0 2px 8px rgba(2, 132, 199, 0.3);
+}
+
+/* Dark mode for countdown card */
+html[data-theme="dark"] .countdown-card-wrap {
+    background: #0f172a !important;
+    border-color: #334155 !important;
+}
+
+html[data-theme="dark"] .countdown-icon-box {
+    background: rgba(56, 189, 248, 0.15) !important;
+    color: #38bdf8 !important;
+}
+
+html[data-theme="dark"] .countdown-header-text .form-label {
+    color: #f8fafc !important;
+}
+
+html[data-theme="dark"] .countdown-header-text .form-desc {
+    color: #94a3b8 !important;
+}
+
+html[data-theme="dark"] .countdown-stepper-wrap {
+    background: #1e293b !important;
+    border-color: #475569 !important;
+}
+
+html[data-theme="dark"] .btn-stepper {
+    background: #334155 !important;
+    color: #f1f5f9 !important;
+}
+
+html[data-theme="dark"] .btn-stepper:hover {
+    background: #475569 !important;
+}
+
+html[data-theme="dark"] .countdown-number-input {
+    color: #ffffff !important;
+}
+
+html[data-theme="dark"] .countdown-unit-badge {
+    color: #94a3b8 !important;
+}
+
+html[data-theme="dark"] .countdown-preset-pill {
+    background: #1e293b !important;
+    border-color: #334155 !important;
+    color: #cbd5e1 !important;
+}
+
+html[data-theme="dark"] .countdown-preset-pill:hover {
+    background: #334155 !important;
+    color: #ffffff !important;
+}
+
+html[data-theme="dark"] .countdown-preset-pill.active {
+    background: #38bdf8 !important;
+    border-color: #38bdf8 !important;
+    color: #0f172a !important;
+    font-weight: 700 !important;
+}
+
+/* Fix Issue 5: White text for 'Mở thư mục Extension' button */
+#btn-open-extension-folder,
+.btn-browser-action.primary,
+#btn-open-extension-folder *,
+.btn-browser-action.primary * {
+    color: #ffffff !important;
+}
+
+#btn-open-extension-folder:hover,
+.btn-browser-action.primary:hover {
+    color: #ffffff !important;
 }

@@ -31,6 +31,9 @@ namespace WindowsFormsApp.Download
         private readonly SpeedLimiter _limiter;
         private readonly object _sync = new object();
         private readonly object _metaLock = new object();
+        private readonly object _segmentsLock = new object();
+        private readonly HashSet<Segment> _activeSegments = new HashSet<Segment>();
+        private readonly SemaphoreSlim _workSignal = new SemaphoreSlim(0, int.MaxValue);
         private readonly Stopwatch _activeStopwatch = new Stopwatch();
 
         private CancellationTokenSource _cts;
@@ -242,7 +245,7 @@ namespace WindowsFormsApp.Download
             RaiseChanged();
         }
 
-        // ------------------------------------------------------------------ khâu 3: đa luồng theo Range
+        // ------------------------------------------------------------------ khâu 3: đa luồng theo Range & Chia nhỏ động (Dynamic Segment Splitting / IDM)
 
         private async Task RunMultiSegmentAsync(CancellationToken ct)
         {
@@ -250,12 +253,21 @@ namespace WindowsFormsApp.Download
 
             using (var failCts = CancellationTokenSource.CreateLinkedTokenSource(ct))
             {
-                var tasks = new List<Task>();
-                foreach (Segment seg in Segments)
+                lock (_segmentsLock)
                 {
-                    if (!seg.Finished) tasks.Add(RunSegmentAsync(seg, failCts));
+                    _activeSegments.Clear();
                 }
-                await Task.WhenAll(tasks).ConfigureAwait(false);
+
+                int workerCount = Math.Max(1, Math.Min(RequestedThreads, Segments.Count));
+                var workerTasks = new List<Task>(workerCount);
+
+                for (int i = 0; i < workerCount; i++)
+                {
+                    int workerId = i + 1;
+                    workerTasks.Add(RunWorkerLoopAsync(workerId, failCts));
+                }
+
+                await Task.WhenAll(workerTasks).ConfigureAwait(false);
             }
 
             VerifyIntegrity();
@@ -270,21 +282,112 @@ namespace WindowsFormsApp.Download
             }
         }
 
-        private async Task RunSegmentAsync(Segment seg, CancellationTokenSource failCts)
+        /// <summary>
+        /// Vòng lặp Worker theo cơ chế Work Stealing / Dynamic Segment Splitting:
+        /// 1. Ưu tiên nhận phân đoạn chưa chạy.
+        /// 2. Khi hết phân đoạn rảnh, tìm phân đoạn dở dang dài nhất để cắt đôi (TrySplit).
+        /// 3. Luôn giữ tối đa băng thông liên tục cho đến byte cuối cùng.
+        /// </summary>
+        private async Task RunWorkerLoopAsync(int workerId, CancellationTokenSource failCts)
         {
-            try
+            var ct = failCts.Token;
+            while (!ct.IsCancellationRequested)
             {
-                await DownloadSegmentWithRetryAsync(seg, failCts.Token).ConfigureAwait(false);
-            }
-            catch (OperationCanceledException)
-            {
-                throw;
-            }
-            catch (Exception ex)
-            {
-                Interlocked.CompareExchange(ref _firstError, ex, null);
-                failCts.Cancel(); // một đoạn lỗi hẳn -> dừng các đoạn còn lại
-                throw;
+                Segment seg = null;
+
+                lock (_segmentsLock)
+                {
+                    // 1. Kiểm tra nếu tất cả phân đoạn đã hoàn tất -> kết thúc worker
+                    if (Segments.All(s => s.Finished))
+                    {
+                        break;
+                    }
+
+                    // 2. Ưu tiên 1: Nhận phân đoạn chưa hoàn thành và chưa được luồng nào tải
+                    seg = Segments.FirstOrDefault(s => !s.Finished && !_activeSegments.Contains(s));
+
+                    // 3. Ưu tiên 2: Cắt đôi phân đoạn động (Dynamic Segment Splitting / Work Stealing kiểu IDM)
+                    if (seg == null && Segments.Count < SegmentPlanner.MaxDynamicSegments)
+                    {
+                        Segment longest = null;
+                        long maxRemaining = 0;
+
+                        foreach (var s in Segments)
+                        {
+                            if (s.Finished) continue;
+                            long rem = s.Remaining;
+                            if (rem > maxRemaining)
+                            {
+                                maxRemaining = rem;
+                                longest = s;
+                            }
+                        }
+
+                        if (longest != null && maxRemaining >= SegmentPlanner.MinSplitSize)
+                        {
+                            int newIndex = Segments.Count;
+                            if (longest.TrySplit(newIndex, SegmentPlanner.MinSplitSize, out Segment newSeg))
+                            {
+                                Segments.Add(newSeg);
+                                seg = newSeg;
+                            }
+                        }
+                    }
+
+                    if (seg != null)
+                    {
+                        _activeSegments.Add(seg);
+                    }
+                }
+
+                if (seg != null)
+                {
+                    try
+                    {
+                        await DownloadSegmentWithRetryAsync(seg, ct).ConfigureAwait(false);
+                    }
+                    catch (OperationCanceledException)
+                    {
+                        throw;
+                    }
+                    catch (Exception ex)
+                    {
+                        Interlocked.CompareExchange(ref _firstError, ex, null);
+                        failCts.Cancel(); // một đoạn lỗi hẳn -> dừng các đoạn còn lại
+                        throw;
+                    }
+                    finally
+                    {
+                        lock (_segmentsLock)
+                        {
+                            _activeSegments.Remove(seg);
+                        }
+                        try { _workSignal.Release(); } catch { }
+                        SaveMetaSafe();
+                        RaiseChanged();
+                    }
+                }
+                else
+                {
+                    // Chưa có việc để nhận hoặc phân tách
+                    lock (_segmentsLock)
+                    {
+                        if (Segments.All(s => s.Finished))
+                        {
+                            break;
+                        }
+                    }
+
+                    // Chờ tín hiệu từ các worker khác hoặc timeout 250ms
+                    try
+                    {
+                        await _workSignal.WaitAsync(250, ct).ConfigureAwait(false);
+                    }
+                    catch (OperationCanceledException)
+                    {
+                        break;
+                    }
+                }
             }
         }
 
@@ -319,32 +422,39 @@ namespace WindowsFormsApp.Download
         private async Task DownloadSegmentOnceAsync(Segment seg, CancellationToken ct)
         {
             long start = seg.NextByte;
-            if (start > seg.End)
+            long end = seg.End;
+            if (start > end)
             {
                 seg.Finished = true;
                 return;
             }
 
             var req = new HttpRequestMessage(HttpMethod.Get, RemoteUrl);
-            req.Headers.Range = new RangeHeaderValue(start, seg.End);
+            req.Headers.Range = new RangeHeaderValue(start, end);
             ApplyIfRange(req);
 
             using (HttpResponseMessage resp = await SendAsync(req, ct).ConfigureAwait(false))
             {
-                ValidateRangeResponse(resp, start, seg.End);
+                ValidateRangeResponse(resp, start, end);
 
                 // bufferSize = 1 -> không đệm trong FileStream: byte nào đã tính vào Downloaded
                 // thì chắc chắn đã giao cho hệ điều hành, an toàn khi Resume sau crash.
                 using (var fs = new FileStream(TargetPath, FileMode.Open, FileAccess.Write, FileShare.ReadWrite, 1, true))
                 {
                     fs.Seek(start, SeekOrigin.Begin);
-                    long remaining = seg.End - start + 1;
-                    long got = await PumpAsync(resp, fs, remaining, seg, ct).ConfigureAwait(false);
-                    if (got != remaining)
-                        throw new IOException("Kết nối bị đóng sớm khi tải phân đoạn #" + seg.Index + ".");
+                    long got = await PumpAsync(resp, fs, seg, ct).ConfigureAwait(false);
                 }
             }
-            seg.Finished = true;
+
+            // Kiểm tra xem phân đoạn đã tải đủ đến End chưa (End có thể đã bị thu nhỏ do TrySplit)
+            if (seg.NextByte > seg.End)
+            {
+                seg.Finished = true;
+            }
+            else
+            {
+                throw new IOException("Kết nối bị đóng sớm khi tải phân đoạn #" + seg.Index + " (" + seg.Downloaded + "/" + seg.Length + " byte).");
+            }
         }
 
         private void ApplyIfRange(HttpRequestMessage req)
@@ -393,7 +503,7 @@ namespace WindowsFormsApp.Download
 
                 using (var fs = new FileStream(TargetPath, FileMode.Create, FileAccess.Write, FileShare.Read, 1, true))
                 {
-                    long got = await PumpAsync(resp, fs, -1, null, ct).ConfigureAwait(false);
+                    long got = await PumpAsync(resp, fs, null, ct).ConfigureAwait(false);
                     if (TotalBytes > 0 && got != TotalBytes)
                         throw new IOException("Dữ liệu nhận được không đầy đủ (" + got + "/" + TotalBytes + " byte).");
                     TotalBytes = got;
@@ -420,10 +530,11 @@ namespace WindowsFormsApp.Download
         }
 
         /// <summary>
-        /// Đọc body từ mạng, ghi xuống dest. remaining = số byte cần đọc (-1 = đến hết).
+        /// Đọc body từ mạng, ghi xuống dest. Nếu seg != null thì đọc cho đến khi seg.NextByte > seg.End
+        /// (hoặc dừng sớm nếu seg.End bị thu hẹp do luồng khác cắt đôi - Dynamic Segment Splitting).
         /// Trả về số byte đã ghi. Cập nhật bộ đếm SAU khi ghi xong.
         /// </summary>
-        private async Task<long> PumpAsync(HttpResponseMessage resp, Stream dest, long remaining, Segment seg, CancellationToken ct)
+        private async Task<long> PumpAsync(HttpResponseMessage resp, Stream dest, Segment seg, CancellationToken ct)
         {
             using (var stall = CancellationTokenSource.CreateLinkedTokenSource(ct))
             using (stall.Token.Register(() => { try { resp.Dispose(); } catch { } }))
@@ -433,9 +544,15 @@ namespace WindowsFormsApp.Download
                 long total = 0;
                 try
                 {
-                    while (remaining != 0)
+                    while (true)
                     {
-                        int want = remaining < 0 ? buffer.Length : (int)Math.Min(buffer.Length, remaining);
+                        int want = buffer.Length;
+                        if (seg != null)
+                        {
+                            long remaining = seg.End - seg.NextByte + 1;
+                            if (remaining <= 0) break; // Đã đạt End (kể cả khi End vừa bị cắt ngắn do split)
+                            want = (int)Math.Min(buffer.Length, remaining);
+                        }
 
                         stall.CancelAfter(StallTimeoutMs);                 // bắt đầu đếm giờ treo
                         int n = await net.ReadAsync(buffer, 0, want, stall.Token).ConfigureAwait(false);
@@ -448,7 +565,6 @@ namespace WindowsFormsApp.Download
                         if (seg != null) seg.Add(n);
                         Interlocked.Add(ref _downloaded, n);
                         total += n;
-                        if (remaining > 0) remaining -= n;
                     }
                 }
                 catch (Exception) when (ct.IsCancellationRequested)
@@ -467,14 +583,45 @@ namespace WindowsFormsApp.Download
 
         private void VerifyIntegrity()
         {
-            foreach (Segment s in Segments)
+            List<Segment> sorted;
+            lock (_segmentsLock)
             {
-                if (!s.Finished || s.Downloaded != s.Length)
-                    throw new DownloadException("Phân đoạn #" + s.Index + " chưa tải đủ dữ liệu.");
+                foreach (Segment s in Segments)
+                {
+                    if (!s.Finished || s.Downloaded != s.Length)
+                        throw new DownloadException("Phân đoạn #" + s.Index + " chưa tải đủ dữ liệu (" + s.Downloaded + "/" + s.Length + " byte).");
+                }
+                sorted = Segments.OrderBy(s => s.Start).ToList();
             }
+
+            if (sorted.Count == 0)
+                throw new DownloadException("Không có phân đoạn nào được ghi nhận.");
+
+            // Kiểm tra tính liên tục và không chồng lấn của các phân đoạn
+            if (sorted[0].Start != 0)
+                throw new DownloadException("Lỗi toàn vẹn dữ liệu: Phân đoạn đầu tiên không bắt đầu từ byte 0 (bắt đầu từ " + sorted[0].Start + ").");
+
+            for (int i = 0; i < sorted.Count - 1; i++)
+            {
+                if (sorted[i].End + 1 != sorted[i + 1].Start)
+                {
+                    throw new DownloadException(string.Format(
+                        "Lỗi toàn vẹn dữ liệu: Xuất hiện khe hở hoặc chồng lấn giữa phân đoạn #{0} [{1}..{2}] và #{3} [{4}..{5}].",
+                        sorted[i].Index, sorted[i].Start, sorted[i].End,
+                        sorted[i + 1].Index, sorted[i + 1].Start, sorted[i + 1].End));
+                }
+            }
+
+            if (sorted[sorted.Count - 1].End != TotalBytes - 1)
+                throw new DownloadException("Lỗi toàn vẹn dữ liệu: Phân đoạn cuối cùng không kết thúc ở byte " + (TotalBytes - 1) + " (kết thúc ở " + sorted[sorted.Count - 1].End + ").");
+
+            long totalSegmentBytes = sorted.Sum(s => s.Length);
+            if (totalSegmentBytes != TotalBytes)
+                throw new DownloadException("Lỗi toàn vẹn dữ liệu: Tổng chiều dài các phân đoạn (" + totalSegmentBytes + ") khác kích thước tệp (" + TotalBytes + ").");
+
             long size = new FileInfo(TargetPath).Length;
             if (size != TotalBytes)
-                throw new DownloadException("Kiểm tra toàn vẹn thất bại: kích thước tệp (" + size + ") khác dự kiến (" + TotalBytes + ").");
+                throw new DownloadException("Kiểm tra toàn vẹn thất bại: kích thước tệp trên đĩa (" + size + ") khác dự kiến (" + TotalBytes + ").");
         }
 
         // ------------------------------------------------------------------ khâu 6: lưu/khôi phục tiến độ
@@ -487,6 +634,19 @@ namespace WindowsFormsApp.Download
                 if (State == DownloadState.Completed || State == DownloadState.Cancelled) return;
                 try
                 {
+                    List<SegmentMeta> segMetas;
+                    lock (_segmentsLock)
+                    {
+                        segMetas = Segments.Select(s => new SegmentMeta
+                        {
+                            Index = s.Index,
+                            Start = s.Start,
+                            End = s.End,
+                            Downloaded = s.Downloaded,
+                            Finished = s.Finished
+                        }).ToList();
+                    }
+
                     var meta = new DownloadMeta
                     {
                         Url = SourceUrl,
@@ -495,14 +655,7 @@ namespace WindowsFormsApp.Download
                         ETag = ETag,
                         LastModified = LastModified,
                         Threads = RequestedThreads,
-                        Segments = Segments.Select(s => new SegmentMeta
-                        {
-                            Index = s.Index,
-                            Start = s.Start,
-                            End = s.End,
-                            Downloaded = s.Downloaded,
-                            Finished = s.Finished
-                        }).ToList()
+                        Segments = segMetas
                     };
                     MetaStore.Save(TargetPath, meta);
                 }
@@ -542,21 +695,33 @@ namespace WindowsFormsApp.Download
 
             // Serialize đầy đủ SegmentMeta để DB có đủ thông tin resume sau crash
             string segsMeta = null;
-            if (SupportsRanges && Segments != null && Segments.Count > 0)
+            List<SegmentDto> segDtos = null;
+            int threadCount = 1;
+
+            if (SupportsRanges && Segments != null)
             {
-                try
+                lock (_segmentsLock)
                 {
-                    var metas = Segments.Select(s => new SegmentMeta
+                    if (Segments.Count > 0)
                     {
-                        Index      = s.Index,
-                        Start      = s.Start,
-                        End        = s.End,
-                        Downloaded = s.Downloaded,
-                        Finished   = s.Finished
-                    }).ToList();
-                    segsMeta = JsonSerializer.Serialize(metas);
+                        try
+                        {
+                            var metas = Segments.Select(s => new SegmentMeta
+                            {
+                                Index      = s.Index,
+                                Start      = s.Start,
+                                End        = s.End,
+                                Downloaded = s.Downloaded,
+                                Finished   = s.Finished
+                            }).ToList();
+                            segsMeta = JsonSerializer.Serialize(metas);
+                        }
+                        catch { }
+
+                        segDtos = Segments.Select(s => new SegmentDto { Downloaded = s.Downloaded, Length = s.Length }).ToList();
+                        threadCount = Segments.Count;
+                    }
                 }
-                catch { }
             }
 
             return new ProgressDto
@@ -570,13 +735,13 @@ namespace WindowsFormsApp.Download
                 Speed           = speed,
                 EtaSeconds      = eta,
                 ElapsedSeconds  = _activeStopwatch.Elapsed.TotalSeconds,
-                Threads         = SupportsRanges ? Segments.Count : 1,
+                Threads         = threadCount,
                 SupportsRanges  = SupportsRanges,
                 Error           = Error,
                 FileHash        = FileHash,
                 VirusScanStatus = VirusScanStatus,
                 VirusScanResult = VirusScanResult,
-                Segments        = Segments.Select(s => new SegmentDto { Downloaded = s.Downloaded, Length = s.Length }).ToList(),
+                Segments        = segDtos ?? new List<SegmentDto>(),
                 SegmentsMetaJson = segsMeta
             };
         }
@@ -605,6 +770,20 @@ namespace WindowsFormsApp.Download
         private static string Describe(Exception ex)
         {
             if (ex is TimeoutException || ex is DownloadException) return ex.Message;
+
+            var s = SettingsManager.Current;
+            if (s != null && s.Proxy != null && s.Proxy.Enabled &&
+                (ex.Message.IndexOf("connect", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                 ex.Message.IndexOf("refused", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                 (ex.InnerException != null && (ex.InnerException.Message.IndexOf("connect", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                                                ex.InnerException.Message.IndexOf("refused", StringComparison.OrdinalIgnoreCase) >= 0))))
+            {
+                bool isEn = string.Equals(s.Language, "en", StringComparison.OrdinalIgnoreCase);
+                return isEn
+                    ? $"Proxy connection error ({s.Proxy.Host}:{s.Proxy.Port}): Unable to reach server. Please check Proxy in Settings or disable Proxy."
+                    : $"Lỗi kết nối máy chủ Proxy ({s.Proxy.Host}:{s.Proxy.Port}): Không thể kết nối. Vui lòng kiểm tra lại Proxy trong Cài đặt hoặc tắt Proxy nếu không sử dụng.";
+            }
+
             if (ex is HttpRequestException && ex.InnerException != null) return "Lỗi mạng: " + ex.InnerException.Message;
             return ex.Message;
         }

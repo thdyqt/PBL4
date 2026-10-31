@@ -1,1134 +1,2381 @@
 <!DOCTYPE html>
+
 <html lang="en">
+
 <head>
+
     <meta charset="UTF-8">
+
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
     <title>DUT Download Accelerator</title>
+
     <link rel="stylesheet" href="../css/style.css">
+
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.3.1/css/all.min.css">
+
     <link rel="stylesheet" href="https://unpkg.com/aos@2.3.1/dist/aos.css">
+
     <script>
+
         (function() {
+
             try {
+
                 var theme = localStorage.getItem('app_theme') || 'light';
+
                 var effective = theme;
+
                 if (theme === 'system') {
+
                     effective = (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) ? 'dark' : 'light';
+
                 }
+
                 document.documentElement.setAttribute('data-theme', effective);
+
                 document.documentElement.setAttribute('data-theme-setting', theme);
+
             } catch(e) {}
+
         })();
+
     </script>
+
 </head>
+
 <body>
+
     <!-- Header -->
+
     <app-header></app-header>
 
+
+
     <!-- Sider -->
+
     <app-sider></app-sider>
 
+
+
     <!-- Main -->
+
     <main class="main-content">
+
         <!-- Section-1 -->
+
         <div class="section-1" data-aos="fade-up" data-aos-duration="800">
+
             <div class="inner-status" id="download-activity-status" aria-live="polite">
+
                 <span class="status-dot"></span><span class="status-label" data-i18n="state.ready">Sẵn sàng tải</span>
+
             </div>
+
         </div>
+
+
 
         <!-- Section-2 -->
+
         <div class="section-2" data-aos="fade-up" data-aos-duration="800" data-aos-delay="150">
+
             <form id="input-form">
+
                 <div class="inner-wrap">
+
                     <div class="url-row">
+
                         <div class="url-label-wrap">
+
                             <label for="url" class="inner-label" data-i18n="add.url_label">Liên kết tải về</label>
+
                             <button type="button" class="btn-batch-link" id="btn-open-batch-modal" data-i18n-title="add.batch_title" title="Thêm nhiều liên kết cùng lúc">
+
                                 <i class="fa-solid fa-list-check"></i> <span data-i18n="add.batch_btn">Tải nhiều link (Batch)</span>
+
                             </button>
+
                         </div>
+
                         <div class="url-input">
+
                             <input type="url" class="inner-input" id="url" name="url" inputmode="url" data-i18n-placeholder="add.url_placeholder" placeholder="https://example.com/tep-can-tai.zip" autocomplete="url">
+
                             <i class="fa-regular fa-clipboard btn-paste" data-i18n-title="add.paste_title" title="Dán từ Clipboard"></i>
+
                         </div>
+
                     </div>
+
                     <div class="filename-row">
+
                         <div class="filename-label-wrap">
+
                             <label for="custom-file-name" class="inner-label">
+
                                 <i class="fa-solid fa-pen-to-square"></i> <span data-i18n="add.custom_name_label">Tên tệp lưu</span> <span class="label-hint" data-i18n="add.custom_name_hint">(Tùy chọn đổi tên trước khi tải)</span>
+
                             </label>
+
                             <button type="button" class="btn-reset-filename" id="btn-reset-filename" title="Khôi phục lại tên tệp gốc từ đường link" style="display: none;">
+
                                 <i class="fa-solid fa-rotate-left"></i> <span data-i18n="add.reset_original_name">Tên gốc</span>
+
                             </button>
+
                         </div>
+
                         <div class="filename-input">
+
                             <input type="text" class="inner-input" id="custom-file-name" name="custom-file-name" data-i18n-placeholder="add.custom_name_placeholder" placeholder="Tự động nhận diện từ liên kết (hoặc nhập tên bạn muốn đổi)" autocomplete="off" spellcheck="false">
+
                             <i class="fa-solid fa-file-pen filename-icon" title="Tùy chỉnh tên tệp tải về"></i>
+
                         </div>
+
                     </div>
+
                     <div class="options-row">
+
                         <div class="save-field">
+
                             <label for="save-path" class="inner-label" data-i18n="add.save_label">Lưu tại</label>
+
                             <div class="save-path-row">
+
                                 <input type="text" class="inner-input" id="save-path" name="save-path" data-i18n-placeholder="add.save_placeholder" placeholder="Chưa chọn vị trí lưu (Bấm để chọn)" readonly>
+
                                 <button type="button" class="inner-browse-button" id="btn-browse-folder" data-i18n-title="add.browse_title" title="Chọn thư mục lưu tệp">
+
                                     <i class="fa-regular fa-folder-open"></i> <span data-i18n="add.browse">Chọn nơi lưu</span>
+
                                 </button>
+
                             </div>
+
                         </div>
+
                         <div class="thread-field">
+
                             <label for="thread" class="inner-label" data-i18n="add.thread_label">Số luồng</label>
+
                             <div class="thread-row">
+
                                 <select name="thread" id="thread">
+
                                     <option value="1" data-i18n="add.thread_1">1 luồng</option>
+
                                     <option value="2" data-i18n="add.thread_2">2 luồng</option>
+
                                     <option value="4" selected data-i18n="add.thread_4">4 luồng</option>
+
                                     <option value="8" data-i18n="add.thread_8">8 luồng</option>
+
                                     <option value="12" data-i18n="add.thread_12">12 luồng</option>
+
                                     <option value="16" data-i18n="add.thread_16">16 luồng</option>
+
                                 </select>
+
                                 <button type="submit" class="inner-download-button" data-i18n="add.start_btn">Bắt đầu tải</button>
+
                             </div>
+
                         </div>
+
                     </div>
+
                 </div>
+
             </form>
+
         </div>
+
+
 
         <!-- Section-Chart: Frame biểu đồ tốc độ & tài nguyên thời gian thực -->
+
         <div class="section-chart" id="section-chart" style="display: none;">
+
             <div class="chart-frame-header">
+
                 <div class="chart-frame-title-wrap">
+
                     <div class="chart-frame-badge">
+
                         <i class="fa-solid fa-chart-line"></i> <span data-i18n="chart.badge">GIÁM SÁT HIỆU NĂNG</span>
+
                     </div>
+
                     <div class="chart-title-row">
+
                         <h2 class="chart-frame-title" data-i18n="chart.main_title">Biểu đồ Tốc độ tải & Tài nguyên hệ thống</h2>
+
                         <div class="chart-live-indicator" id="chart-live-indicator">
+
                             <span class="live-pulse-dot"></span>
+
                             <span class="live-text" data-i18n="chart.live">TRỰC TIẾP</span>
+
                         </div>
+
                     </div>
+
                     <p class="chart-frame-desc" data-i18n="chart.main_desc">Theo dõi biến thiên tốc độ tải về theo thời gian thực (500ms), mức sử dụng CPU và bộ nhớ RAM của ứng dụng.</p>
+
                 </div>
+
                 <div class="chart-frame-actions">
+
                     <div class="chart-time-range-group" role="group" aria-label="Time range">
+
                         <button type="button" class="btn-time-range active" data-range="30">
+
                             <span data-i18n="chart.range_30s">30 giây</span>
+
                         </button>
+
                         <button type="button" class="btn-time-range" data-range="60">
+
                             <span data-i18n="chart.range_60s">60 giây</span>
+
                         </button>
+
                         <button type="button" class="btn-time-range" data-range="120">
+
                             <span data-i18n="chart.range_120s">2 phút</span>
+
                         </button>
+
                     </div>
+
                     <button type="button" class="btn-chart-action" id="btn-toggle-chart-stream" title="Tạm dừng / Tiếp tục cập nhật dữ liệu">
+
                         <i class="fa-solid fa-pause" id="chart-pause-icon"></i>
+
                         <span id="chart-pause-text" data-i18n="chart.btn_pause">Tạm dừng vẽ</span>
+
                     </button>
+
                     <button type="button" class="btn-chart-action secondary" id="btn-clear-chart-data" title="Xóa dữ liệu cũ và vẽ lại từ đầu">
+
                         <i class="fa-solid fa-rotate-left"></i>
+
                         <span data-i18n="chart.btn_clear">Xóa dữ liệu</span>
+
                     </button>
+
                 </div>
+
             </div>
+
+
 
             <!-- KPI Metric Cards Grid -->
+
             <div class="chart-kpi-grid">
+
                 <!-- Card 1: Live Download Speed -->
+
                 <div class="chart-kpi-card highlight-speed">
+
                     <div class="kpi-card-header">
+
                         <span class="kpi-label" data-i18n="chart.speed_card">Tốc độ tải hiện tại</span>
+
                         <div class="kpi-icon-wrap icon-speed">
+
                             <i class="fa-solid fa-gauge-high"></i>
+
                         </div>
+
                     </div>
+
                     <div class="kpi-value-wrap">
+
                         <span class="kpi-value" id="kpi-live-speed">0 B/s</span>
+
                         <span class="kpi-trend" id="kpi-speed-trend"><i class="fa-solid fa-arrow-trend-up"></i></span>
+
                     </div>
+
                     <div class="kpi-footer">
+
                         <span class="kpi-subtext" id="kpi-speed-peak">Đỉnh: 0 B/s</span>
+
                     </div>
+
                 </div>
+
+
 
                 <!-- Card 2: CPU Utilization -->
+
                 <div class="chart-kpi-card">
+
                     <div class="kpi-card-header">
+
                         <span class="kpi-label" data-i18n="chart.cpu_card">Mức sử dụng CPU</span>
+
                         <div class="kpi-icon-wrap icon-cpu">
+
                             <i class="fa-solid fa-microchip"></i>
+
                         </div>
+
                     </div>
+
                     <div class="kpi-value-wrap">
+
                         <span class="kpi-value" id="kpi-live-cpu">0.0%</span>
+
                     </div>
+
                     <div class="kpi-footer">
+
                         <div class="kpi-mini-bar">
+
                             <div class="kpi-mini-bar-fill fill-cpu" id="kpi-cpu-bar" style="width: 0%;"></div>
+
                         </div>
+
                         <span class="kpi-subtext" id="kpi-cpu-sub">Tiến trình ứng dụng</span>
+
                     </div>
+
                 </div>
+
+
 
                 <!-- Card 3: RAM Working Set -->
+
                 <div class="chart-kpi-card">
+
                     <div class="kpi-card-header">
+
                         <span class="kpi-label" data-i18n="chart.ram_card">Bộ nhớ RAM tiêu thụ</span>
+
                         <div class="kpi-icon-wrap icon-ram">
+
                             <i class="fa-solid fa-memory"></i>
+
                         </div>
+
                     </div>
+
                     <div class="kpi-value-wrap">
+
                         <span class="kpi-value" id="kpi-live-ram">0 MB</span>
+
                     </div>
+
                     <div class="kpi-footer">
+
                         <div class="kpi-mini-bar">
+
                             <div class="kpi-mini-bar-fill fill-ram" id="kpi-ram-bar" style="width: 0%;"></div>
+
                         </div>
+
                         <span class="kpi-subtext" id="kpi-ram-sub">Working Set</span>
+
                     </div>
+
                 </div>
+
+
 
                 <!-- Card 4: Active Threads & Jobs -->
+
                 <div class="chart-kpi-card">
+
                     <div class="kpi-card-header">
+
                         <span class="kpi-label" data-i18n="chart.threads_card">Luồng mạng đang chạy</span>
+
                         <div class="kpi-icon-wrap icon-threads">
+
                             <i class="fa-solid fa-network-wired"></i>
+
                         </div>
+
                     </div>
+
                     <div class="kpi-value-wrap">
+
                         <span class="kpi-value" id="kpi-live-threads">0 luồng</span>
+
                     </div>
+
                     <div class="kpi-footer">
+
                         <span class="kpi-subtext" id="kpi-threads-sub">0 tệp đang kết nối</span>
+
                     </div>
+
                 </div>
+
             </div>
+
+
 
             <!-- Main Speed Chart Container -->
+
             <div class="chart-panel-main">
+
                 <div class="chart-panel-header">
+
                     <div>
+
                         <h3 class="chart-panel-title">
+
                             <i class="fa-solid fa-bolt"></i>
+
                             <span data-i18n="chart.speed_chart_title">Băng thông tải về (Download Throughput)</span>
+
                         </h3>
+
                         <p class="chart-panel-subtitle" data-i18n="chart.speed_chart_subtitle">Đo đạc lưu lượng mạng thực tế gửi từ máy chủ theo từng giây</p>
+
                     </div>
+
                     <div class="chart-panel-meta">
+
                         <span class="chart-meta-pill" id="chart-speed-meta-pill">Độ trễ mẫu: 500ms</span>
+
                     </div>
+
                 </div>
+
                 <div class="chart-canvas-wrapper speed-canvas-wrap">
+
                     <canvas id="speed-chart-canvas" role="img" aria-label="Bi?u ?? t?c ?? t?i th?i gian th?c / Real-time download speed chart"></canvas>
+
                 </div>
+
             </div>
+
+
 
             <!-- Sub Resource Charts: 2-column Grid (CPU & RAM) -->
+
             <div class="chart-sub-grid">
+
                 <!-- CPU Chart -->
+
                 <div class="chart-panel-sub">
+
                     <div class="chart-panel-header">
+
                         <h4 class="chart-sub-title">
+
                             <i class="fa-solid fa-microchip icon-cpu-color"></i>
+
                             <span data-i18n="chart.cpu_chart_title">Tiêu thụ CPU tiến trình (%)</span>
+
                         </h4>
+
                         <span class="chart-badge-pill" id="chart-cpu-pill">0%</span>
+
                     </div>
+
                     <div class="chart-canvas-wrapper sub-canvas-wrap">
+
                         <canvas id="cpu-chart-canvas" role="img" aria-label="Bi?u ?? m?c s? d?ng CPU / CPU utilization chart"></canvas>
+
                     </div>
+
                 </div>
+
+
 
                 <!-- RAM Chart -->
+
                 <div class="chart-panel-sub">
+
                     <div class="chart-panel-header">
+
                         <h4 class="chart-sub-title">
+
                             <i class="fa-solid fa-memory icon-ram-color"></i>
+
                             <span data-i18n="chart.ram_chart_title">Bộ nhớ RAM làm việc (MB)</span>
+
                         </h4>
+
                         <span class="chart-badge-pill" id="chart-ram-pill">0 MB</span>
+
                     </div>
+
                     <div class="chart-canvas-wrapper sub-canvas-wrap">
+
                         <canvas id="ram-chart-canvas" role="img" aria-label="Bi?u ?? b? nh? RAM / RAM usage chart"></canvas>
+
                     </div>
+
                 </div>
+
             </div>
+
         </div>
+
+
 
         <!-- Section-3 -->
+
         <div class="section-3" data-aos="fade-up" data-aos-duration="800" data-aos-delay="300">
+
             <div class="inner-head">
+
                 <div>
+
                     <div class="inner-queue-label" data-i18n="filter.home.label">GẦN ĐÂY</div>
+
                     <h2 class="inner-download-title" data-i18n="filter.home.title">Tệp gần đây</h2>
+
                 </div>
+
                 <div>
+
                     <div class="inner-count-badge">0 tác vụ</div>
+
                 </div>
+
             </div>
+
+
 
             <!-- Toolbar Tìm kiếm & Sắp xếp file -->
+
             <div class="file-toolbar" id="file-toolbar">
+
                 <div class="toolbar-search-wrap">
+
                     <i class="fa-solid fa-magnifying-glass search-icon"></i>
+
                     <input type="text" id="search-file-input" class="search-input" data-i18n-placeholder="search.placeholder" placeholder="Tìm kiếm tên file, đuôi mở rộng (.mp4, .zip...), link..." autocomplete="off" spellcheck="false" data-i18n-title="search.title" title="Tìm kiếm tệp (Phím tắt: Ctrl + F hoặc /)">
+
                     <span class="search-count-pill" id="search-count-pill" style="display: none;">0 kết quả</span>
+
                     <button type="button" class="btn-clear-search" id="btn-clear-search" data-i18n-title="search.clear_title" title="Xóa nội dung tìm kiếm (Esc)" style="display: none;">
+
                         <i class="fa-solid fa-xmark"></i>
+
                     </button>
+
                 </div>
+
+
 
                 <div class="toolbar-sort-wrap">
+
                     <div class="sort-select-group">
+
                         <label for="sort-select" class="sort-label">
+
                             <i class="fa-solid fa-arrow-down-short-wide"></i>
+
                             <span data-i18n="sort.label">Sắp xếp:</span>
+
                         </label>
+
                         <select id="sort-select" class="sort-select" title="Chọn tiêu chí sắp xếp tệp">
+
                             <option value="date" data-i18n="sort.opt_date">Thời điểm tải (Mới / Cũ)</option>
+
                             <option value="name" data-i18n="sort.opt_name">Tên file (A - Z / Z - A)</option>
+
                             <option value="size" data-i18n="sort.opt_size">Độ lớn file (Dung lượng)</option>
+
                             <option value="duration" data-i18n="sort.opt_duration">Thời gian tải về (Nhanh / Lâu)</option>
+
                             <option value="speed" data-i18n="sort.opt_speed">Tốc độ tải</option>
+
                             <option value="status" data-i18n="sort.opt_status">Trạng thái (Tiến độ)</option>
+
                         </select>
+
                     </div>
+
+
 
                     <button type="button" class="btn-sort-order" id="btn-sort-order" data-i18n-title="sort.order_title" title="Đảo chiều sắp xếp">
+
                         <i class="fa-solid fa-arrow-down-wide-short" id="sort-order-icon"></i>
+
                         <span class="sort-order-text" id="sort-order-text">Mới nhất</span>
+
                     </button>
+
+
 
                     <button type="button" class="btn-reset-toolbar" id="btn-reset-toolbar" data-i18n-title="sort.reset_title" title="Đặt lại tìm kiếm & sắp xếp mặc định" style="display: none;">
+
                         <i class="fa-solid fa-rotate-left"></i>
+
                         <span data-i18n="sort.reset">Đặt lại</span>
+
                     </button>
+
                 </div>
+
             </div>
+
+
 
             <div class="inner-state" id="empty-state">
+
                 <i class="fa-solid fa-circle-down"></i>
+
                 <h3 data-i18n="filter.home.emptyTitle">Chưa có tệp nào</h3>
+
                 <div data-i18n="filter.home.emptyDesc">Dán liên kết tải về, chọn vị trí lưu rồi bắt đầu.</div>
+
             </div>
+
+
 
             <!-- Empty state khi tìm kiếm không có kết quả -->
+
             <div class="inner-state search-empty-state" id="search-empty-state" style="display: none;">
+
                 <div class="search-empty-icon"><i class="fa-solid fa-magnifying-glass"></i></div>
+
                 <h3 data-i18n="empty.search_title">Không tìm thấy tệp phù hợp</h3>
+
                 <div class="search-empty-desc">Không có tệp nào khớp với từ khóa "<strong id="search-keyword-display"></strong>" trong danh mục này.</div>
+
                 <button type="button" class="btn-clear-search-action" id="btn-empty-clear">
+
                     <i class="fa-solid fa-xmark"></i> <span data-i18n="empty.search_clear">Xóa tìm kiếm</span>
+
                 </button>
+
             </div>
+
+
 
             <div id="download-list"></div>
+
         </div>
+
+
 
         <!-- Section-Device: Frame giữa trang cho Thông tin thiết bị -->
+
         <div class="section-device" id="section-device" style="display: none;">
+
             <div class="device-frame-header">
+
                 <div class="device-frame-title-wrap">
+
                     <div class="device-frame-badge"><i class="fa-solid fa-microchip"></i> <span data-i18n="device.badge">HỆ THỐNG</span></div>
+
                     <h2 class="device-frame-title" data-i18n="device.main_title">Thông tin thiết bị & Bộ nhớ</h2>
+
                     <p class="device-frame-desc" data-i18n="device.main_desc">Theo dõi thông số phần cứng, dung lượng các ổ đĩa và khả năng lưu trữ tệp tin trên máy tính của bạn.</p>
+
                 </div>
+
                 <div class="device-frame-actions">
+
                     <button type="button" class="btn-device-action" id="btn-refresh-device-main" data-i18n-title="device.refresh_title" title="Cập nhật lại thông tin mới nhất">
+
                         <i class="fa-solid fa-arrows-rotate"></i> <span data-i18n="device.refresh">Làm mới</span>
+
                     </button>
+
                 </div>
+
             </div>
+
+
 
             <!-- Loading State -->
+
             <div class="device-loading-state" id="device-loading-state">
+
                 <div class="device-spinner"><i class="fa-solid fa-circle-notch fa-spin"></i></div>
+
                 <p data-i18n="device.loading">Đang đọc thông số thiết bị từ hệ thống...</p>
+
             </div>
+
+
 
             <!-- Content Container -->
+
             <div class="device-content-container" id="device-content-container" style="display: none;">
+
                 <!-- System Info Cards Grid -->
+
                 <div class="device-sys-grid" id="device-sys-grid"></div>
 
+
+
                 <!-- Overall Storage Capacity Meter -->
+
                 <div class="device-overall-card" id="device-overall-card"></div>
 
+
+
                 <!-- Drives Section -->
+
                 <div class="device-drives-section">
+
                     <div class="device-section-subtitle">
+
                         <i class="fa-solid fa-hard-drive"></i>
+
                         <span data-i18n="device.drives_subtitle">Chi tiết các ổ đĩa lưu trữ</span>
+
                     </div>
+
                     <div class="device-drives-grid" id="device-drives-grid"></div>
+
                 </div>
+
             </div>
+
         </div>
+
     </main>
 
+
+
     <!-- Settings Modal -->
+
     <div class="modal-overlay" id="settings-modal" style="display: none;">
+
         <div class="modal-card">
+
             <div class="modal-header">
+
                 <div class="modal-title-wrap">
+
                     <div class="modal-icon"><i class="fa-solid fa-sliders"></i></div>
+
                     <div>
+
                         <h3 class="modal-title" data-i18n="settings.title">Cài đặt nâng cao</h3>
+
                         <div class="modal-subtitle" data-i18n="settings.subtitle">Hàng đợi tải về, Giới hạn băng thông & Cấu hình Proxy</div>
+
                     </div>
+
                 </div>
+
                 <button type="button" class="btn-modal-close" id="btn-close-settings" data-i18n-title="settings.close_title" title="Đóng">&times;</button>
+
             </div>
+
+
 
             <!-- Tabs -->
+
             <div class="settings-tabs">
+
                 <button type="button" class="settings-tab-btn active" data-tab="tab-queue">
+
                     <i class="fa-solid fa-layer-group"></i> <span data-i18n="settings.tab.queue">Hàng đợi (Queue)</span>
+
                 </button>
+
                 <button type="button" class="settings-tab-btn" data-tab="tab-bandwidth">
+
                     <i class="fa-solid fa-gauge-high"></i> <span data-i18n="settings.tab.bandwidth">Băng thông (Speed)</span>
+
                 </button>
+
                 <button type="button" class="settings-tab-btn" data-tab="tab-proxy">
+
                     <i class="fa-solid fa-shield-halved"></i> <span data-i18n="settings.tab.proxy">Proxy</span>
+
                 </button>
+
                 <button type="button" class="settings-tab-btn" data-tab="tab-browser">
+
                     <i class="fa-solid fa-puzzle-piece"></i> <span data-i18n="settings.tab.browser">Trình duyệt (Browser)</span>
+
                 </button>
+
                                 <button type="button" class="settings-tab-btn" data-tab="tab-schedule">
+
                     <i class="fa-solid fa-clock"></i> <span data-i18n="settings.tab.schedule">Lập lịch & Nguồn</span>
+
                 </button>
+
                 <button type="button" class="settings-tab-btn" data-tab="tab-other">
+
                     <i class="fa-solid fa-gear"></i> <span data-i18n="settings.tab.other">Cài đặt khác</span>
+
                 </button>
+
             </div>
 
+
+
             <div class="modal-body">
+
                 <!-- Tab 1: Queue -->
+
                 <div class="settings-tab-content active" id="tab-queue">
+
                     <div class="form-group">
+
                         <label class="form-label" for="setting-max-concurrent" data-i18n="settings.queue.max_concurrent">Số tệp tải đồng thời tối đa (Max Concurrent Downloads)</label>
+
                         <div class="form-desc" data-i18n="settings.queue.max_concurrent_desc">Kiểm soát số lượng tệp được tải cùng lúc. Các tệp vượt quá sẽ nằm trong hàng đợi và tự động kích hoạt khi có tệp hoàn tất.</div>
+
                         <select id="setting-max-concurrent" class="form-select">
+
                             <option value="1" data-i18n="settings.queue.opt_1">1 tệp (Tải tuần tự từng tệp)</option>
+
                             <option value="2" selected data-i18n="settings.queue.opt_2">2 tệp đồng thời (Khuyên dùng)</option>
+
                             <option value="3" data-i18n="settings.queue.opt_3">3 tệp đồng thời</option>
+
                             <option value="5" data-i18n="settings.queue.opt_5">5 tệp đồng thời</option>
+
                             <option value="8" data-i18n="settings.queue.opt_8">8 tệp đồng thời</option>
+
                             <option value="0" data-i18n="settings.queue.opt_0">0 (Không giới hạn - Tải tất cả)</option>
+
                         </select>
+
                     </div>
+
+
 
                     <div class="form-group switch-row">
+
                         <div>
+
                             <div class="form-label" data-i18n="settings.queue.auto_next">Tự động bắt đầu tệp tiếp theo trong hàng đợi</div>
+
                             <div class="form-desc" data-i18n="settings.queue.auto_next_desc">Kích hoạt tác vụ tiếp theo ngay khi một tệp hoàn thành hoặc bị hủy.</div>
+
                         </div>
+
                         <label class="toggle-switch">
+
                             <input type="checkbox" id="setting-auto-start-next" checked>
+
                             <span class="toggle-slider"></span>
+
                         </label>
+
                     </div>
 
+
+
                     <div class="form-group">
+
                         <label class="form-label" for="setting-default-threads" data-i18n="settings.queue.threads">Số luồng tải mặc định cho mỗi tệp</label>
+
                         <select id="setting-default-threads" class="form-select">
+
                             <option value="1" data-i18n="settings.queue.threads_1">1 luồng</option>
+
                             <option value="2" data-i18n="settings.queue.threads_2">2 luồng</option>
+
                             <option value="4" selected data-i18n="settings.queue.threads_4">4 luồng (Tối ưu)</option>
+
                             <option value="8" data-i18n="settings.queue.threads_8">8 luồng</option>
+
                             <option value="12" data-i18n="settings.queue.threads_12">12 luồng</option>
+
                             <option value="16" data-i18n="settings.queue.threads_16">16 luồng</option>
+
                         </select>
+
                     </div>
+
                 </div>
+
+
 
                 <!-- Tab 2: Bandwidth Limit -->
+
                 <div class="settings-tab-content" id="tab-bandwidth">
+
                     <div class="form-group switch-row">
+
                         <div>
+
                             <div class="form-label" data-i18n="settings.speed.enable">Giới hạn băng thông (Bandwidth Throttling)</div>
+
                             <div class="form-desc" data-i18n="settings.speed.enable_desc">Áp dụng thuật toán Virtual Clock Leaky Bucket đa luồng, phân phối mượt mà cho toàn ứng dụng.</div>
+
                         </div>
+
                         <label class="toggle-switch">
+
                             <input type="checkbox" id="setting-speed-limit-enable">
+
                             <span class="toggle-slider"></span>
+
                         </label>
+
                     </div>
+
+
 
                     <div id="speed-limit-sub-wrap" class="sub-controls" style="display: none;">
+
                         <label class="form-label" data-i18n="settings.speed.presets">Chọn mức giới hạn nhanh (Presets):</label>
+
                         <div class="preset-pills">
+
                             <button type="button" class="btn-pill" data-kbps="512">512 KB/s</button>
+
                             <button type="button" class="btn-pill" data-kbps="1024">1 MB/s</button>
+
                             <button type="button" class="btn-pill" data-kbps="2048">2 MB/s</button>
+
                             <button type="button" class="btn-pill" data-kbps="5120">5 MB/s</button>
+
                             <button type="button" class="btn-pill" data-kbps="10240">10 MB/s</button>
+
                         </div>
+
+
 
                         <div class="form-group custom-speed-wrap">
+
                             <label class="form-label" for="setting-custom-speed" data-i18n="settings.speed.custom_label">Hoặc nhập tốc độ tuỳ chỉnh (KB/giây):</label>
+
                             <div class="input-addon-wrap">
+
                                 <input type="number" id="setting-custom-speed" class="form-input" min="10" max="1000000" data-i18n-placeholder="settings.speed.custom_placeholder" placeholder="vd: 2048">
+
                                 <span class="input-addon">KB/s</span>
+
                             </div>
+
                         </div>
+
                     </div>
+
                 </div>
+
+
 
                 <!-- Tab 3: Proxy -->
+
                 <div class="settings-tab-content" id="tab-proxy">
+
                     <div class="form-group switch-row">
+
                         <div>
+
                             <div class="form-label" data-i18n="settings.proxy.enable">Kích hoạt Proxy</div>
+
                             <div class="form-desc" data-i18n="settings.proxy.enable_desc">Chuyển hướng mọi luồng tải và dò tìm thông tin tệp qua máy chủ Proxy.</div>
+
                         </div>
+
                         <label class="toggle-switch">
+
                             <input type="checkbox" id="setting-proxy-enable">
+
                             <span class="toggle-slider"></span>
+
                         </label>
+
                     </div>
+
+
 
                     <div id="proxy-sub-wrap" class="proxy-sub-wrap" style="display: none;">
+
                         <div class="form-group proxy-mode-group">
+
                             <label class="form-label" for="setting-proxy-mode">
+
                                 <i class="fa-solid fa-sliders"></i> <span data-i18n="settings.proxy.mode">Chế độ Proxy</span>
+
                             </label>
+
                             <div class="input-with-icon">
+
                                 <i class="fa-solid fa-network-wired input-icon"></i>
+
                                 <select id="setting-proxy-mode" class="form-select proxy-mode-select">
+
                                     <option value="manual" data-i18n="settings.proxy.mode_manual">Tùy chỉnh máy chủ Proxy thủ công</option>
+
                                     <option value="system" data-i18n="settings.proxy.mode_system">Sử dụng cấu hình Proxy hệ thống Windows</option>
+
                                     <option value="direct" data-i18n="settings.proxy.mode_direct">Kết nối trực tiếp (Bỏ qua Proxy)</option>
+
                                 </select>
+
                             </div>
+
                         </div>
+
+
 
                         <!-- Banner thông tin khi chọn chế độ System hoặc Direct -->
+
                         <div class="proxy-mode-banner" id="proxy-info-system" style="display: none;">
+
                             <div class="banner-icon"><i class="fa-brands fa-windows"></i></div>
+
                             <div class="banner-content">
+
                                 <div class="banner-title" data-i18n="settings.proxy.info_system_title">Proxy hệ thống Windows</div>
+
                                 <div class="banner-desc" data-i18n="settings.proxy.info_system_desc">Ứng dụng sẽ tự động đồng bộ và sử dụng cấu hình Proxy đang hoạt động trong thiết lập mạng của Windows.</div>
+
                             </div>
+
                         </div>
+
+
 
                         <div class="proxy-mode-banner" id="proxy-info-direct" style="display: none;">
+
                             <div class="banner-icon"><i class="fa-solid fa-globe"></i></div>
+
                             <div class="banner-content">
+
                                 <div class="banner-title" data-i18n="settings.proxy.info_direct_title">Kết nối Internet trực tiếp</div>
+
                                 <div class="banner-desc" data-i18n="settings.proxy.info_direct_desc">Mọi tác vụ tải về sẽ kết nối thẳng tới máy chủ tệp mà không thông qua bất kỳ máy chủ trung gian nào.</div>
+
                             </div>
+
                         </div>
+
+
 
                         <!-- Khung cấu hình Proxy thủ công rộng rãi, thoáng đãng -->
+
                         <div id="proxy-manual-fields" class="proxy-manual-card">
+
                             <div class="proxy-card-header">
+
                                 <span class="proxy-card-title">
+
                                     <i class="fa-solid fa-server"></i> <span data-i18n="settings.proxy.server_title">Cấu hình máy chủ</span>
+
                                 </span>
+
                                 <span class="proxy-card-badge" data-i18n="settings.proxy.badge_manual">Thủ công</span>
+
                             </div>
+
+
 
                             <!-- Lưới thông số kết nối: Giao thức, Máy chủ, Cổng -->
+
                             <div class="proxy-server-grid">
+
                                 <div class="form-group proxy-col-protocol">
+
                                     <label class="form-label" for="setting-proxy-type" data-i18n="settings.proxy.type">Giao thức</label>
+
                                     <div class="input-with-icon">
+
                                         <i class="fa-solid fa-shield-halved input-icon"></i>
+
                                         <select id="setting-proxy-type" class="form-select">
+
                                             <option value="http">HTTP / HTTPS</option>
+
                                             <option value="socks5">SOCKS5</option>
+
                                         </select>
+
                                     </div>
+
                                 </div>
+
                                 <div class="form-group proxy-col-host">
+
                                     <label class="form-label" for="setting-proxy-host" data-i18n="settings.proxy.host">Địa chỉ máy chủ (Host / IP)</label>
+
                                     <div class="input-with-icon">
+
                                         <i class="fa-solid fa-globe input-icon"></i>
+
                                         <input type="text" id="setting-proxy-host" class="form-input" data-i18n-placeholder="settings.proxy.host_placeholder" placeholder="vd: 127.0.0.1 hoặc proxy.example.com">
+
                                     </div>
+
                                 </div>
+
                                 <div class="form-group proxy-col-port">
+
                                     <label class="form-label" for="setting-proxy-port" data-i18n="settings.proxy.port">Cổng (Port)</label>
+
                                     <div class="input-with-icon">
+
                                         <i class="fa-solid fa-hashtag input-icon"></i>
+
                                         <input type="number" id="setting-proxy-port" class="form-input text-center" placeholder="8080" min="1" max="65535">
+
                                     </div>
+
                                 </div>
+
                             </div>
+
+
 
                             <!-- Khu vực Xác thực tài khoản -->
+
                             <div class="proxy-auth-card">
+
                                 <div class="proxy-auth-header">
+
                                     <div class="proxy-auth-title-wrap">
+
                                         <span class="auth-icon"><i class="fa-solid fa-user-lock"></i></span>
+
                                         <div>
+
                                             <div class="form-label" data-i18n="settings.proxy.auth">Yêu cầu xác thực tài khoản (Authentication)</div>
+
                                             <div class="form-desc" data-i18n="settings.proxy.auth_desc">Bật nếu máy chủ Proxy yêu cầu Tên đăng nhập và Mật khẩu truy cập.</div>
+
                                         </div>
+
                                     </div>
+
                                     <label class="toggle-switch">
+
                                         <input type="checkbox" id="setting-proxy-auth">
+
                                         <span class="toggle-slider"></span>
+
                                     </label>
+
                                 </div>
+
+
 
                                 <div id="proxy-auth-fields" class="proxy-auth-body" style="display: none;">
+
                                     <div class="form-group">
+
                                         <label class="form-label" for="setting-proxy-user" data-i18n="settings.proxy.user">Tên đăng nhập (Username)</label>
+
                                         <div class="input-with-icon">
+
                                             <i class="fa-solid fa-user input-icon"></i>
+
                                             <input type="text" id="setting-proxy-user" class="form-input" data-i18n-placeholder="settings.proxy.user_placeholder" placeholder="Nhập tên tài khoản...">
+
                                         </div>
+
                                     </div>
+
                                     <div class="form-group">
+
                                         <label class="form-label" for="setting-proxy-pass" data-i18n="settings.proxy.pass">Mật khẩu (Password)</label>
+
                                         <div class="input-with-icon password-input-wrap">
+
                                             <i class="fa-solid fa-key input-icon"></i>
+
                                             <input type="password" id="setting-proxy-pass" class="form-input" data-i18n-placeholder="settings.proxy.pass_placeholder" placeholder="Nhập mật khẩu...">
+
                                             <button type="button" class="btn-toggle-pw" id="btn-toggle-proxy-pass" title="Hiện/Ẩn mật khẩu">
+
                                                 <i class="fa-regular fa-eye"></i>
+
                                             </button>
+
                                         </div>
+
                                     </div>
+
                                 </div>
+
                             </div>
+
+
 
                             <!-- Tùy chọn Bỏ qua địa chỉ nội bộ -->
+
                             <div class="proxy-option-box">
+
                                 <label class="custom-checkbox">
+
                                     <input type="checkbox" id="setting-proxy-bypass-local" checked>
+
                                     <span class="checkbox-indicator"></span>
+
                                     <div class="checkbox-text-wrap">
+
                                         <span class="checkbox-title" data-i18n="settings.proxy.bypass">Bỏ qua Proxy đối với các địa chỉ mạng cục bộ (Bypass Local Addresses)</span>
+
                                         <span class="checkbox-desc" data-i18n="settings.proxy.bypass_desc">Không định tuyến qua Proxy khi tải từ localhost, 127.0.0.1 hoặc mạng nội bộ LAN.</span>
+
                                     </div>
+
                                 </label>
+
                             </div>
+
                         </div>
+
+
 
                         <!-- Kiểm tra kết nối Proxy -->
+
                         <div class="proxy-test-card">
+
                             <div class="proxy-test-action">
+
                                 <button type="button" class="btn-test-proxy" id="btn-test-proxy">
+
                                     <i class="fa-solid fa-bolt-lightning"></i> <span data-i18n="settings.proxy.test_btn">Kiểm tra kết nối Proxy</span>
+
                                 </button>
+
                                 <span class="test-proxy-hint" data-i18n="settings.proxy.test_hint">Gửi yêu cầu thử nghiệm để đo độ trễ và kiểm tra tính khả dụng</span>
+
                             </div>
+
                             <div class="proxy-test-status" id="proxy-test-status"></div>
+
                         </div>
+
                     </div>
+
                 </div>
+
+
 
                 <!-- Tab 4: Browser Integration / Extension -->
+
                 <div class="settings-tab-content" id="tab-browser">
+
                     <!-- Status Banner -->
+
                     <div class="browser-server-card">
+
                         <div class="browser-server-header">
+
                             <div class="browser-server-info">
+
                                 <div class="server-status-dot online"></div>
+
                                 <div>
+
                                     <div class="server-name" data-i18n="settings.browser.status_title">Cổng IPC Local Loopback đang lắng nghe</div>
+
                                     <div class="server-endpoint">http://127.0.0.1:8989/</div>
+
                                 </div>
+
                             </div>
+
                             <span class="server-badge" data-i18n="settings.browser.status_ready">SẴN SÀNG</span>
+
                         </div>
+
                         <p class="server-desc" data-i18n="settings.browser.status_desc">
+
                             Trình duyệt Chrome / Edge sẽ tự động gửi URL và tên file qua cổng này ngay khi người dùng nhấn tải file trên web.
+
                         </p>
+
                     </div>
+
+
 
                     <!-- Steps Guide -->
+
                     <div class="browser-guide-title">
+
                         <i class="fa-solid fa-circle-info"></i> <span data-i18n="settings.browser.guide_title">Hướng dẫn cài đặt Extension cho Chrome / Edge (3 bước)</span>
+
                     </div>
+
+
 
                     <div class="browser-steps-list">
+
                         <div class="browser-step-item">
+
                             <div class="step-num">1</div>
+
                             <div class="step-content">
+
                                 <div class="step-title" data-i18n="settings.browser.step1_title">Mở trang quản lý Tiện ích mở rộng của Trình duyệt</div>
+
                                 <div class="step-desc" data-i18n="settings.browser.step1_desc">
+
                                     Mở Chrome và truy cập <code class="browser-code">chrome://extensions</code> hoặc Edge <code class="browser-code">edge://extensions</code>, sau đó bật công tắc <b>"Chế độ dành cho nhà phát triển" (Developer mode)</b> ở góc trên bên phải.
+
                                 </div>
+
                             </div>
+
                         </div>
 
+
+
                         <div class="browser-step-item">
+
                             <div class="step-num">2</div>
+
                             <div class="step-content">
+
                                 <div class="step-title" data-i18n="settings.browser.step2_title">Nạp tiện ích đã giải nén (Load Unpacked)</div>
+
                                 <div class="step-desc" data-i18n="settings.browser.step2_desc">
+
                                     Bấm nút <b>"Tải tiện ích đã giải nén" (Load unpacked)</b> và chọn thư mục <code class="browser-code">BrowserExtension</code> của dự án.
+
                                 </div>
+
                             </div>
+
                         </div>
 
+
+
                         <div class="browser-step-item">
+
                             <div class="step-num">3</div>
+
                             <div class="step-content">
+
                                 <div class="step-title" data-i18n="settings.browser.step3_title">Trải nghiệm bắt link tự động</div>
+
                                 <div class="step-desc" data-i18n="settings.browser.step3_desc">
+
                                     Bấm vào bất kỳ link tải tệp (<code class="browser-code">.zip, .iso, .exe, .mp4, .pdf...</code>) hoặc nhấp chuột phải chọn <b>"Tải bằng DUT Download Accelerator"</b>, liên kết sẽ được tự động chuyển ngay về app!
+
                                 </div>
+
                             </div>
+
                         </div>
+
                     </div>
+
+
 
                     <!-- Action buttons -->
+
                     <div class="browser-actions-row">
+
                         <button type="button" class="btn-browser-action primary" id="btn-open-extension-folder">
+
                             <i class="fa-solid fa-folder-open"></i> <span data-i18n="settings.browser.btn_open_folder">Mở thư mục Extension</span>
+
                         </button>
+
                         <button type="button" class="btn-browser-action secondary" id="btn-test-capture">
+
                             <i class="fa-solid fa-paper-plane"></i> <span data-i18n="settings.browser.btn_test_capture">Bắn link thử nghiệm (Test)</span>
+
                         </button>
+
                     </div>
+
                 </div>
+
+
 
                 <!-- Tab 5: Other Settings -->
+
                 <div class="settings-tab-content" id="tab-other">
+
                     <!-- Theme Settings Card -->
+
                     <div class="theme-settings-section">
+
                         <div class="theme-settings-header">
+
                             <div class="theme-header-icon"><i class="fa-solid fa-palette"></i></div>
+
                             <div>
+
                                 <div class="form-label" data-i18n="settings.theme.title">Giao diện hiển thị (Theme)</div>
+
                                 <div class="form-desc" data-i18n="settings.theme.desc">Tùy chỉnh chế độ sáng, tối hoặc tự động theo thiết lập hệ thống Windows (Mặc định: Chế độ sáng).</div>
+
                             </div>
+
                         </div>
+
+
 
                         <div class="theme-options-grid" id="theme-options-grid">
+
                             <!-- Option 1: Light Mode (Default) -->
+
                             <div class="theme-option-card active" data-theme-val="light" id="theme-card-light">
+
                                 <input type="radio" name="setting-theme" value="light" id="setting-theme-light" checked class="theme-radio-input">
+
                                 <div class="theme-card-preview preview-light">
+
                                     <div class="mini-app-header">
+
                                         <span class="mini-app-dot"></span>
+
                                         <span class="mini-app-bar"></span>
+
                                     </div>
+
                                     <div class="mini-app-body">
+
                                         <div class="mini-app-sider"></div>
+
                                         <div class="mini-app-content">
+
                                             <div class="mini-app-card"></div>
+
                                             <div class="mini-app-card small"></div>
+
                                         </div>
+
                                     </div>
+
                                 </div>
+
                                 <div class="theme-card-meta">
+
                                     <div class="theme-card-title">
+
                                         <i class="fa-regular fa-sun icon-sun"></i>
+
                                         <span data-i18n="settings.theme.light">Chế độ sáng</span>
+
                                     </div>
+
                                     <div class="theme-card-badge" data-i18n="settings.theme.light_badge">Mặc định</div>
+
                                 </div>
+
                                 <div class="theme-card-desc" data-i18n="settings.theme.light_desc">Giao diện tươi sáng, rõ ràng và thanh thoát</div>
+
                                 <div class="theme-selected-indicator"><i class="fa-solid fa-circle-check"></i></div>
+
                             </div>
+
+
 
                             <!-- Option 2: Dark Mode -->
+
                             <div class="theme-option-card" data-theme-val="dark" id="theme-card-dark">
+
                                 <input type="radio" name="setting-theme" value="dark" id="setting-theme-dark" class="theme-radio-input">
+
                                 <div class="theme-card-preview preview-dark">
+
                                     <div class="mini-app-header">
+
                                         <span class="mini-app-dot"></span>
+
                                         <span class="mini-app-bar"></span>
+
                                     </div>
+
                                     <div class="mini-app-body">
+
                                         <div class="mini-app-sider"></div>
+
                                         <div class="mini-app-content">
+
                                             <div class="mini-app-card"></div>
+
                                             <div class="mini-app-card small"></div>
+
                                         </div>
+
                                     </div>
+
                                 </div>
+
                                 <div class="theme-card-meta">
+
                                     <div class="theme-card-title">
+
                                         <i class="fa-solid fa-moon icon-moon"></i>
+
                                         <span data-i18n="settings.theme.dark">Chế độ tối</span>
+
                                     </div>
+
                                 </div>
+
                                 <div class="theme-card-desc" data-i18n="settings.theme.dark_desc">Tông màu tối hiện đại, bảo vệ mắt khi dùng lâu</div>
+
                                 <div class="theme-selected-indicator"><i class="fa-solid fa-circle-check"></i></div>
+
                             </div>
+
+
 
                             <!-- Option 3: System Default -->
+
                             <div class="theme-option-card" data-theme-val="system" id="theme-card-system">
+
                                 <input type="radio" name="setting-theme" value="system" id="setting-theme-system" class="theme-radio-input">
+
                                 <div class="theme-card-preview preview-system">
+
                                     <div class="preview-split-half split-light">
+
                                         <div class="mini-app-header">
+
                                             <span class="mini-app-dot"></span>
+
                                         </div>
+
                                         <div class="mini-app-body">
+
                                             <div class="mini-app-content">
+
                                                 <div class="mini-app-card"></div>
+
                                             </div>
+
                                         </div>
+
                                     </div>
+
                                     <div class="preview-split-half split-dark">
+
                                         <div class="mini-app-header">
+
                                             <span class="mini-app-dot"></span>
+
                                         </div>
+
                                         <div class="mini-app-body">
+
                                             <div class="mini-app-content">
+
                                                 <div class="mini-app-card"></div>
+
                                             </div>
+
                                         </div>
+
                                     </div>
+
                                 </div>
+
                                 <div class="theme-card-meta">
+
                                     <div class="theme-card-title">
+
                                         <i class="fa-solid fa-circle-half-stroke icon-system"></i>
+
                                         <span data-i18n="settings.theme.system">Hệ thống</span>
+
                                     </div>
+
                                 </div>
+
                                 <div class="theme-card-desc" data-i18n="settings.theme.system_desc">Tự động đồng bộ theo giao diện hệ điều hành Windows</div>
+
                                 <div class="theme-selected-indicator"><i class="fa-solid fa-circle-check"></i></div>
+
                             </div>
+
                         </div>
+
                     </div>
+
+
 
                     <!-- Language Settings Section -->
+
                     <div class="theme-divider"></div>
+
                     <div class="theme-settings-section lang-settings-section">
+
                         <div class="theme-settings-header">
+
                             <div class="theme-header-icon" style="background: #ecfdf5; color: #059669;"><i class="fa-solid fa-language"></i></div>
+
                             <div>
+
                                 <div class="form-label" data-i18n="settings.lang.title">Ngôn ngữ hiển thị (Language)</div>
+
                                 <div class="form-desc" data-i18n="settings.lang.desc">Chọn ngôn ngữ hiển thị trên toàn bộ giao diện phần mềm (Mặc định: Tiếng Việt).</div>
+
                             </div>
+
                         </div>
+
+
 
                         <div class="lang-options-grid" id="lang-options-grid">
+
                             <!-- Option 1: Tiếng Việt (Default) -->
+
                             <div class="lang-option-card active" data-lang-val="vi" id="lang-card-vi">
+
                                 <input type="radio" name="setting-language" value="vi" id="setting-lang-vi" checked class="theme-radio-input">
+
                                 <div class="lang-card-icon-wrap">
+
                                     <span class="lang-flag-symbol">🇻🇳</span>
+
                                 </div>
+
                                 <div class="theme-card-meta">
+
                                     <div class="theme-card-title">
+
                                         <span data-i18n="settings.lang.vi">Tiếng Việt</span>
+
                                     </div>
+
                                     <div class="theme-card-badge" data-i18n="settings.lang.vi_badge">Mặc định</div>
+
                                 </div>
+
                                 <div class="theme-card-desc" data-i18n="settings.lang.vi_desc">Giao diện ngôn ngữ Tiếng Việt chuẩn xác và trực quan</div>
+
                                 <div class="theme-selected-indicator"><i class="fa-solid fa-circle-check"></i></div>
+
                             </div>
+
+
 
                             <!-- Option 2: English -->
+
                             <div class="lang-option-card" data-lang-val="en" id="lang-card-en">
+
                                 <input type="radio" name="setting-language" value="en" id="setting-lang-en" class="theme-radio-input">
+
                                 <div class="lang-card-icon-wrap">
+
                                     <span class="lang-flag-symbol">🇬🇧</span>
+
                                 </div>
+
                                 <div class="theme-card-meta">
+
                                     <div class="theme-card-title">
+
                                         <span data-i18n="settings.lang.en">English</span>
+
                                     </div>
+
                                     <div class="theme-card-badge en-badge" data-i18n="settings.lang.en_badge">International</div>
+
                                 </div>
+
                                 <div class="theme-card-desc" data-i18n="settings.lang.en_desc">Standard English interface for global users</div>
+
                                 <div class="theme-selected-indicator"><i class="fa-solid fa-circle-check"></i></div>
+
                             </div>
+
                         </div>
+
                     </div>
+
+
 
                     <!-- Confirm Delete Option -->
+
                     <div class="theme-divider"></div>
+
                     <div class="form-group switch-row" style="margin-top: 18px; margin-bottom: 6px;">
+
                         <div>
+
                             <div class="form-label" data-i18n="settings.confirm_delete">Xác nhận trước khi xóa tệp</div>
+
                             <div class="form-desc" data-i18n="settings.confirm_delete_desc">Hiển thị hộp thoại xác nhận khi bạn xóa tệp hoặc xóa tất cả tệp khỏi danh sách. Bỏ chọn nếu bạn muốn xóa ngay mà không cần xác nhận lại.</div>
+
                         </div>
+
                         <label class="toggle-switch">
+
                             <input type="checkbox" id="setting-confirm-delete" checked>
+
                             <span class="toggle-slider"></span>
+
                         </label>
+
                     </div>
+
+
+
+                    <!-- Windows Shell Integration Section -->
+
+                    <div class="theme-divider"></div>
+
+                    <div class="theme-settings-section" style="margin-top: 18px; margin-bottom: 6px;">
+
+                        <div class="theme-settings-header">
+
+                            <div class="theme-header-icon" style="background: #e0f2fe; color: #0284c7;"><i class="fa-brands fa-windows"></i></div>
+
+                            <div>
+
+                                <div class="form-label" data-i18n="settings.shell.title">Tích hợp hệ điều hành Windows (Windows Shell)</div>
+
+                                <div class="form-desc" data-i18n="settings.shell.desc">Tùy biến hành vi hệ điều hành: Chạy nền trên khay hệ thống, khởi động cùng Windows và thông báo khi tải xong.</div>
+
+                            </div>
+
+                        </div>
+
+
+
+                        <!-- 1. Run on Startup -->
+
+                        <div class="form-group switch-row" style="margin-top: 10px;">
+
+                            <div>
+
+                                <div class="form-label" data-i18n="settings.shell.start_with_windows">Khởi động cùng Windows (Run on Startup)</div>
+
+                                <div class="form-desc" data-i18n="settings.shell.start_with_windows_desc">Tự động khởi chạy DUT Download Accelerator ngầm trên khay hệ thống khi bạn đăng nhập Windows (Registry HKCU\Run).</div>
+
+                            </div>
+
+                            <label class="toggle-switch">
+
+                                <input type="checkbox" id="setting-start-with-windows">
+
+                                <span class="toggle-slider"></span>
+
+                            </label>
+
+                        </div>
+
+
+
+                        <!-- 2. Minimize to Tray on Close -->
+
+                        <div class="form-group switch-row" style="margin-top: 10px;">
+
+                            <div>
+
+                                <div class="form-label" data-i18n="settings.shell.minimize_to_tray">Thu nhỏ xuống khay hệ thống khi đóng [X]</div>
+
+                                <div class="form-desc" data-i18n="settings.shell.minimize_to_tray_desc">Khi bấm dấu [X] tắt ứng dụng, app sẽ thu nhỏ xuống khay hệ thống (System Tray) để tiếp tục tải ngầm thay vì tắt hẳn.</div>
+
+                            </div>
+
+                            <label class="toggle-switch">
+
+                                <input type="checkbox" id="setting-minimize-to-tray" checked>
+
+                                <span class="toggle-slider"></span>
+
+                            </label>
+
+                        </div>
+
+
+
+                        <!-- 3. Toast Notification on completion -->
+
+                        <div class="form-group switch-row" style="margin-top: 10px;">
+
+                            <div>
+
+                                <div class="form-label" data-i18n="settings.shell.toast_complete">Thông báo Windows khi tải xong (Toast Notification)</div>
+
+                                <div class="form-desc" data-i18n="settings.shell.toast_complete_desc">Hiển thị thông báo Toast / BalloonTip ở góc phải màn hình khi tệp hoàn tất, bấm vào thông báo để mở tệp ngay.</div>
+
+                            </div>
+
+                            <label class="toggle-switch">
+
+                                <input type="checkbox" id="setting-toast-on-completion" checked>
+
+                                <span class="toggle-slider"></span>
+
+                            </label>
+
+                        </div>
+
+                    </div>
+
                 </div>
+
+
 
                 <!-- Tab 6: Schedule & Windows Power Management -->
+
                 <div class="settings-tab-content" id="tab-schedule">
+
                     <!-- Section 1: Hẹn giờ tự động tải -->
+
                     <div class="schedule-section">
+
                         <div class="schedule-section-header">
+
                             <div class="schedule-icon-wrap"><i class="fa-solid fa-calendar-days"></i></div>
+
                             <div>
+
                                 <div class="form-label" data-i18n="schedule.title">Lập lịch bắt đầu tải (Download Scheduler)</div>
+
                                 <div class="form-desc" data-i18n="schedule.desc">Tự động khởi động tất cả tác vụ trong hàng đợi hoặc đang tạm dừng vào đúng khung giờ chỉ định.</div>
+
                             </div>
+
                             <label class="toggle-switch">
+
                                 <input type="checkbox" id="setting-schedule-enable">
+
                                 <span class="toggle-slider"></span>
+
                             </label>
+
                         </div>
+
+
 
                         <div id="schedule-sub-wrap" class="sub-controls" style="display: none;">
+
                             <div class="schedule-grid">
+
                                 <div class="form-group">
+
                                     <label class="form-label" for="setting-schedule-time" data-i18n="schedule.time_label">Giờ bắt đầu tải (Start Time):</label>
+
                                     <div class="input-with-icon">
+
                                         <i class="fa-solid fa-clock input-icon"></i>
+
                                         <input type="time" id="setting-schedule-time" class="form-input time-picker-input" value="01:00">
+
                                     </div>
+
                                 </div>
+
                                 <div class="schedule-status-banner">
+
                                     <div class="schedule-status-indicator">
+
                                         <span class="status-pulse-dot" id="schedule-pulse-dot"></span>
+
                                         <span id="schedule-status-text" data-i18n="schedule.status_waiting">Đang chờ đến giờ hẹn 01:00...</span>
+
                                     </div>
+
                                     <button type="button" class="btn-pill btn-test-schedule" id="btn-trigger-schedule-now" title="Chạy thử ngay danh sách hàng đợi">
+
                                         <i class="fa-solid fa-play"></i> <span data-i18n="schedule.trigger_now">Thử chạy ngay</span>
+
                                     </button>
+
                                 </div>
+
                             </div>
+
                         </div>
+
                     </div>
+
+
 
                     <!-- Section 2: Quản lý nguồn điện Windows (Windows Power Management) -->
+
                     <div class="theme-divider"></div>
+
                     <div class="schedule-section">
+
                         <div class="schedule-section-header">
+
                             <div class="schedule-icon-wrap power"><i class="fa-solid fa-bolt-lightning"></i></div>
+
                             <div>
+
                                 <div class="form-label" data-i18n="power.title">Quản lý nguồn điện Windows (Power Management)</div>
+
                                 <div class="form-desc" data-i18n="power.desc">Tương tác trực tiếp Win32 API: Chống ru ngủ khi tải và tự động hành động sau khi hoàn tất.</div>
+
                             </div>
+
                         </div>
+
+
 
                         <!-- Win32 OS Interop Explanation Card -->
+
                         <div class="os-interop-card">
+
                             <div class="os-interop-head">
+
                                 <div class="os-badge-title">
+
                                     <i class="fa-brands fa-windows"></i> <span>Win32 API: SetThreadExecutionState</span>
+
                                 </div>
+
                                 <span class="os-state-badge" id="os-sleep-status-badge">
+
                                     <span class="os-state-dot"></span>
+
                                     <span id="os-sleep-status-text">Đang bảo vệ (ES_SYSTEM_REQUIRED)</span>
+
                                 </span>
+
                             </div>
+
                             <p class="os-interop-desc" data-i18n="power.os_desc">
+
                                 Windows sẽ không tự động kích hoạt chế độ Sleep hoặc tắt màn hình khi đang có ít nhất 1 tác vụ tải ngầm đang hoạt động (ES_SYSTEM_REQUIRED | ES_CONTINUOUS).
+
                             </p>
+
                         </div>
+
+
 
                         <!-- Action on complete choices -->
+
                         <div class="form-group" style="margin-top: 18px;">
+
                             <label class="form-label" data-i18n="power.action_label">Hành động khi tải xong toàn bộ danh sách hàng đợi:</label>
+
                             <div class="power-action-cards" id="power-action-cards">
+
                                 <!-- Option: None -->
+
                                 <label class="power-card active" data-action="none" id="power-card-none">
+
                                     <input type="radio" name="setting-power-action" value="none" checked class="power-radio">
+
                                     <div class="power-card-icon"><i class="fa-solid fa-ban"></i></div>
+
                                     <div class="power-card-info">
+
                                         <div class="power-card-title" data-i18n="power.action_none">Không làm gì</div>
+
                                         <div class="power-card-desc" data-i18n="power.action_none_desc">Giữ máy tính hoạt động bình thường, phục hồi chế độ ngủ mặc định của HĐH.</div>
+
                                     </div>
+
                                     <div class="power-check-indicator"><i class="fa-solid fa-circle-check"></i></div>
+
                                 </label>
+
+
 
                                 <!-- Option: Sleep -->
+
                                 <label class="power-card" data-action="sleep" id="power-card-sleep">
+
                                     <input type="radio" name="setting-power-action" value="sleep" class="power-radio">
+
                                     <div class="power-card-icon sleep"><i class="fa-solid fa-moon"></i></div>
+
                                     <div class="power-card-info">
+
                                         <div class="power-card-title" data-i18n="power.action_sleep">Ngủ (Sleep / Suspend)</div>
+
                                         <div class="power-card-desc" data-i18n="power.action_sleep_desc">Đưa máy tính vào trạng thái tiết kiệm điện năng sau khi hết thời gian đếm ngược.</div>
+
                                     </div>
+
                                     <div class="power-check-indicator"><i class="fa-solid fa-circle-check"></i></div>
+
                                 </label>
+
+
 
                                 <!-- Option: Shutdown -->
+
                                 <label class="power-card" data-action="shutdown" id="power-card-shutdown">
+
                                     <input type="radio" name="setting-power-action" value="shutdown" class="power-radio">
+
                                     <div class="power-card-icon shutdown"><i class="fa-solid fa-power-off"></i></div>
+
                                     <div class="power-card-info">
+
                                         <div class="power-card-title" data-i18n="power.action_shutdown">Tắt máy tính (Shutdown)</div>
+
                                         <div class="power-card-desc" data-i18n="power.action_shutdown_desc">Thực thi lệnh hệ thống shutdown.exe /s /t 60 để tắt máy an toàn sau khi tải xong.</div>
+
                                     </div>
+
                                     <div class="power-check-indicator"><i class="fa-solid fa-circle-check"></i></div>
+
                                 </label>
+
                             </div>
+
                         </div>
+
+
 
                         <!-- Countdown duration input -->
-                        <div class="form-group" id="countdown-duration-wrap" style="margin-top: 14px; display: none;">
-                            <label class="form-label" for="setting-countdown-sec" data-i18n="power.countdown_label">Thời gian đếm ngược cảnh báo trước khi hành động (giây):</label>
-                            <div class="input-addon-wrap" style="max-width: 200px;">
-                                <input type="number" id="setting-countdown-sec" class="form-input text-center" min="10" max="300" value="60">
-                                <span class="input-addon" data-i18n="power.seconds">giây</span>
+                        <div class="countdown-card-wrap" id="countdown-duration-wrap" style="display: none;">
+                            <div class="countdown-card-header">
+                                <div class="countdown-icon-box">
+                                    <i class="fa-solid fa-stopwatch"></i>
+                                </div>
+                                <div class="countdown-header-text">
+                                    <label class="form-label" for="setting-countdown-sec" data-i18n="power.countdown_label">Thời gian đếm ngược cảnh báo trước khi thực hiện:</label>
+                                    <div class="form-desc" data-i18n="power.countdown_desc">Khoảng thời gian hiển thị thông báo để bạn kịp hủy nếu vẫn đang dùng máy tính.</div>
+                                </div>
                             </div>
-                            <div class="form-desc" data-i18n="power.countdown_desc">Cho phép bạn kịp hủy lệnh tắt máy nếu vẫn còn ngồi trước máy tính.</div>
+
+                            <div class="countdown-input-row">
+                                <div class="countdown-stepper-wrap">
+                                    <button type="button" class="btn-stepper" id="btn-countdown-minus" title="Giảm 10 giây">
+                                        <i class="fa-solid fa-minus"></i>
+                                    </button>
+                                    <div class="countdown-input-box">
+                                        <input type="number" id="setting-countdown-sec" class="countdown-number-input" min="10" max="600" step="5" value="60">
+                                        <span class="countdown-unit-badge" data-i18n="power.seconds">giây</span>
+                                    </div>
+                                    <button type="button" class="btn-stepper" id="btn-countdown-plus" title="Tăng 10 giây">
+                                        <i class="fa-solid fa-plus"></i>
+                                    </button>
+                                </div>
+
+                                <div class="countdown-presets-pills">
+                                    <button type="button" class="countdown-preset-pill" data-sec="30">30s</button>
+                                    <button type="button" class="countdown-preset-pill active" data-sec="60">60s (Khuyên dùng)</button>
+                                    <button type="button" class="countdown-preset-pill" data-sec="120">120s (2 phút)</button>
+                                    <button type="button" class="countdown-preset-pill" data-sec="300">300s (5 phút)</button>
+                                </div>
+                            </div>
                         </div>
+
                     </div>
+
                 </div>
+
             </div>
 
+
+
             <div class="modal-footer">
+
                 <button type="button" class="btn-modal-cancel" id="btn-cancel-settings" data-i18n="settings.footer.cancel">Đóng</button>
+
                 <button type="button" class="btn-modal-save" id="btn-save-settings">
+
                     <i class="fa-solid fa-floppy-disk"></i> <span data-i18n="settings.footer.save">Lưu cài đặt</span>
+
                 </button>
+
             </div>
+
         </div>
+
     </div>
+
+
 
     <!-- Batch Download Modal -->
+
     <div class="modal-overlay" id="batch-modal" style="display: none;">
+
         <div class="modal-card modal-batch">
+
             <div class="modal-header">
+
                 <div class="modal-title-wrap">
+
                     <div class="modal-icon"><i class="fa-solid fa-list-check"></i></div>
+
                     <div>
+
                         <h3 class="modal-title" data-i18n="batch.title">Tải hàng loạt liên kết (Batch URLs)</h3>
+
                         <div class="modal-subtitle" data-i18n="batch.subtitle">Dán danh sách nhiều URL để tự động thêm tất cả vào hàng đợi tải về</div>
+
                     </div>
+
                 </div>
+
                 <button type="button" class="btn-modal-close" id="btn-close-batch" title="Đóng" data-i18n-title="common.close">&times;</button>
+
             </div>
+
+
 
             <div class="modal-body">
+
                 <div class="form-group">
+
                     <div class="batch-textarea-head">
+
                         <label class="form-label" for="batch-urls-input" data-i18n="batch.list_label">Danh sách URL (mỗi dòng một liên kết):</label>
+
                         <span class="batch-count-badge" id="batch-urls-count">0 liên kết hợp lệ</span>
+
                     </div>
+
                     <textarea id="batch-urls-input" class="form-textarea" rows="6" data-i18n-placeholder="batch.textarea_placeholder" placeholder="https://example.com/file1.zip&#10;https://example.com/file2.mp4&#10;https://example.com/file3.iso"></textarea>
+
                 </div>
+
+
 
                 <div class="batch-settings-grid">
+
                     <section class="batch-setting-card batch-save-setting" aria-labelledby="batch-save-label">
+
                         <div class="batch-setting-heading">
+
                             <span class="batch-setting-icon"><i class="fa-regular fa-folder-open"></i></span>
+
                             <div>
+
                                 <label class="form-label" id="batch-save-label" for="batch-save-path" data-i18n="batch.save_title">Vị trí lưu tệp</label>
+
                                 <p class="batch-setting-desc" data-i18n="batch.save_desc">Chọn thư mục dùng cho toàn bộ liên kết trong danh sách.</p>
+
                             </div>
+
                         </div>
+
                         <div class="batch-save-control">
+
                             <input type="text" class="inner-input" id="batch-save-path" readonly placeholder="Chưa chọn thư mục lưu" data-i18n-placeholder="batch.save_placeholder">
+
                             <button type="button" class="inner-browse-button" id="btn-batch-browse" title="Chọn thư mục lưu tệp" data-i18n-title="batch.choose_folder">
+
                                 <i class="fa-solid fa-folder-plus"></i><span data-i18n="batch.choose_folder">Chọn thư mục</span>
+
                             </button>
+
                         </div>
+
                     </section>
+
+
 
                     <section class="batch-setting-card batch-thread-setting" aria-labelledby="batch-thread-label">
+
                         <div class="batch-setting-heading">
+
                             <span class="batch-setting-icon"><i class="fa-solid fa-diagram-project"></i></span>
+
                             <div>
+
                                 <label class="form-label" id="batch-thread-label" for="batch-thread-select" data-i18n="batch.thread_title">Số luồng mỗi tệp</label>
+
                                 <p class="batch-setting-desc" data-i18n="batch.thread_desc">Nhiều luồng hơn có thể tăng tốc độ tải.</p>
+
                             </div>
+
                         </div>
+
                         <select id="batch-thread-select" class="form-select">
+
                             <option value="1" data-i18n="add.thread_1">1 luồng</option>
+
                             <option value="2" data-i18n="add.thread_2">2 luồng</option>
+
                             <option value="4" selected data-i18n="add.thread_4">4 luồng</option>
+
                             <option value="8" data-i18n="add.thread_8">8 luồng</option>
+
                             <option value="12" data-i18n="add.thread_12">12 luồng</option>
+
                             <option value="16" data-i18n="add.thread_16">16 luồng</option>
+
                         </select>
+
                     </section>
+
                 </div>
+
             </div>
+
+
 
             <div class="modal-footer">
+
                 <button type="button" class="btn-modal-cancel" id="btn-cancel-batch" data-i18n="batch.cancel">Hủy bỏ</button>
+
                 <button type="button" class="btn-modal-save" id="btn-submit-batch">
+
                     <i class="fa-solid fa-cloud-arrow-down"></i> <span id="btn-submit-batch-text" data-i18n="batch.submit">Thêm vào hàng đợi</span>
+
                 </button>
+
             </div>
+
         </div>
+
     </div>
+
+
 
     <!-- Disk Space Warning Modal -->
+
     <div class="modal-overlay" id="disk-space-modal" style="display: none;">
+
         <div class="modal-card disk-space-card">
+
             <div class="disk-space-header">
+
                 <div class="disk-space-icon-wrap" id="disk-space-icon-wrap">
+
                     <i class="fa-solid fa-triangle-exclamation" id="disk-space-icon"></i>
+
                 </div>
+
                 <div class="disk-space-title-info">
+
                     <h3 class="modal-title" id="disk-space-title" data-i18n="disk.title">Cảnh báo dung lượng ổ đĩa</h3>
+
                     <div class="disk-space-subtitle" id="disk-space-subtitle" data-i18n="disk.subtitle">Kiểm tra không gian lưu trữ hệ thống</div>
+
                 </div>
+
                 <button type="button" class="btn-modal-close" id="btn-close-disk-modal" title="Đóng" data-i18n-title="common.close">&times;</button>
+
             </div>
+
             <div class="disk-space-body">
+
                 <div class="disk-space-message" id="disk-space-message"></div>
+
                 <div class="disk-space-comparison" id="disk-space-comparison" style="display: none;">
+
                     <div class="disk-compare-item current-drive">
+
                         <span class="compare-label"><i class="fa-solid fa-database"></i> <span data-i18n="disk.current_drive">Ổ đĩa hiện tại</span></span>
+
                         <span class="compare-val" id="compare-current-val">-</span>
+
                     </div>
+
                     <div class="disk-compare-arrow"><i class="fa-solid fa-arrow-right-long"></i></div>
+
                     <div class="disk-compare-item suggested-drive">
+
                         <span class="compare-label"><i class="fa-solid fa-circle-check"></i> <span data-i18n="disk.suggested_drive">Đề xuất đổi sang</span></span>
+
                         <span class="compare-val" id="compare-suggested-val">-</span>
+
                     </div>
+
                 </div>
+
             </div>
+
             <div class="disk-space-footer">
+
                 <button type="button" class="btn-disk-action secondary" id="btn-disk-close" data-i18n="disk.understood">Đã hiểu</button>
+
                 <button type="button" class="btn-disk-action primary" id="btn-disk-switch-folder" style="display: none;">
+
                     <i class="fa-regular fa-folder-open"></i> <span data-i18n="disk.switch_folder">Đổi thư mục lưu ngay</span>
+
                 </button>
+
             </div>
+
         </div>
+
     </div>
+
+
 
         <!-- Power Action Countdown Modal -->
+
     <div class="modal-overlay" id="power-countdown-modal" style="display: none; z-index: 99999;">
+
         <div class="modal-card power-countdown-card">
+
             <div class="power-countdown-header">
+
                 <div class="power-pulsing-icon" id="power-pulsing-icon">
+
                     <i class="fa-solid fa-power-off"></i>
+
                 </div>
+
                 <h3 class="power-modal-title" id="power-countdown-title" data-i18n="power.modal_title">HÀNG ĐỢI TẢI ĐÃ HOÀN TẤT</h3>
+
                 <p class="power-modal-subtitle" id="power-countdown-subtitle" data-i18n="power.modal_subtitle">Máy tính sẽ tự động tắt nguồn trong:</p>
+
             </div>
+
             <div class="power-countdown-body">
+
                 <div class="power-timer-circle">
+
                     <span class="power-digits" id="power-countdown-digits">60</span>
+
                     <span class="power-sec-label" data-i18n="power.seconds_upper">GIÂY</span>
+
                 </div>
+
                 <div class="power-progress-track">
+
                     <div class="power-progress-fill" id="power-progress-fill" style="width: 100%;"></div>
+
                 </div>
+
                 <p class="power-cancel-hint" data-i18n="power.cancel_hint">Nhấn "HỦY TẮT MÁY" hoặc phím ESC để dừng lệnh tắt máy tính.</p>
+
             </div>
+
             <div class="power-countdown-footer">
+
                 <button type="button" class="btn-cancel-power" id="btn-cancel-power-action">
+
                     <i class="fa-solid fa-ban"></i> <span data-i18n="power.btn_cancel">HỦY TẮT MÁY NGAY (CANCEL)</span>
+
                 </button>
+
                 <button type="button" class="btn-now-power" id="btn-exec-power-now">
+
                     <i class="fa-solid fa-forward-step"></i> <span data-i18n="power.btn_now">Thực hiện ngay</span>
+
                 </button>
+
             </div>
+
         </div>
+
     </div>
 
+
+
     <!-- Social Contact -->
+
     <social-contact></social-contact>
 
+
+
     <!-- Scripts -->
+
     <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+
     <script src="https://unpkg.com/just-validate@latest/dist/just-validate.production.min.js"></script>
+
     <script src="../js/chart.min.js"></script>
+
     <script src="../js/chart-monitor.js"></script>
+
     <script src="../js/i18n.js"></script>
+
     <script src="../js/components.js"></script>
+
     <script src="../js/script.js"></script>
+
     <script src="../js/ui.js"></script>
+
     <script src="../js/download.js"></script>
+
 </body>
+
 </html>
+
