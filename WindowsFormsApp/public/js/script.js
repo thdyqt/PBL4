@@ -283,6 +283,39 @@ if (window.chrome && window.chrome.webview) {
                 }
             }
 
+            // Xử lý Lập lịch & Quản lý nguồn điện Windows
+            if (response.action === "SCHEDULE_TRIGGERED") {
+                const isEn = window.i18n && window.i18n.getCurrentLanguage && window.i18n.getCurrentLanguage() === "en";
+                const msg = (window.i18n && window.i18n.format)
+                    ? window.i18n.format("schedule.triggered_toast", response.time)
+                    : (isEn ? `Scheduled time reached (${response.time}), queue downloads started!` : `Đã đến giờ hẹn (${response.time}), tự động bắt đầu tải hàng đợi!`);
+                if (window.showAppToast) window.showAppToast(msg);
+            }
+
+            if (response.action === "POWER_ACTION_COUNTDOWN") {
+                if (window.showPowerCountdownModal) {
+                    window.showPowerCountdownModal(response.powerAction, response.remainingSeconds);
+                }
+            }
+
+            if (response.action === "POWER_ACTION_CANCELLED") {
+                if (window.hidePowerCountdownModal) window.hidePowerCountdownModal();
+                const isEn = window.i18n && window.i18n.getCurrentLanguage && window.i18n.getCurrentLanguage() === "en";
+                const msg = (window.i18n && window.i18n.t)
+                    ? window.i18n.t("power.cancelled_toast", "Đã hủy lệnh tắt máy tính thành công!")
+                    : (isEn ? "Power action cancelled successfully!" : "Đã hủy lệnh tắt máy tính thành công!");
+                if (window.showAppToast) window.showAppToast(msg);
+            }
+
+            if (response.action === "PERFORMANCE_METRICS") {
+                if (response.isSleepPrevented !== undefined && window.updateWin32SleepStatus) {
+                    window.updateWin32SleepStatus(response.isSleepPrevented);
+                }
+                if (response.isCountingDown && response.remainingSeconds !== undefined && window.showPowerCountdownModal) {
+                    window.showPowerCountdownModal(response.powerAction, response.remainingSeconds);
+                }
+            }
+
         } catch (error) {
             console.error("Lỗi đọc dữ liệu từ C#: ", error);
         }
@@ -329,8 +362,11 @@ function addDownloadTask(url, savePath, thread, customFileName = "") {
     const downloadedLabel = isEn ? "Downloaded:" : "Đã tải:";
     const etaLabel = isEn ? "ETA:" : "Còn lại:";
 
+    const prepText = isEn ? "Preparing..." : "?ang chu?n b?...";
     const downloadHTML = `
         <div class="download-item" id="${taskId}"
+             role="article"
+             aria-labelledby="${taskId}-filename"
              data-state="preparing"
              data-category="${category}"
              data-file-name="${safeFileName}"
@@ -344,29 +380,30 @@ function addDownloadTask(url, savePath, thread, customFileName = "") {
              data-target-path="${safeSavePath}">
             <div class="progress-header">
                 <div class="file-info">
-                    <i class="${iconClass}"></i>
-                    <span class="file-name" title="${safeFileName}">${safeFileName}</span>
+                    <i class="${iconClass}" aria-hidden="true"></i>
+                    <span class="file-name" id="${taskId}-filename" title="${safeFileName}">${safeFileName}</span>
+                    <span class="status-pill status-pill-preparing" id="${taskId}-status-pill">${prepText}</span>
                 </div>
                 <div class="header-right">
                     <div class="item-actions">
-                        <button type="button" class="btn-item-action btn-force-start" title="${titleForce}" data-item-action="force-start" style="display: none;">
-                            <i class="fa-solid fa-bolt"></i>
+                        <button type="button" class="btn-item-action btn-force-start" title="${titleForce}" aria-label="${titleForce}" data-item-action="force-start" style="display: none;">
+                            <i class="fa-solid fa-bolt" aria-hidden="true"></i>
                         </button>
-                        <button type="button" class="btn-item-action btn-pause-resume" title="${titlePause}" data-item-action="toggle-pause">
-                            <i class="fa-solid fa-pause"></i>
+                        <button type="button" class="btn-item-action btn-pause-resume" title="${titlePause}" aria-label="${titlePause}" data-item-action="toggle-pause">
+                            <i class="fa-solid fa-pause" aria-hidden="true"></i>
                         </button>
-                        <button type="button" class="btn-item-action btn-cancel" title="${titleCancel}" data-item-action="cancel">
-                            <i class="fa-solid fa-ban"></i>
+                        <button type="button" class="btn-item-action btn-cancel" title="${titleCancel}" aria-label="${titleCancel}" data-item-action="cancel">
+                            <i class="fa-solid fa-ban" aria-hidden="true"></i>
                         </button>
-                        <button type="button" class="btn-item-action btn-delete" title="${titleDelete}" data-item-action="delete">
-                            <i class="fa-solid fa-trash"></i>
+                        <button type="button" class="btn-item-action btn-delete" title="${titleDelete}" aria-label="${titleDelete}" data-item-action="delete">
+                            <i class="fa-solid fa-trash" aria-hidden="true"></i>
                         </button>
                     </div>
                     <div class="progress-percentage" id="${taskId}-percent">0%</div>
                 </div>
             </div>
             
-            <div class="progress-bar-container">
+            <div class="progress-bar-container" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" id="${taskId}-progress-container">
                 <div class="progress-bar-fill" id="${taskId}-progress"></div>
             </div>
             
@@ -651,6 +688,37 @@ function populateSettingsForm(s) {
     if (window.setLanguage) {
         window.setLanguage(currentLang, false);
     }
+
+    // 4. Tab Lập lịch & Quản lý nguồn điện Windows
+    const sched = s.schedule || {};
+    const schedEnable = document.getElementById("setting-schedule-enable");
+    const schedSub = document.getElementById("schedule-sub-wrap");
+    const schedTime = document.getElementById("setting-schedule-time");
+    const countdownSec = document.getElementById("setting-countdown-sec");
+    const countdownWrap = document.getElementById("countdown-duration-wrap");
+
+    if (schedEnable) schedEnable.checked = !!sched.enabled;
+    if (schedSub) schedSub.style.display = sched.enabled ? "block" : "none";
+    if (schedTime) schedTime.value = sched.startTime || "01:00";
+    if (countdownSec) countdownSec.value = String(sched.countdownSeconds || 60);
+
+    const action = (sched.actionOnComplete || "none").toLowerCase();
+    document.querySelectorAll(".power-card").forEach(c => {
+        const isMatch = c.dataset.action === action;
+        c.classList.toggle("active", isMatch);
+        const radio = c.querySelector(".power-radio");
+        if (radio) radio.checked = isMatch;
+    });
+    if (countdownWrap) {
+        countdownWrap.style.display = (action === "shutdown" || action === "sleep") ? "block" : "none";
+    }
+
+    if (window.updateHeaderScheduleBadge) {
+        window.updateHeaderScheduleBadge(sched);
+    }
+    if (window.updateScheduleStatusText) {
+        window.updateScheduleStatusText(sched.enabled, sched.startTime || "01:00");
+    }
 }
 window.populateSettingsForm = populateSettingsForm;
 
@@ -805,6 +873,7 @@ document.addEventListener("click", (e) => {
         openSettingsModal("tab-queue");
         return;
     }
+
 
     // 2. Mở Cài đặt từ Header Speed Limit button
     if (e.target.closest("#btn-header-speed-limit")) {
@@ -1033,7 +1102,13 @@ if (btnSaveSettings) {
             autoStartNextInQueue: autoNext,
             confirmBeforeDelete: confirmBeforeDelete,
             theme: themeVal,
-            language: langVal
+            language: langVal,
+            schedule: {
+                enabled: document.getElementById("setting-schedule-enable")?.checked ?? false,
+                startTime: document.getElementById("setting-schedule-time")?.value || "01:00",
+                actionOnComplete: document.querySelector(".power-card.active")?.dataset.action || "none",
+                countdownSeconds: parseInt(document.getElementById("setting-countdown-sec")?.value || "60", 10)
+            }
         };
 
         if (window.chrome && window.chrome.webview) {
@@ -1335,4 +1410,237 @@ document.addEventListener("DOMContentLoaded", () => {
             if (e.target === modal) closeDiskSpaceModal();
         });
     }
+});
+
+
+// ==========================================================================
+// Module: Lập lịch tải & Quản lý nguồn điện Windows (Scheduler & Power)
+// ==========================================================================
+
+function updateHeaderScheduleBadge(sched) {
+    const btn = document.getElementById("btn-header-schedule");
+    const label = document.getElementById("header-schedule-label");
+    if (!btn || !label) return;
+
+    const isEn = window.i18n && window.i18n.getCurrentLanguage && window.i18n.getCurrentLanguage() === "en";
+    const defaultLabel = isEn ? "Schedule" : "Lập lịch";
+
+    if (sched && sched.enabled) {
+        btn.classList.add("is-scheduled");
+        const action = sched.actionOnComplete || "none";
+        let actionSuffix = "";
+        if (action === "shutdown") actionSuffix = isEn ? " (Shutdown)" : " (Tắt máy)";
+        else if (action === "sleep") actionSuffix = isEn ? " (Sleep)" : " (Ngủ)";
+
+        label.textContent = `${sched.startTime || "01:00"}${actionSuffix}`;
+        btn.title = isEn
+            ? `Download scheduler active: starts at ${sched.startTime || "01:00"}${actionSuffix}`
+            : `Hẹn giờ tải đang bật: bắt đầu lúc ${sched.startTime || "01:00"}${actionSuffix}`;
+    } else {
+        btn.classList.remove("is-scheduled");
+        label.textContent = defaultLabel;
+        btn.title = isEn
+            ? "Download Scheduler & Windows Power Management (Click to configure)"
+            : "Lập lịch tải & Quản lý nguồn điện Windows (Click để cài đặt)";
+    }
+}
+window.updateHeaderScheduleBadge = updateHeaderScheduleBadge;
+
+function updateScheduleStatusText(enabled, time) {
+    const statusText = document.getElementById("schedule-status-text");
+    const pulseDot = document.getElementById("schedule-pulse-dot");
+    if (!statusText) return;
+
+    const isEn = window.i18n && window.i18n.getCurrentLanguage && window.i18n.getCurrentLanguage() === "en";
+
+    if (enabled) {
+        if (pulseDot) pulseDot.style.display = "inline-block";
+        statusText.textContent = isEn
+            ? `Waiting until ${time} to automatically start queue...`
+            : `Đang chờ đến ${time} để tự động tải danh sách hàng đợi...`;
+    } else {
+        if (pulseDot) pulseDot.style.display = "none";
+        statusText.textContent = isEn
+            ? "Download scheduler is currently disabled"
+            : "Lập lịch tải hiện đang tắt";
+    }
+}
+window.updateScheduleStatusText = updateScheduleStatusText;
+
+function updateWin32SleepStatus(isSleepPrevented) {
+    const badge = document.getElementById("os-sleep-status-badge");
+    const text = document.getElementById("os-sleep-status-text");
+    if (!badge || !text) return;
+
+    const isEn = window.i18n && window.i18n.getCurrentLanguage && window.i18n.getCurrentLanguage() === "en";
+
+    if (isSleepPrevented) {
+        badge.classList.add("active");
+        text.textContent = isEn ? "Active protection (ES_SYSTEM_REQUIRED)" : "Đang bảo vệ (ES_SYSTEM_REQUIRED)";
+    } else {
+        badge.classList.remove("active");
+        text.textContent = isEn ? "Standby (ES_CONTINUOUS)" : "Chế độ chờ (ES_CONTINUOUS)";
+    }
+}
+window.updateWin32SleepStatus = updateWin32SleepStatus;
+
+// Power countdown dialog management
+let powerCountdownInterval = null;
+let currentCountdownRemaining = 60;
+let initialCountdownDuration = 60;
+
+function showPowerCountdownModal(action, remainingSeconds) {
+    const modal = document.getElementById("power-countdown-modal");
+    const digits = document.getElementById("power-countdown-digits");
+    const fill = document.getElementById("power-progress-fill");
+    const title = document.getElementById("power-countdown-title");
+    const subtitle = document.getElementById("power-countdown-subtitle");
+    const icon = document.getElementById("power-pulsing-icon");
+    const btnCancel = document.getElementById("btn-cancel-power-action");
+
+    if (!modal) return;
+
+    const isSleep = (action === "sleep");
+    const isEn = window.i18n && window.i18n.getCurrentLanguage && window.i18n.getCurrentLanguage() === "en";
+
+    currentCountdownRemaining = remainingSeconds;
+    if (remainingSeconds > initialCountdownDuration) {
+        initialCountdownDuration = remainingSeconds;
+    }
+
+    if (digits) {
+        digits.textContent = String(remainingSeconds);
+        digits.classList.toggle("sleep-mode", isSleep);
+    }
+
+    if (fill) {
+        fill.classList.toggle("sleep-mode", isSleep);
+        const percent = Math.max(0, Math.min(100, (remainingSeconds / initialCountdownDuration) * 100));
+        fill.style.width = percent + "%";
+    }
+
+    if (icon) {
+        icon.classList.toggle("sleep-mode", isSleep);
+        icon.innerHTML = isSleep ? '<i class="fa-solid fa-moon"></i>' : '<i class="fa-solid fa-power-off"></i>';
+    }
+
+    if (title) {
+        title.textContent = isEn ? "ALL DOWNLOADS COMPLETED" : "HÀNG ĐỢI TẢI ĐÃ HOÀN TẤT";
+    }
+
+    if (subtitle) {
+        if (isSleep) {
+            subtitle.textContent = isEn ? "Computer will enter Sleep mode in:" : "Máy tính sẽ tự động vào chế độ Ngủ (Sleep) sau:";
+        } else {
+            subtitle.textContent = isEn ? "Computer will automatically shut down in:" : "Máy tính sẽ tự động tắt nguồn (Shutdown) sau:";
+        }
+    }
+
+    if (btnCancel) {
+        btnCancel.innerHTML = isSleep
+            ? '<i class="fa-solid fa-ban"></i> <span>' + (isEn ? "CANCEL SLEEP" : "HỦY CHẾ ĐỘ NGỦ (CANCEL)") + '</span>'
+            : '<i class="fa-solid fa-ban"></i> <span>' + (isEn ? "CANCEL SHUTDOWN (ABORT)" : "HỦY TẮT MÁY NGAY (CANCEL)") + '</span>';
+    }
+
+    modal.style.display = "flex";
+}
+window.showPowerCountdownModal = showPowerCountdownModal;
+
+function hidePowerCountdownModal() {
+    const modal = document.getElementById("power-countdown-modal");
+    if (modal) modal.style.display = "none";
+    if (powerCountdownInterval) {
+        clearInterval(powerCountdownInterval);
+        powerCountdownInterval = null;
+    }
+}
+window.hidePowerCountdownModal = hidePowerCountdownModal;
+
+// Setup Schedule & Power UI Interaction Events
+document.addEventListener("DOMContentLoaded", () => {
+    // 1. Toggle switch schedule
+    const schedEnable = document.getElementById("setting-schedule-enable");
+    const schedSub = document.getElementById("schedule-sub-wrap");
+    const schedTime = document.getElementById("setting-schedule-time");
+
+    if (schedEnable && schedSub) {
+        schedEnable.addEventListener("change", () => {
+            schedSub.style.display = schedEnable.checked ? "block" : "none";
+            updateScheduleStatusText(schedEnable.checked, schedTime ? schedTime.value : "01:00");
+        });
+    }
+
+    if (schedTime) {
+        schedTime.addEventListener("input", () => {
+            const isEnabled = schedEnable ? schedEnable.checked : false;
+            updateScheduleStatusText(isEnabled, schedTime.value);
+        });
+    }
+
+    // 2. Select Power Action Card
+    const powerCards = document.querySelectorAll(".power-card");
+    const countdownWrap = document.getElementById("countdown-duration-wrap");
+
+    powerCards.forEach(card => {
+        card.addEventListener("click", () => {
+            powerCards.forEach(c => c.classList.remove("active"));
+            card.classList.add("active");
+            const radio = card.querySelector(".power-radio");
+            if (radio) radio.checked = true;
+
+            const action = card.dataset.action;
+            if (countdownWrap) {
+                countdownWrap.style.display = (action === "shutdown" || action === "sleep") ? "block" : "none";
+            }
+        });
+    });
+
+    // 3. Test Trigger Schedule Now button
+    const btnTestSchedule = document.getElementById("btn-trigger-schedule-now");
+    if (btnTestSchedule) {
+        btnTestSchedule.addEventListener("click", () => {
+            if (window.chrome && window.chrome.webview) {
+                window.chrome.webview.postMessage(JSON.stringify({ action: "TRIGGER_SCHEDULE_NOW" }));
+            }
+            const isEn = window.i18n && window.i18n.getCurrentLanguage && window.i18n.getCurrentLanguage() === "en";
+            if (window.showAppToast) {
+                window.showAppToast(isEn ? "Triggering schedule queue immediately..." : "Đang kích hoạt ngay danh sách hàng đợi...");
+            }
+        });
+    }
+
+    // 4. Cancel Power Action (Countdown)
+    const btnCancelPower = document.getElementById("btn-cancel-power-action");
+    if (btnCancelPower) {
+        btnCancelPower.addEventListener("click", () => {
+            if (window.chrome && window.chrome.webview) {
+                window.chrome.webview.postMessage(JSON.stringify({ action: "CANCEL_POWER_ACTION" }));
+            }
+            hidePowerCountdownModal();
+        });
+    }
+
+    // 5. Execute Power Action Now
+    const btnExecNow = document.getElementById("btn-exec-power-now");
+    if (btnExecNow) {
+        btnExecNow.addEventListener("click", () => {
+            if (window.chrome && window.chrome.webview) {
+                window.chrome.webview.postMessage(JSON.stringify({ action: "EXECUTE_POWER_ACTION_NOW" }));
+            }
+            hidePowerCountdownModal();
+        });
+    }
+
+    // 6. Keyboard Shortcut ESC to cancel power countdown
+    document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape") {
+            const modal = document.getElementById("power-countdown-modal");
+            if (modal && modal.style.display !== "none") {
+                if (window.chrome && window.chrome.webview) {
+                    window.chrome.webview.postMessage(JSON.stringify({ action: "CANCEL_POWER_ACTION" }));
+                }
+                hidePowerCountdownModal();
+            }
+        }
+    });
 });

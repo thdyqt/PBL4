@@ -224,7 +224,7 @@
                     </div>
                 </div>
                 <div class="chart-canvas-wrapper speed-canvas-wrap">
-                    <canvas id="speed-chart-canvas"></canvas>
+                    <canvas id="speed-chart-canvas" role="img" aria-label="Bi?u ?? t?c ?? t?i th?i gian th?c / Real-time download speed chart"></canvas>
                 </div>
             </div>
 
@@ -240,7 +240,7 @@
                         <span class="chart-badge-pill" id="chart-cpu-pill">0%</span>
                     </div>
                     <div class="chart-canvas-wrapper sub-canvas-wrap">
-                        <canvas id="cpu-chart-canvas"></canvas>
+                        <canvas id="cpu-chart-canvas" role="img" aria-label="Bi?u ?? m?c s? d?ng CPU / CPU utilization chart"></canvas>
                     </div>
                 </div>
 
@@ -254,7 +254,7 @@
                         <span class="chart-badge-pill" id="chart-ram-pill">0 MB</span>
                     </div>
                     <div class="chart-canvas-wrapper sub-canvas-wrap">
-                        <canvas id="ram-chart-canvas"></canvas>
+                        <canvas id="ram-chart-canvas" role="img" aria-label="Bi?u ?? b? nh? RAM / RAM usage chart"></canvas>
                     </div>
                 </div>
             </div>
@@ -398,6 +398,9 @@
                 </button>
                 <button type="button" class="settings-tab-btn" data-tab="tab-browser">
                     <i class="fa-solid fa-puzzle-piece"></i> <span data-i18n="settings.tab.browser">Trình duyệt (Browser)</span>
+                </button>
+                                <button type="button" class="settings-tab-btn" data-tab="tab-schedule">
+                    <i class="fa-solid fa-clock"></i> <span data-i18n="settings.tab.schedule">Lập lịch & Nguồn</span>
                 </button>
                 <button type="button" class="settings-tab-btn" data-tab="tab-other">
                     <i class="fa-solid fa-gear"></i> <span data-i18n="settings.tab.other">Cài đặt khác</span>
@@ -851,6 +854,122 @@
                         </label>
                     </div>
                 </div>
+
+                <!-- Tab 6: Schedule & Windows Power Management -->
+                <div class="settings-tab-content" id="tab-schedule">
+                    <!-- Section 1: Hẹn giờ tự động tải -->
+                    <div class="schedule-section">
+                        <div class="schedule-section-header">
+                            <div class="schedule-icon-wrap"><i class="fa-solid fa-calendar-days"></i></div>
+                            <div>
+                                <div class="form-label" data-i18n="schedule.title">Lập lịch bắt đầu tải (Download Scheduler)</div>
+                                <div class="form-desc" data-i18n="schedule.desc">Tự động khởi động tất cả tác vụ trong hàng đợi hoặc đang tạm dừng vào đúng khung giờ chỉ định.</div>
+                            </div>
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="setting-schedule-enable">
+                                <span class="toggle-slider"></span>
+                            </label>
+                        </div>
+
+                        <div id="schedule-sub-wrap" class="sub-controls" style="display: none;">
+                            <div class="schedule-grid">
+                                <div class="form-group">
+                                    <label class="form-label" for="setting-schedule-time" data-i18n="schedule.time_label">Giờ bắt đầu tải (Start Time):</label>
+                                    <div class="input-with-icon">
+                                        <i class="fa-solid fa-clock input-icon"></i>
+                                        <input type="time" id="setting-schedule-time" class="form-input time-picker-input" value="01:00">
+                                    </div>
+                                </div>
+                                <div class="schedule-status-banner">
+                                    <div class="schedule-status-indicator">
+                                        <span class="status-pulse-dot" id="schedule-pulse-dot"></span>
+                                        <span id="schedule-status-text" data-i18n="schedule.status_waiting">Đang chờ đến giờ hẹn 01:00...</span>
+                                    </div>
+                                    <button type="button" class="btn-pill btn-test-schedule" id="btn-trigger-schedule-now" title="Chạy thử ngay danh sách hàng đợi">
+                                        <i class="fa-solid fa-play"></i> <span data-i18n="schedule.trigger_now">Thử chạy ngay</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Section 2: Quản lý nguồn điện Windows (Windows Power Management) -->
+                    <div class="theme-divider"></div>
+                    <div class="schedule-section">
+                        <div class="schedule-section-header">
+                            <div class="schedule-icon-wrap power"><i class="fa-solid fa-bolt-lightning"></i></div>
+                            <div>
+                                <div class="form-label" data-i18n="power.title">Quản lý nguồn điện Windows (Power Management)</div>
+                                <div class="form-desc" data-i18n="power.desc">Tương tác trực tiếp Win32 API: Chống ru ngủ khi tải và tự động hành động sau khi hoàn tất.</div>
+                            </div>
+                        </div>
+
+                        <!-- Win32 OS Interop Explanation Card -->
+                        <div class="os-interop-card">
+                            <div class="os-interop-head">
+                                <div class="os-badge-title">
+                                    <i class="fa-brands fa-windows"></i> <span>Win32 API: SetThreadExecutionState</span>
+                                </div>
+                                <span class="os-state-badge" id="os-sleep-status-badge">
+                                    <span class="os-state-dot"></span>
+                                    <span id="os-sleep-status-text">Đang bảo vệ (ES_SYSTEM_REQUIRED)</span>
+                                </span>
+                            </div>
+                            <p class="os-interop-desc" data-i18n="power.os_desc">
+                                Windows sẽ không tự động kích hoạt chế độ Sleep hoặc tắt màn hình khi đang có ít nhất 1 tác vụ tải ngầm đang hoạt động (ES_SYSTEM_REQUIRED | ES_CONTINUOUS).
+                            </p>
+                        </div>
+
+                        <!-- Action on complete choices -->
+                        <div class="form-group" style="margin-top: 18px;">
+                            <label class="form-label" data-i18n="power.action_label">Hành động khi tải xong toàn bộ danh sách hàng đợi:</label>
+                            <div class="power-action-cards" id="power-action-cards">
+                                <!-- Option: None -->
+                                <label class="power-card active" data-action="none" id="power-card-none">
+                                    <input type="radio" name="setting-power-action" value="none" checked class="power-radio">
+                                    <div class="power-card-icon"><i class="fa-solid fa-ban"></i></div>
+                                    <div class="power-card-info">
+                                        <div class="power-card-title" data-i18n="power.action_none">Không làm gì</div>
+                                        <div class="power-card-desc" data-i18n="power.action_none_desc">Giữ máy tính hoạt động bình thường, phục hồi chế độ ngủ mặc định của HĐH.</div>
+                                    </div>
+                                    <div class="power-check-indicator"><i class="fa-solid fa-circle-check"></i></div>
+                                </label>
+
+                                <!-- Option: Sleep -->
+                                <label class="power-card" data-action="sleep" id="power-card-sleep">
+                                    <input type="radio" name="setting-power-action" value="sleep" class="power-radio">
+                                    <div class="power-card-icon sleep"><i class="fa-solid fa-moon"></i></div>
+                                    <div class="power-card-info">
+                                        <div class="power-card-title" data-i18n="power.action_sleep">Ngủ (Sleep / Suspend)</div>
+                                        <div class="power-card-desc" data-i18n="power.action_sleep_desc">Đưa máy tính vào trạng thái tiết kiệm điện năng sau khi hết thời gian đếm ngược.</div>
+                                    </div>
+                                    <div class="power-check-indicator"><i class="fa-solid fa-circle-check"></i></div>
+                                </label>
+
+                                <!-- Option: Shutdown -->
+                                <label class="power-card" data-action="shutdown" id="power-card-shutdown">
+                                    <input type="radio" name="setting-power-action" value="shutdown" class="power-radio">
+                                    <div class="power-card-icon shutdown"><i class="fa-solid fa-power-off"></i></div>
+                                    <div class="power-card-info">
+                                        <div class="power-card-title" data-i18n="power.action_shutdown">Tắt máy tính (Shutdown)</div>
+                                        <div class="power-card-desc" data-i18n="power.action_shutdown_desc">Thực thi lệnh hệ thống shutdown.exe /s /t 60 để tắt máy an toàn sau khi tải xong.</div>
+                                    </div>
+                                    <div class="power-check-indicator"><i class="fa-solid fa-circle-check"></i></div>
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Countdown duration input -->
+                        <div class="form-group" id="countdown-duration-wrap" style="margin-top: 14px; display: none;">
+                            <label class="form-label" for="setting-countdown-sec" data-i18n="power.countdown_label">Thời gian đếm ngược cảnh báo trước khi hành động (giây):</label>
+                            <div class="input-addon-wrap" style="max-width: 200px;">
+                                <input type="number" id="setting-countdown-sec" class="form-input text-center" min="10" max="300" value="60">
+                                <span class="input-addon" data-i18n="power.seconds">giây</span>
+                            </div>
+                            <div class="form-desc" data-i18n="power.countdown_desc">Cho phép bạn kịp hủy lệnh tắt máy nếu vẫn còn ngồi trước máy tính.</div>
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <div class="modal-footer">
@@ -962,6 +1081,37 @@
                 <button type="button" class="btn-disk-action secondary" id="btn-disk-close" data-i18n="disk.understood">Đã hiểu</button>
                 <button type="button" class="btn-disk-action primary" id="btn-disk-switch-folder" style="display: none;">
                     <i class="fa-regular fa-folder-open"></i> <span data-i18n="disk.switch_folder">Đổi thư mục lưu ngay</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+        <!-- Power Action Countdown Modal -->
+    <div class="modal-overlay" id="power-countdown-modal" style="display: none; z-index: 99999;">
+        <div class="modal-card power-countdown-card">
+            <div class="power-countdown-header">
+                <div class="power-pulsing-icon" id="power-pulsing-icon">
+                    <i class="fa-solid fa-power-off"></i>
+                </div>
+                <h3 class="power-modal-title" id="power-countdown-title" data-i18n="power.modal_title">HÀNG ĐỢI TẢI ĐÃ HOÀN TẤT</h3>
+                <p class="power-modal-subtitle" id="power-countdown-subtitle" data-i18n="power.modal_subtitle">Máy tính sẽ tự động tắt nguồn trong:</p>
+            </div>
+            <div class="power-countdown-body">
+                <div class="power-timer-circle">
+                    <span class="power-digits" id="power-countdown-digits">60</span>
+                    <span class="power-sec-label" data-i18n="power.seconds_upper">GIÂY</span>
+                </div>
+                <div class="power-progress-track">
+                    <div class="power-progress-fill" id="power-progress-fill" style="width: 100%;"></div>
+                </div>
+                <p class="power-cancel-hint" data-i18n="power.cancel_hint">Nhấn "HỦY TẮT MÁY" hoặc phím ESC để dừng lệnh tắt máy tính.</p>
+            </div>
+            <div class="power-countdown-footer">
+                <button type="button" class="btn-cancel-power" id="btn-cancel-power-action">
+                    <i class="fa-solid fa-ban"></i> <span data-i18n="power.btn_cancel">HỦY TẮT MÁY NGAY (CANCEL)</span>
+                </button>
+                <button type="button" class="btn-now-power" id="btn-exec-power-now">
+                    <i class="fa-solid fa-forward-step"></i> <span data-i18n="power.btn_now">Thực hiện ngay</span>
                 </button>
             </div>
         </div>

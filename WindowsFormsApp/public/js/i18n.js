@@ -23,6 +23,8 @@
             "header.delete_all": "Xóa tất cả",
             "header.delete_all_title": "Xóa tất cả các tác vụ khỏi danh sách",
             "header.settings": "Cài đặt hệ thống",
+            "header.lang_switch": "Ngôn ngữ",
+            "header.lang_title": "Chuyển đổi ngôn ngữ (Tiếng Việt / English)",
 
             // Sider Menu
             "sider.category_title": "DANH MỤC",
@@ -191,6 +193,30 @@
             "action.cancel": "Hủy tải",
             "action.delete": "Xóa khỏi danh sách",
 
+            // Item row labels & tooltips
+            "item.speed_label": "Tốc độ:",
+            "item.avg_speed_label": "Tốc độ TB:",
+            "item.downloaded_label": "Đã tải:",
+            "item.eta_label": "Còn lại:",
+            "item.duration_label": "Thời gian:",
+            "item.threads_count": "{0} luồng",
+            "item.threads_singular": "1 luồng",
+            "item.thread_progress": "Luồng {0}: {1}%",
+            "item.completed": "Hoàn thành",
+            "item.done": "Hoàn tất",
+            "item.bypass_queue": "Bắt đầu tải ngay (Bỏ qua hàng đợi)",
+            "item.pause": "Tạm dừng",
+            "item.resume": "Tiếp tục",
+            "item.cancel": "Hủy tải",
+            "item.delete": "Xóa",
+            "item.open_file": "Mở file",
+            "item.open_folder": "Mở thư mục",
+            "item.threat_warning": "Cảnh báo: Tệp chứa mối đe dọa! Bấm để xác nhận trước khi mở.",
+            "item.threat_badge": "Phát hiện mối đe dọa!",
+            "item.scanning_defender": "Đang quét qua Windows Defender...",
+            "item.safe": "An toàn",
+            "item.scan_failed": "Lỗi quét",
+
             // Settings Modal
             "settings.title": "Cài đặt nâng cao",
             "settings.subtitle": "Hàng đợi tải về, Giới hạn băng thông & Cấu hình Proxy",
@@ -200,6 +226,47 @@
             "settings.tab.proxy": "Proxy",
             "settings.tab.browser": "Trình duyệt (Browser)",
             "settings.tab.other": "Cài đặt khác",
+            "header.schedule": "Lập lịch",
+            "header.schedule_title": "Lập lịch tải & Quản lý nguồn điện Windows",
+            "settings.tab.schedule": "Lập lịch & Nguồn",
+
+            // Schedule & Power Management (Windows Power Management & Win32 API)
+            "schedule.title": "Lập lịch bắt đầu tải (Download Scheduler)",
+            "schedule.desc": "Tự động khởi động tất cả tác vụ trong hàng đợi hoặc đang tạm dừng vào đúng khung giờ chỉ định.",
+            "schedule.time_label": "Giờ bắt đầu tải (Start Time):",
+            "schedule.status_waiting": "Đang chờ đến giờ hẹn...",
+            "schedule.status_waiting_time": "Đang chờ đến {0} để tự động tải danh sách hàng đợi",
+            "schedule.status_disabled": "Lập lịch tải hiện đang tắt",
+            "schedule.trigger_now": "Thử chạy ngay",
+            "schedule.triggered_toast": "Đã đến giờ hẹn ({0}), tự động bắt đầu tải danh sách hàng đợi!",
+            "schedule.saved_toast": "Đã lưu thiết lập lập lịch & nguồn điện thành công!",
+
+            "power.title": "Quản lý nguồn điện Windows (Power Management)",
+            "power.desc": "Tương tác trực tiếp Win32 API: Chống ru ngủ khi tải và tự động hành động sau khi hoàn tất.",
+            "power.os_desc": "Hệ điều hành Windows sẽ không tự động kích hoạt chế độ Sleep hoặc tắt màn hình khi đang có ít nhất 1 tác vụ tải ngầm đang hoạt động (ES_SYSTEM_REQUIRED | ES_CONTINUOUS).",
+            "power.os_active": "Đang bảo vệ (ES_SYSTEM_REQUIRED)",
+            "power.os_standby": "Chế độ chờ (ES_CONTINUOUS)",
+            "power.action_label": "Hành động khi tải xong toàn bộ danh sách hàng đợi:",
+            "power.action_none": "Không làm gì",
+            "power.action_none_desc": "Giữ máy tính hoạt động bình thường, phục hồi chế độ ngủ mặc định của HĐH.",
+            "power.action_sleep": "Ngủ (Sleep / Suspend)",
+            "power.action_sleep_desc": "Đưa máy tính vào trạng thái tiết kiệm điện năng sau khi hết thời gian đếm ngược.",
+            "power.action_shutdown": "Tắt máy tính (Shutdown)",
+            "power.action_shutdown_desc": "Thực thi lệnh hệ thống shutdown.exe /s /t 60 để tắt máy an toàn sau khi tải xong.",
+            "power.countdown_label": "Thời gian đếm ngược cảnh báo trước khi hành động (giây):",
+            "power.countdown_desc": "Cho phép bạn kịp hủy lệnh tắt máy nếu vẫn còn ngồi trước máy tính.",
+            "power.seconds": "giây",
+            "power.seconds_upper": "GIÂY",
+            "power.modal_title": "HÀNG ĐỢI TẢI ĐÃ HOÀN TẤT",
+            "power.modal_subtitle": "Máy tính sẽ tự động tắt nguồn sau:",
+            "power.modal_subtitle_shutdown": "Máy tính sẽ tự động tắt nguồn (Shutdown) sau:",
+            "power.modal_subtitle_sleep": "Máy tính sẽ tự động vào chế độ Ngủ (Sleep) sau:",
+            "power.cancel_hint": "Nhấn \"HỦY TẮT MÁY\" hoặc phím ESC để dừng lệnh tắt máy tính.",
+            "power.btn_cancel": "HỦY TẮT MÁY NGAY (CANCEL)",
+            "power.btn_cancel_sleep": "HỦY CHẾ ĐỘ NGỦ (CANCEL)",
+            "power.btn_now": "Thực hiện ngay",
+            "power.cancelled_toast": "Đã hủy lệnh tắt máy tính thành công!",
+
 
             // Settings Tab 1: Queue
             "settings.queue.max_concurrent": "Số tệp tải đồng thời tối đa (Max Concurrent Downloads)",
@@ -394,6 +461,8 @@
             "header.delete_all": "Delete All",
             "header.delete_all_title": "Remove all tasks from the list",
             "header.settings": "System Settings",
+            "header.lang_switch": "Language",
+            "header.lang_title": "Switch language (Ti?ng Vi?t / English)",
 
             // Sider Menu
             "sider.category_title": "CATEGORIES",
@@ -562,6 +631,30 @@
             "action.cancel": "Cancel",
             "action.delete": "Remove from List",
 
+            // Item row labels & tooltips
+            "item.speed_label": "Speed:",
+            "item.avg_speed_label": "Avg Speed:",
+            "item.downloaded_label": "Downloaded:",
+            "item.eta_label": "ETA:",
+            "item.duration_label": "Duration:",
+            "item.threads_count": "{0} threads",
+            "item.threads_singular": "1 thread",
+            "item.thread_progress": "Thread {0}: {1}%",
+            "item.completed": "Completed",
+            "item.done": "Done",
+            "item.bypass_queue": "Start now (Bypass queue)",
+            "item.pause": "Pause",
+            "item.resume": "Resume",
+            "item.cancel": "Cancel download",
+            "item.delete": "Delete",
+            "item.open_file": "Open file",
+            "item.open_folder": "Open folder",
+            "item.threat_warning": "Warning: Threat detected! Click to confirm before opening.",
+            "item.threat_badge": "Threat Detected!",
+            "item.scanning_defender": "Scanning with Windows Defender...",
+            "item.safe": "Safe",
+            "item.scan_failed": "Scan Failed",
+
             // Settings Modal
             "settings.title": "Advanced Settings",
             "settings.subtitle": "Download Queue, Bandwidth Limits & Proxy Configuration",
@@ -571,6 +664,47 @@
             "settings.tab.proxy": "Proxy",
             "settings.tab.browser": "Browser Integration",
             "settings.tab.other": "Other Settings",
+            "header.schedule": "Schedule",
+            "header.schedule_title": "Download Scheduler & Windows Power Management",
+            "settings.tab.schedule": "Schedule & Power",
+
+            // Schedule & Power Management (Windows Power Management & Win32 API)
+            "schedule.title": "Download Scheduler",
+            "schedule.desc": "Automatically start all queued or paused download tasks at the specified time.",
+            "schedule.time_label": "Start Time:",
+            "schedule.status_waiting": "Waiting for scheduled time...",
+            "schedule.status_waiting_time": "Waiting until {0} to start queued downloads",
+            "schedule.status_disabled": "Download scheduler is currently disabled",
+            "schedule.trigger_now": "Test Run Now",
+            "schedule.triggered_toast": "Scheduled time reached ({0}), queue downloads started automatically!",
+            "schedule.saved_toast": "Schedule and power management settings saved successfully!",
+
+            "power.title": "Windows Power Management",
+            "power.desc": "Direct Win32 API interop: prevent sleep while downloading and take action upon completion.",
+            "power.os_desc": "Windows will not automatically enter Sleep or turn off the screen while at least one download is actively running (ES_SYSTEM_REQUIRED | ES_CONTINUOUS).",
+            "power.os_active": "Protected (ES_SYSTEM_REQUIRED)",
+            "power.os_standby": "Standby (ES_CONTINUOUS)",
+            "power.action_label": "Action when all queued downloads complete:",
+            "power.action_none": "Do Nothing",
+            "power.action_none_desc": "Keep computer running normally, restoring standard Windows power plan.",
+            "power.action_sleep": "Sleep (Suspend)",
+            "power.action_sleep_desc": "Put the computer into power-saving sleep mode after countdown expires.",
+            "power.action_shutdown": "Shutdown Computer",
+            "power.action_shutdown_desc": "Execute system command shutdown.exe /s /t 60 to shut down safely.",
+            "power.countdown_label": "Warning countdown duration before action (seconds):",
+            "power.countdown_desc": "Gives you time to abort the shutdown if you are still using the computer.",
+            "power.seconds": "seconds",
+            "power.seconds_upper": "SECONDS",
+            "power.modal_title": "ALL DOWNLOADS COMPLETED",
+            "power.modal_subtitle": "The computer will automatically shut down in:",
+            "power.modal_subtitle_shutdown": "The computer will automatically shut down in:",
+            "power.modal_subtitle_sleep": "The computer will enter sleep mode in:",
+            "power.cancel_hint": "Click \"CANCEL SHUTDOWN\" or press ESC to abort.",
+            "power.btn_cancel": "CANCEL SHUTDOWN (ABORT)",
+            "power.btn_cancel_sleep": "CANCEL SLEEP",
+            "power.btn_now": "Execute Now",
+            "power.cancelled_toast": "Shutdown aborted successfully!",
+
 
             // Settings Tab 1: Queue
             "settings.queue.max_concurrent": "Maximum Concurrent Downloads",
@@ -861,6 +995,17 @@
                 if (speedLabel) speedLabel.textContent = t("header.speed_unlimited");
                 speedBtn.title = t("header.speed_limit_title");
             }
+        }
+
+        // 5b. Update header language toggle button if present
+        const langLabel = document.getElementById("header-lang-label");
+        const langBtn = document.getElementById("btn-header-lang-toggle");
+        if (langLabel) {
+            langLabel.textContent = targetLang.toUpperCase();
+        }
+        if (langBtn) {
+            langBtn.title = t("header.lang_title", "Chuy?n ??i ng?n ng? / Switch language");
+            langBtn.setAttribute("aria-label", langBtn.title);
         }
 
         // 6. Notify subscribers (ui.js, download.js, etc.)

@@ -213,22 +213,31 @@
 
     window.addEventListener("app:languagechange", () => {
         const isEn = window.i18n && window.i18n.getCurrentLanguage && window.i18n.getCurrentLanguage() === "en";
+        const t = (k, fb) => (window.i18n && window.i18n.t) ? window.i18n.t(k, fb) : fb;
+        const fmt = (k, ...args) => (window.i18n && window.i18n.format) ? window.i18n.format(k, ...args) : args[0];
+
         document.querySelectorAll("#download-list .download-item").forEach(item => {
             const state = item.dataset.state;
             const statusEl = item.querySelector(".download-status");
+            const pillEl = item.querySelector(".status-pill");
+
+            if (pillEl && state) {
+                pillEl.textContent = getStateText(state);
+            }
+
             if (state && statusEl) {
                 if (state === "completed") {
                     const elapsedSec = item.dataset.elapsedTime;
                     const avgSpeed = item.dataset.avgSpeed;
                     const completedAt = item.dataset.completedAt;
                     const thCount = item.querySelectorAll(".segment-bar").length || 1;
-                    const threadWord = isEn ? (thCount > 1 ? "threads" : "thread") : "luồng";
-                    const completedWord = isEn ? "Completed" : "Hoàn thành";
-                    const durationWord = isEn ? "Duration" : "Thời gian";
-                    const avgWord = isEn ? "Avg Speed" : "Tốc độ TB";
-                    let text = `${completedWord} — ${thCount} ${threadWord}`;
+                    const threadWord = thCount > 1 ? fmt("item.threads_count", thCount) : t("item.threads_singular", "1 luồng");
+                    const completedWord = t("item.completed", "Hoàn thành");
+                    const durationWord = t("item.duration_label", "Thời gian:").replace(":", "");
+                    const avgWord = t("item.avg_speed_label", "Tốc độ TB:").replace(":", "");
+                    let text = `${completedWord} • ${threadWord}`;
                     if (elapsedSec) {
-                        text += ` (${durationWord}: ${elapsedSec}s${avgSpeed ? ` — ${avgWord}: ${avgSpeed}` : ""})`;
+                        text += ` (${durationWord}: ${elapsedSec}s${avgSpeed ? ` • ${avgWord}: ${avgSpeed}` : ""})`;
                     }
                     if (completedAt) {
                         text += ` • ${completedAt}`;
@@ -241,21 +250,53 @@
 
             const speedLabel = item.querySelector(`[id$="-speed-label"]`);
             if (speedLabel) {
-                speedLabel.textContent = state === "completed" ? (isEn ? "Avg Speed:" : "Tốc độ TB:") : (isEn ? "Speed:" : "Tốc độ:");
+                speedLabel.textContent = state === "completed" ? t("item.avg_speed_label", "Tốc độ TB:") : t("item.speed_label", "Tốc độ:");
             }
             const etaLabel = item.querySelector(`[id$="-eta-label"]`);
             if (etaLabel) {
-                etaLabel.textContent = state === "completed" ? (isEn ? "Duration:" : "Thời gian tải:") : (isEn ? "ETA:" : "Còn lại:");
+                etaLabel.textContent = state === "completed" ? t("item.duration_label", "Thời gian:") : t("item.eta_label", "Còn lại:");
             }
             const downloadedLabel = item.querySelector(`[id$="-downloaded-label"]`);
             if (downloadedLabel) {
-                downloadedLabel.textContent = isEn ? "Downloaded:" : "Đã tải:";
+                downloadedLabel.textContent = t("item.downloaded_label", "Đã tải:");
+            }
+
+            // Update action buttons with tooltips and accessible aria-labels
+            const btnForce = item.querySelector('[data-item-action="force-start"]');
+            if (btnForce) {
+                btnForce.title = t("item.bypass_queue", "Bắt đầu tải ngay (Bỏ qua hàng đợi)");
+                btnForce.setAttribute("aria-label", btnForce.title);
+            }
+            const btnPause = item.querySelector('[data-item-action="toggle-pause"]');
+            if (btnPause) {
+                const isPaused = state === "paused";
+                btnPause.title = isPaused ? t("item.resume", "Tiếp tục") : t("item.pause", "Tạm dừng");
+                btnPause.setAttribute("aria-label", btnPause.title);
+            }
+            const btnCancel = item.querySelector('[data-item-action="cancel"]');
+            if (btnCancel) {
+                btnCancel.title = t("item.cancel", "Hủy tải");
+                btnCancel.setAttribute("aria-label", btnCancel.title);
+            }
+            const btnDelete = item.querySelector('[data-item-action="delete"]');
+            if (btnDelete) {
+                btnDelete.title = t("item.delete", "Xóa");
+                btnDelete.setAttribute("aria-label", btnDelete.title);
             }
 
             const btnOpenFile = item.querySelector(".btn-open-file span");
-            if (btnOpenFile) btnOpenFile.textContent = isEn ? "Open File" : "Mở file";
+            if (btnOpenFile) btnOpenFile.textContent = t("item.open_file", "Mở file");
             const btnOpenFolder = item.querySelector(".btn-open-folder span");
-            if (btnOpenFolder) btnOpenFolder.textContent = isEn ? "Open Folder" : "Mở thư mục";
+            if (btnOpenFolder) btnOpenFolder.textContent = t("item.open_folder", "Mở thư mục");
+
+            // Segment bar titles
+            const bars = item.querySelectorAll(".segment-bar");
+            bars.forEach((bar, i) => {
+                const segTitlePrefix = isEn ? "Thread" : "Luồng";
+                const match = bar.title.match(/(\d+)%/);
+                const pct = match ? match[1] : "100";
+                bar.title = `${segTitlePrefix} ${i + 1}: ${pct}%`;
+            });
         });
         syncHeaderPauseButtons();
     });
@@ -396,6 +437,19 @@
         const previousFileName = item.dataset.fileName;
         const previousCategory = item.dataset.category;
         item.dataset.state = d.state;
+
+        let statusPill = item.querySelector(".status-pill");
+        if (!statusPill) {
+            statusPill = document.createElement("span");
+            statusPill.className = "status-pill status-pill-" + d.state;
+            statusPill.id = `${d.taskId}-status-pill`;
+            const fileInfo = item.querySelector(".file-info");
+            if (fileInfo) fileInfo.appendChild(statusPill);
+        }
+        if (statusPill) {
+            statusPill.className = "status-pill status-pill-" + d.state;
+            statusPill.textContent = getStateText(d.state);
+        }
         if (d.targetPath) item.dataset.targetPath = d.targetPath;
         if (d.fileName) item.dataset.fileName = d.fileName;
         if (typeof d.totalBytes === "number" && d.totalBytes > 0) item.dataset.totalBytes = d.totalBytes;
@@ -544,6 +598,13 @@
 
         const bar = document.getElementById(`${d.taskId}-progress`);
         if (bar) bar.style.width = percent + "%";
+        const barContainer = item.querySelector(".progress-bar-container");
+        if (barContainer) {
+            barContainer.setAttribute("role", "progressbar");
+            barContainer.setAttribute("aria-valuenow", percent);
+            barContainer.setAttribute("aria-valuemin", "0");
+            barContainer.setAttribute("aria-valuemax", "100");
+        }
 
         // Thanh tiến độ từng luồng + tooltip realtime
         const bars = item.querySelectorAll(".segment-bar");
@@ -1252,6 +1313,15 @@
 
         const stateText = getStateText(state);
         const isEn = window.i18n && window.i18n.getCurrentLanguage && window.i18n.getCurrentLanguage() === "en";
+        const t = (k, fb) => (window.i18n && window.i18n.t) ? window.i18n.t(k, fb) : fb;
+        const fmt = (k, ...args) => (window.i18n && window.i18n.format) ? window.i18n.format(k, ...args) : args[0];
+
+        const openFileText = t("item.open_file", isEn ? "Open File" : "Mở file");
+        const openFolderText = t("item.open_folder", isEn ? "Open Folder" : "Mở thư mục");
+        const titleForce = t("item.bypass_queue", isEn ? "Start now (Bypass queue)" : "Bắt đầu tải ngay (Bỏ qua hàng đợi)");
+        const titlePauseResume = showPause ? t("item.resume", isEn ? "Resume" : "Tiếp tục") : t("item.pause", isEn ? "Pause" : "Tạm dừng");
+        const titleCancel = t("item.cancel", isEn ? "Cancel download" : "Hủy tải");
+        const titleDelete = t("item.delete", isEn ? "Delete" : "Xóa");
 
         const threadCount = rec.threads || 1;
         const elapsedSec = rec.elapsedSeconds > 0 ? rec.elapsedSeconds.toFixed(1) : "";
@@ -1319,6 +1389,8 @@
 
         const html = `
             <div class="download-item" id="${rec.id}"
+                 role="article"
+                 aria-labelledby="${rec.id}-filename"
                  data-state="${state}"
                  data-category="${category}"
                  data-file-name="${safeFileName}"
@@ -1333,8 +1405,9 @@
                  data-target-path="${safeTargetPath}">
                 <div class="progress-header">
                     <div class="file-info">
-                        <i class="${iconClass}"></i>
-                        <span class="file-name" title="${safeFileName}">${safeFileName}</span>
+                        <i class="${iconClass}" aria-hidden="true"></i>
+                        <span class="file-name" id="${rec.id}-filename" title="${safeFileName}">${safeFileName}</span>
+                        <span class="status-pill status-pill-${state}" id="${rec.id}-status-pill">${stateText}</span>
                     </div>
                     <div class="header-right">
                         <div class="item-actions">

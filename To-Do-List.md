@@ -7,7 +7,7 @@ Dưới đây là các chức năng được phân loại theo mức độ giá 
 ## NHÓM 1: CÁC CHỨC NĂNG ĐẬM CHẤT "HỆ ĐIỀU HÀNH WINDOWS" 
 *(⭐ Ghi điểm lý thuyết HĐH cao nhất)*
 
-### 1. Lập lịch tải & Quản lý nguồn điện Windows (Scheduler & Windows Power Management)
+### 1. Lập lịch tải & Quản lý nguồn điện Windows (Scheduler & Windows Power Management) [ĐÃ HOÀN THÀNH - COMPLETED]
 - **Mô tả:** Người dùng hẹn giờ: "01:00 sáng tự động bắt đầu tải danh sách hàng đợi, tải xong hết thì tự Tắt máy (Shutdown) hoặc Ngủ (Sleep)".
 - **Bản chất HĐH:**
   - *Tránh bị hệ điều hành "ru ngủ" khi đang tải:* Gọi Win32 API `SetThreadExecutionState` (`ES_SYSTEM_REQUIRED | ES_CONTINUOUS`) để báo Windows không được tự động Sleep khi đang có luồng tải chạy ngầm.

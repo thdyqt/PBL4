@@ -65,6 +65,16 @@ class Header extends HTMLElement {
                 </div>
             </header>
         `;
+        const langToggleBtn = this.querySelector('#btn-header-lang-toggle');
+        if (langToggleBtn) {
+            langToggleBtn.addEventListener('click', () => {
+                const cur = (window.i18n && window.i18n.getLanguage) ? window.i18n.getLanguage() : 'vi';
+                const next = cur === 'vi' ? 'en' : 'vi';
+                if (window.setLanguage) {
+                    window.setLanguage(next, true);
+                }
+            });
+        }
         if (window.i18n && window.i18n.getLanguage) {
             window.setLanguage(window.i18n.getLanguage(), false);
         }
@@ -129,6 +139,16 @@ class Sider extends HTMLElement {
             </nav>
             <div class="sider-overlay"></div>
         `;
+        const langToggleBtn = this.querySelector('#btn-header-lang-toggle');
+        if (langToggleBtn) {
+            langToggleBtn.addEventListener('click', () => {
+                const cur = (window.i18n && window.i18n.getLanguage) ? window.i18n.getLanguage() : 'vi';
+                const next = cur === 'vi' ? 'en' : 'vi';
+                if (window.setLanguage) {
+                    window.setLanguage(next, true);
+                }
+            });
+        }
         if (window.i18n && window.i18n.getLanguage) {
             window.setLanguage(window.i18n.getLanguage(), false);
         }

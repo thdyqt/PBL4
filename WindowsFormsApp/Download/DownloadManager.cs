@@ -34,6 +34,8 @@ namespace WindowsFormsApp.Download
         private bool _disposed;
 
         public event Action<ProgressDto> ProgressChanged;
+        public event Action AllDownloadsCompleted;
+        private bool _wasDownloading;
 
         public DownloadManager()
         {
@@ -562,6 +564,24 @@ namespace WindowsFormsApp.Download
             }
         }
 
+        public void StartAllQueued()
+        {
+            lock (_queueLock)
+            {
+                var queuedList = _queue.ToList();
+                _queue.Clear();
+                foreach (var taskId in queuedList)
+                {
+                    DownloadJob job;
+                    if (_jobs.TryGetValue(taskId, out job) && job.State == DownloadState.Queued)
+                    {
+                        job.Start();
+                    }
+                }
+            }
+            CheckAndProcessQueue();
+        }
+
         public void CheckAndProcessQueue()
         {
             lock (_queueLock)
@@ -579,6 +599,25 @@ namespace WindowsFormsApp.Download
                     }
                 }
             }
+
+            int queuedCount;
+            lock (_queueLock) { queuedCount = _queue.Count; }
+            int active = ActiveDownloadingCount;
+            if (active > 0)
+            {
+                _wasDownloading = true;
+                PowerManagementHelper.PreventSleep();
+            }
+            else
+            {
+                PowerManagementHelper.AllowSleep();
+                if (_wasDownloading && queuedCount == 0)
+                {
+                    _wasDownloading = false;
+                    try { AllDownloadsCompleted?.Invoke(); } catch { }
+                }
+            }
+
         }
 
         /// <summary>Hủy tác vụ tải: dừng luồng, xóa file dở dang và .dlmeta.</summary>
@@ -649,6 +688,7 @@ namespace WindowsFormsApp.Download
             foreach (DownloadJob job in _jobs.Values) job.Shutdown();
             foreach (FtpJob job in _ftpJobs.Values) job.Shutdown();
             _http.Dispose();
+            PowerManagementHelper.AllowSleep();
         }
 
         public void Dispose()

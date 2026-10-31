@@ -3004,13 +3004,43 @@ html[data-language="en"] .download-actions::before {
 }
 
 #settings-modal .settings-tabs {
-    padding: 0 32px;
+    display: flex;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding: 0 28px;
     gap: 8px;
+    white-space: nowrap;
+    scrollbar-width: thin;
+    scrollbar-color: #cbd5e1 transparent;
+    -webkit-overflow-scrolling: touch;
+}
+
+#settings-modal .settings-tabs::-webkit-scrollbar {
+    height: 5px;
+}
+
+#settings-modal .settings-tabs::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+#settings-modal .settings-tabs::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 4px;
+}
+
+#settings-modal .settings-tabs::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
 }
 
 #settings-modal .settings-tab-btn {
-    padding: 14px 18px;
+    flex-shrink: 0;
+    white-space: nowrap;
+    padding: 13px 18px;
     font-size: 13.5px;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
 }
 
 #settings-modal .modal-body {
@@ -3094,13 +3124,39 @@ html[data-language="en"] .download-actions::before {
 /* Settings Tabs */
 .settings-tabs {
     display: flex;
-    padding: 0 28px;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding: 0 24px;
     background: #fafcff;
     border-bottom: 1px solid #e2e8f0;
     gap: 8px;
+    white-space: nowrap;
+    scrollbar-width: thin;
+    scrollbar-color: #cbd5e1 transparent;
+    -webkit-overflow-scrolling: touch;
+}
+
+.settings-tabs::-webkit-scrollbar {
+    height: 5px;
+}
+
+.settings-tabs::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.settings-tabs::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 4px;
+}
+
+.settings-tabs::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
 }
 
 .settings-tab-btn {
+    flex-shrink: 0;
+    white-space: nowrap;
     padding: 12px 18px;
     background: none;
     border: none;
@@ -3109,7 +3165,7 @@ html[data-language="en"] .download-actions::before {
     font-weight: 600;
     color: #64748b;
     cursor: pointer;
-    display: flex;
+    display: inline-flex;
     align-items: center;
     gap: 8px;
     transition: all 0.2s;
@@ -5255,9 +5311,21 @@ html[data-theme="dark"] .btn-modal-close:hover {
     color: #ffffff !important;
 }
 
-html[data-theme="dark"] .settings-tabs {
+html[data-theme="dark"] .settings-tabs,
+html[data-theme="dark"] #settings-modal .settings-tabs {
     background-color: #0f172a !important;
     border-bottom: 1px solid #334155 !important;
+    scrollbar-color: #475569 transparent !important;
+}
+
+html[data-theme="dark"] .settings-tabs::-webkit-scrollbar-thumb,
+html[data-theme="dark"] #settings-modal .settings-tabs::-webkit-scrollbar-thumb {
+    background: #475569 !important;
+}
+
+html[data-theme="dark"] .settings-tabs::-webkit-scrollbar-thumb:hover,
+html[data-theme="dark"] #settings-modal .settings-tabs::-webkit-scrollbar-thumb:hover {
+    background: #64748b !important;
 }
 
 html[data-theme="dark"] .settings-tab-btn {
@@ -6403,3 +6471,816 @@ html[data-theme="dark"] .btn-browser-action.secondary:hover {
 
 
 
+
+/* ============================================================
+   FRONTEND UI ENGINEERING POLISH: ACCESSIBILITY, I18N & METRICS
+   ============================================================ */
+
+/* 1. Global WCAG 2.1 AA Keyboard Focus Visibility */
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+.btn-item-action:focus-visible,
+.btn-time-range:focus-visible,
+.btn-chart-action:focus-visible {
+    outline: 2px solid #2563EB !important;
+    outline-offset: 2px !important;
+}
+
+html[data-theme="dark"] button:focus-visible,
+html[data-theme="dark"] a:focus-visible,
+html[data-theme="dark"] input:focus-visible,
+html[data-theme="dark"] select:focus-visible,
+html[data-theme="dark"] textarea:focus-visible,
+html[data-theme="dark"] .btn-item-action:focus-visible,
+html[data-theme="dark"] .btn-time-range:focus-visible,
+html[data-theme="dark"] .btn-chart-action:focus-visible {
+    outline: 2px solid #60A5FA !important;
+    outline-offset: 2px !important;
+}
+
+/* 2. Header Instant Language Switcher */
+.header .btn-lang-toggle {
+    padding: 8px 14px;
+    border: 1px solid #E2E8F0;
+    border-radius: 12px;
+    font-weight: 700;
+    font-size: 12px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background-color: #F8FAFC;
+    color: #1E293B;
+    letter-spacing: 0.5px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.header .btn-lang-toggle:hover {
+    background-color: #EFF6FF;
+    border-color: #93C5FD;
+    color: #1D4ED8;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.12);
+}
+
+.header .btn-lang-toggle i {
+    color: #3B82F6;
+    font-size: 13px;
+    transition: transform 0.3s ease;
+}
+
+.header .btn-lang-toggle:hover i {
+    transform: rotate(30deg) scale(1.15);
+}
+
+html[data-theme="dark"] .header .btn-lang-toggle {
+    background-color: #1E293B;
+    border-color: #334155;
+    color: #F8FAFC;
+}
+
+html[data-theme="dark"] .header .btn-lang-toggle:hover {
+    background-color: #0F172A;
+    border-color: #3B82F6;
+    color: #60A5FA;
+    box-shadow: 0 4px 14px rgba(59, 130, 246, 0.25);
+}
+
+/* 3. Download Task Status Pills */
+.status-pill {
+    display: inline-flex;
+    align-items: center;
+    padding: 3px 9px;
+    border-radius: 9999px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+    margin-left: 8px;
+    flex-shrink: 0;
+    line-height: 1.2;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.status-pill-downloading {
+    background-color: #E0F2FE;
+    color: #0369A1;
+    border: 1px solid #BAE6FD;
+}
+
+.status-pill-completed {
+    background-color: #DCFCE7;
+    color: #15803D;
+    border: 1px solid #BBF7D0;
+}
+
+.status-pill-paused {
+    background-color: #FEF3C7;
+    color: #B45309;
+    border: 1px solid #FDE68A;
+}
+
+.status-pill-queued,
+.status-pill-preparing {
+    background-color: #F1F5F9;
+    color: #475569;
+    border: 1px solid #E2E8F0;
+}
+
+.status-pill-failed,
+.status-pill-cancelled {
+    background-color: #FEE2E2;
+    color: #B91C1C;
+    border: 1px solid #FECACA;
+}
+
+html[data-theme="dark"] .status-pill-downloading {
+    background-color: rgba(14, 165, 233, 0.16);
+    color: #38BDF8;
+    border-color: rgba(14, 165, 233, 0.35);
+}
+
+html[data-theme="dark"] .status-pill-completed {
+    background-color: rgba(34, 197, 94, 0.16);
+    color: #4ADE80;
+    border-color: rgba(34, 197, 94, 0.35);
+}
+
+html[data-theme="dark"] .status-pill-paused {
+    background-color: rgba(245, 158, 11, 0.16);
+    color: #FBBF24;
+    border-color: rgba(245, 158, 11, 0.35);
+}
+
+html[data-theme="dark"] .status-pill-queued,
+html[data-theme="dark"] .status-pill-preparing {
+    background-color: rgba(148, 163, 184, 0.16);
+    color: #94A3B8;
+    border-color: rgba(148, 163, 184, 0.35);
+}
+
+html[data-theme="dark"] .status-pill-failed,
+html[data-theme="dark"] .status-pill-cancelled {
+    background-color: rgba(239, 68, 68, 0.16);
+    color: #F87171;
+    border-color: rgba(239, 68, 68, 0.35);
+}
+
+/* 4. Speed & Performance Chart Responsive Layout */
+.chart-kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+    gap: 16px;
+    margin-bottom: 24px;
+}
+
+@media (max-width: 900px) {
+    .chart-kpi-grid {
+        grid-template-columns: 1fr 1fr;
+    }
+}
+
+@media (max-width: 520px) {
+    .chart-kpi-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+
+/* ==========================================================================
+   5. Lập lịch tải & Quản lý nguồn điện Windows (Scheduler & Power Management)
+   ========================================================================== */
+
+/* Schedule Tab Container */
+#tab-schedule {
+    display: none;
+    flex-direction: column;
+    gap: 24px;
+}
+
+#tab-schedule.active {
+    display: flex;
+}
+
+.schedule-section {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.schedule-section-header {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.schedule-icon-wrap {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+    background: #ecfdf5;
+    color: #059669;
+    border: 1px solid #a7f3d0;
+    flex-shrink: 0;
+}
+
+.schedule-icon-wrap i {
+    color: #059669;
+}
+
+.schedule-icon-wrap.power {
+    background: #fffbeb;
+    color: #d97706;
+    border: 1px solid #fde68a;
+}
+
+.schedule-icon-wrap.power i {
+    color: #d97706;
+}
+
+.schedule-grid {
+    display: grid;
+    grid-template-columns: 210px 1fr;
+    gap: 16px;
+    align-items: flex-end;
+    margin-top: 6px;
+}
+
+@media (max-width: 600px) {
+    .schedule-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.time-picker-input {
+    font-size: 16px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    padding: 10px 14px 10px 38px;
+    border-radius: 8px;
+    width: 100%;
+}
+
+.schedule-status-banner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    padding: 12px 18px;
+    border-radius: 10px;
+    gap: 12px;
+}
+
+.schedule-status-indicator {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 13.5px;
+    font-weight: 500;
+    color: #475569;
+}
+
+.status-pulse-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background-color: #10b981;
+    display: inline-block;
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+    animation: dot-pulse 1.8s infinite;
+}
+
+@keyframes dot-pulse {
+    0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+    70% { transform: scale(1); box-shadow: 0 0 0 8px rgba(16, 185, 129, 0); }
+    100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+}
+
+.btn-test-schedule {
+    font-size: 12.5px;
+    padding: 7px 16px;
+    background: #ffffff;
+    border: 1px solid #cbd5e1;
+    color: #0f172a;
+    border-radius: 7px;
+    cursor: pointer;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.2s;
+}
+
+.btn-test-schedule:hover {
+    background: #f1f5f9;
+    border-color: #94a3b8;
+}
+
+/* OS Interop Card (Win32 API SetThreadExecutionState) */
+.os-interop-card {
+    background: linear-gradient(135deg, #f0f9ff, #e0f2fe);
+    border: 1px solid #bae6fd;
+    border-radius: 12px;
+    padding: 16px 20px;
+    margin-top: 6px;
+}
+
+.os-interop-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 8px;
+    gap: 12px;
+}
+
+.os-badge-title {
+    font-size: 13.5px;
+    font-weight: 700;
+    color: #0369a1;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.os-state-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    font-size: 12px;
+    font-weight: 600;
+    padding: 5px 12px;
+    border-radius: 20px;
+    background: #ffffff;
+    border: 1px solid #7dd3fc;
+    color: #0284c7;
+}
+
+.os-state-badge.active {
+    background: #ecfdf5;
+    border-color: #6ee7b7;
+    color: #059669;
+}
+
+.os-state-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: currentColor;
+}
+
+.os-interop-desc {
+    font-size: 13px;
+    line-height: 1.5;
+    color: #334155;
+    margin: 0;
+}
+
+/* Power Action Selection Cards */
+.power-action-cards {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 14px;
+    margin-top: 10px;
+}
+
+@media (max-width: 680px) {
+    .power-action-cards {
+        grid-template-columns: 1fr;
+    }
+}
+
+.power-card {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    padding: 16px 14px;
+    background: #ffffff;
+    border: 2px solid #e2e8f0;
+    border-radius: 12px;
+    cursor: pointer;
+    position: relative;
+    transition: all 0.2s ease-in-out;
+}
+
+.power-card:hover {
+    border-color: #cbd5e1;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.power-card.active {
+    border-color: #2563eb;
+    background: #f8faff;
+    box-shadow: 0 4px 14px rgba(37, 99, 235, 0.12);
+}
+
+.power-radio {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.power-card-icon {
+    width: 38px;
+    height: 38px;
+    border-radius: 10px;
+    background: #f1f5f9;
+    color: #64748b;
+    border: 1px solid #e2e8f0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    flex-shrink: 0;
+}
+
+.power-card-icon i {
+    color: #64748b;
+}
+
+.power-card-icon.sleep {
+    background: #f5f3ff;
+    color: #7c3aed;
+    border: 1px solid #ddd6fe;
+}
+
+.power-card-icon.sleep i {
+    color: #7c3aed;
+}
+
+.power-card-icon.shutdown {
+    background: #fef2f2;
+    color: #dc2626;
+    border: 1px solid #fecaca;
+}
+
+.power-card-icon.shutdown i {
+    color: #dc2626;
+}
+
+.power-card-info {
+    flex: 1;
+}
+
+.power-card-title {
+    font-size: 13.5px;
+    font-weight: 700;
+    color: #0f172a;
+    margin-bottom: 4px;
+}
+
+.power-card-desc {
+    font-size: 11.5px;
+    line-height: 1.45;
+    color: #64748b;
+}
+
+.power-check-indicator {
+    font-size: 16px;
+    color: #2563eb;
+    opacity: 0;
+    transition: opacity 0.2s;
+}
+
+.power-card.active .power-check-indicator {
+    opacity: 1;
+}
+
+/* ==========================================================================
+   Power Countdown Modal (Shutdown / Sleep Countdown Dialog)
+   ========================================================================== */
+.power-countdown-card {
+    max-width: 480px;
+    width: 90%;
+    border-radius: 16px;
+    background: #ffffff;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.35);
+    border: 1px solid #e2e8f0;
+    text-align: center;
+    padding: 32px 28px 24px;
+    animation: modal-pop 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes modal-pop {
+    0% { transform: scale(0.92); opacity: 0; }
+    100% { transform: scale(1); opacity: 1; }
+}
+
+.power-pulsing-icon {
+    width: 68px;
+    height: 68px;
+    border-radius: 50%;
+    background: #fee2e2;
+    color: #dc2626;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 32px;
+    margin-bottom: 16px;
+    box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.7);
+    animation: power-pulse 1.5s infinite;
+}
+
+.power-pulsing-icon.sleep-mode {
+    background: #ede9fe;
+    color: #7c3aed;
+    box-shadow: 0 0 0 0 rgba(124, 58, 237, 0.7);
+    animation: sleep-pulse 1.5s infinite;
+}
+
+@keyframes power-pulse {
+    0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.7); }
+    70% { transform: scale(1.05); box-shadow: 0 0 0 16px rgba(220, 38, 38, 0); }
+    100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(220, 38, 38, 0); }
+}
+
+@keyframes sleep-pulse {
+    0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(124, 58, 237, 0.7); }
+    70% { transform: scale(1.05); box-shadow: 0 0 0 16px rgba(124, 58, 237, 0); }
+    100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(124, 58, 237, 0); }
+}
+
+.power-modal-title {
+    font-size: 19px;
+    font-weight: 800;
+    color: #0f172a;
+    letter-spacing: -0.3px;
+    margin: 0 0 6px;
+}
+
+.power-modal-subtitle {
+    font-size: 14px;
+    color: #64748b;
+    margin: 0 0 20px;
+}
+
+.power-timer-circle {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    margin: 10px auto 20px;
+}
+
+.power-digits {
+    font-size: 64px;
+    font-weight: 900;
+    font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, monospace;
+    line-height: 1;
+    color: #dc2626;
+    font-feature-settings: 'tnum';
+    letter-spacing: -2px;
+}
+
+.power-digits.sleep-mode {
+    color: #7c3aed;
+}
+
+.power-sec-label {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    color: #94a3b8;
+    margin-top: 4px;
+}
+
+.power-progress-track {
+    width: 100%;
+    height: 8px;
+    border-radius: 4px;
+    background: #f1f5f9;
+    overflow: hidden;
+    margin-bottom: 12px;
+}
+
+.power-progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #dc2626, #ef4444);
+    border-radius: 4px;
+    transition: width 1s linear;
+}
+
+.power-progress-fill.sleep-mode {
+    background: linear-gradient(90deg, #7c3aed, #8b5cf6);
+}
+
+.power-cancel-hint {
+    font-size: 12px;
+    color: #64748b;
+    margin: 0 0 24px;
+}
+
+.power-countdown-footer {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+}
+
+.btn-cancel-power {
+    flex: 1;
+    padding: 12px 18px;
+    background: #dc2626;
+    color: #ffffff;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    box-shadow: 0 4px 12px rgba(220, 38, 38, 0.35);
+    transition: all 0.2s;
+}
+
+.btn-cancel-power:hover {
+    background: #b91c1c;
+    transform: translateY(-1px);
+    box-shadow: 0 6px 16px rgba(220, 38, 38, 0.45);
+}
+
+.btn-now-power {
+    padding: 12px 18px;
+    background: #f1f5f9;
+    color: #475569;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    font-size: 13.5px;
+    font-weight: 600;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.2s;
+}
+
+.btn-now-power:hover {
+    background: #e2e8f0;
+    color: #0f172a;
+}
+
+/* ==========================================================================
+   Dark Mode: Complete Styling for Scheduler & Power
+   ========================================================================== */
+
+/* Dark mode: Section Icons */
+html[data-theme="dark"] .schedule-icon-wrap {
+    background: rgba(16, 185, 129, 0.16) !important;
+    border: 1px solid rgba(16, 185, 129, 0.35) !important;
+}
+
+html[data-theme="dark"] .schedule-icon-wrap i {
+    color: #34d399 !important;
+}
+
+html[data-theme="dark"] .schedule-icon-wrap.power {
+    background: rgba(245, 158, 11, 0.16) !important;
+    border: 1px solid rgba(245, 158, 11, 0.35) !important;
+}
+
+html[data-theme="dark"] .schedule-icon-wrap.power i {
+    color: #fbbf24 !important;
+}
+
+/* Dark mode: Sub controls & banners */
+html[data-theme="dark"] .schedule-status-banner {
+    background: #0f172a !important;
+    border-color: #334155 !important;
+}
+
+html[data-theme="dark"] .schedule-status-indicator {
+    color: #cbd5e1 !important;
+}
+
+html[data-theme="dark"] .btn-test-schedule {
+    background: #1e293b !important;
+    border-color: #475569 !important;
+    color: #f1f5f9 !important;
+}
+
+html[data-theme="dark"] .btn-test-schedule:hover {
+    background: #334155 !important;
+}
+
+/* Dark mode: OS Interop Card */
+html[data-theme="dark"] .os-interop-card {
+    background: linear-gradient(135deg, rgba(3, 105, 161, 0.22), rgba(14, 165, 233, 0.12)) !important;
+    border: 1px solid rgba(56, 189, 248, 0.35) !important;
+}
+
+html[data-theme="dark"] .os-badge-title {
+    color: #38bdf8 !important;
+}
+
+html[data-theme="dark"] .os-state-badge {
+    background: #0f172a !important;
+    border-color: #0284c7 !important;
+    color: #38bdf8 !important;
+}
+
+html[data-theme="dark"] .os-state-badge.active {
+    background: rgba(16, 185, 129, 0.18) !important;
+    border-color: #059669 !important;
+    color: #34d399 !important;
+}
+
+html[data-theme="dark"] .os-interop-desc {
+    color: #cbd5e1 !important;
+}
+
+/* Dark mode: Power Action Selection Cards */
+html[data-theme="dark"] .power-card {
+    background: #0f172a !important;
+    border: 1.5px solid #334155 !important;
+}
+
+html[data-theme="dark"] .power-card:hover {
+    border-color: #475569 !important;
+    background: #131d31 !important;
+}
+
+html[data-theme="dark"] .power-card.active {
+    background: rgba(56, 189, 248, 0.12) !important;
+    border-color: #38bdf8 !important;
+    box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.25), 0 4px 14px rgba(0, 0, 0, 0.35) !important;
+}
+
+html[data-theme="dark"] .power-card-title {
+    color: #f8fafc !important;
+}
+
+html[data-theme="dark"] .power-card-desc {
+    color: #94a3b8 !important;
+}
+
+html[data-theme="dark"] .power-check-indicator {
+    color: #38bdf8 !important;
+}
+
+/* Dark mode: Icons inside power cards */
+html[data-theme="dark"] .power-card-icon {
+    background: rgba(148, 163, 184, 0.14) !important;
+    border: 1px solid rgba(148, 163, 184, 0.25) !important;
+}
+
+html[data-theme="dark"] .power-card-icon i {
+    color: #94a3b8 !important;
+}
+
+html[data-theme="dark"] .power-card-icon.sleep {
+    background: rgba(168, 85, 247, 0.18) !important;
+    border: 1px solid rgba(168, 85, 247, 0.35) !important;
+}
+
+html[data-theme="dark"] .power-card-icon.sleep i {
+    color: #c084fc !important;
+}
+
+html[data-theme="dark"] .power-card-icon.shutdown {
+    background: rgba(239, 68, 68, 0.18) !important;
+    border: 1px solid rgba(239, 68, 68, 0.35) !important;
+}
+
+html[data-theme="dark"] .power-card-icon.shutdown i {
+    color: #f87171 !important;
+}
+
+/* Dark mode: Countdown Modal */
+html[data-theme="dark"] .power-countdown-card {
+    background: #1e293b !important;
+    border-color: #334155 !important;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.6) !important;
+}
+
+html[data-theme="dark"] .power-modal-title {
+    color: #f8fafc !important;
+}
+
+html[data-theme="dark"] .power-modal-subtitle,
+html[data-theme="dark"] .power-cancel-hint {
+    color: #94a3b8 !important;
+}
+
+html[data-theme="dark"] .power-progress-track {
+    background: #0f172a !important;
+}
+
+html[data-theme="dark"] .btn-now-power {
+    background: #0f172a !important;
+    border-color: #334155 !important;
+    color: #cbd5e1 !important;
+}
+
+html[data-theme="dark"] .btn-now-power:hover {
+    background: #334155 !important;
+    color: #f8fafc !important;
+}

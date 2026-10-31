@@ -546,11 +546,9 @@
         maxPoints = Math.round(currentRangeSeconds * 2); // 2 points per second at 500ms
 
         document.querySelectorAll(".btn-time-range").forEach(btn => {
-            if (Number(btn.dataset.range) === currentRangeSeconds) {
-                btn.classList.add("active");
-            } else {
-                btn.classList.remove("active");
-            }
+            const isActive = Number(btn.dataset.range) === currentRangeSeconds;
+            btn.classList.toggle("active", isActive);
+            btn.setAttribute("aria-pressed", isActive ? "true" : "false");
         });
 
         // Trim buffer if shrank
@@ -624,6 +622,47 @@
             });
         });
         observer.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+
+        // Responsive resize listener with debounce
+        let resizeTimer = null;
+        window.addEventListener("resize", () => {
+            clearTimeout(resizeTimer);
+            resizeTimer = setTimeout(() => {
+                if (speedChartInstance) speedChartInstance.resize();
+                if (cpuChartInstance) cpuChartInstance.resize();
+                if (ramChartInstance) ramChartInstance.resize();
+            }, 100);
+        });
+
+        // Synchronize labels and tooltips when language changes
+        window.addEventListener("app:languagechange", () => {
+            const t = (k, fb) => (window.i18n && window.i18n.t) ? window.i18n.t(k, fb) : fb;
+            const fmt = (k, ...args) => (window.i18n && window.i18n.format) ? window.i18n.format(k, ...args) : args[0];
+
+            // Update peak speed
+            const peakEl = document.getElementById("kpi-speed-peak");
+            if (peakEl) {
+                peakEl.textContent = t("chart.speed_peak", "??nh: {0}").replace("{0}", formatSpeed(peakSpeedBytes));
+            }
+
+            // Update thread subtext
+            const threadsSub = document.getElementById("kpi-threads-sub");
+            if (threadsSub) {
+                threadsSub.textContent = t("chart.threads_sub", "{0} t?p ?ang k?t n?i").replace("{0}", activeTasksMap.size);
+            }
+
+            // Update stream pause/resume button label
+            const text = document.getElementById("chart-pause-text");
+            const indicator = document.getElementById("chart-live-indicator");
+            const liveText = indicator ? indicator.querySelector(".live-text") : null;
+            if (isStreamPaused) {
+                if (text) text.textContent = t("chart.btn_resume", "Ti?p t?c v?");
+                if (liveText) liveText.textContent = t("chart.paused_badge", "?? T?M D?NG V?");
+            } else {
+                if (text) text.textContent = t("chart.btn_pause", "T?m d?ng v?");
+                if (liveText) liveText.textContent = t("chart.live", "TR?C TI?P");
+            }
+        });
 
         // Listen for IPC messages from C#
         if (window.chrome && window.chrome.webview) {

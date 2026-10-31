@@ -22,6 +22,14 @@ namespace WindowsFormsApp.Download
         public bool BypassLocal { get; set; } = true;
     }
 
+    public class ScheduleSettings
+    {
+        public bool Enabled { get; set; } = false;
+        public string StartTime { get; set; } = "01:00"; // Định dạng 24h: "HH:mm"
+        public string ActionOnComplete { get; set; } = "none"; // "none", "sleep", "shutdown"
+        public int CountdownSeconds { get; set; } = 60; // Số giây đếm ngược trước khi tắt/ngủ
+    }
+
     public class AppSettings
     {
         public int MaxConcurrentDownloads { get; set; } = 2; // 0 = Không giới hạn
@@ -33,6 +41,7 @@ namespace WindowsFormsApp.Download
         public bool ConfirmBeforeDelete { get; set; } = true;
         public string Theme { get; set; } = "light"; // "light", "dark", "system"
         public string Language { get; set; } = "vi"; // "vi", "en"
+        public ScheduleSettings Schedule { get; set; } = new ScheduleSettings();
     }
 
     public class ProxyTestResult
@@ -79,6 +88,7 @@ namespace WindowsFormsApp.Download
                         if (settings != null)
                         {
                             if (settings.Proxy == null) settings.Proxy = new ProxySettings();
+                            if (settings.Schedule == null) settings.Schedule = new ScheduleSettings();
                             if (string.IsNullOrWhiteSpace(settings.Language)) settings.Language = "vi";
                             _current = settings;
                             return _current;

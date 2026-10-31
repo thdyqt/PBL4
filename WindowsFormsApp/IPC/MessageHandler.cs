@@ -16,6 +16,7 @@ namespace WindowsFormsApp.IPC
 
         private readonly Form1 _mainForm;
         private readonly DownloadManager _manager;
+        private readonly DownloadScheduler _scheduler;
 
         // Cache local để tránh query DB mỗi 400ms: taskId -> DownloadRecord
         // Chỉ đọc/ghi từ luồng event ProgressChanged (single-threaded qua message pump)
@@ -40,6 +41,14 @@ namespace WindowsFormsApp.IPC
 
             _manager = new DownloadManager();
             _manager.ProgressChanged += OnProgressChanged;
+            _manager.AllDownloadsCompleted += OnAllDownloadsCompleted;
+
+            var settings = SettingsManager.Load();
+            _scheduler = new DownloadScheduler(settings.Schedule);
+            _scheduler.SchedulerTriggered += OnSchedulerTriggered;
+            _scheduler.CountdownTick += OnSchedulerCountdownTick;
+            _scheduler.CountdownFinished += OnSchedulerCountdownFinished;
+            _scheduler.CountdownCancelled += OnSchedulerCountdownCancelled;
 
             _cachedTotalRamBytes = GetTotalSystemRam();
 
@@ -51,7 +60,9 @@ namespace WindowsFormsApp.IPC
         public void Shutdown()
         {
             try { _metricsTimer?.Dispose(); } catch { }
+            try { _scheduler?.Dispose(); } catch { }
             _manager.ProgressChanged -= OnProgressChanged;
+            _manager.AllDownloadsCompleted -= OnAllDownloadsCompleted;
             _manager.Shutdown();
         }
 
@@ -248,6 +259,31 @@ namespace WindowsFormsApp.IPC
 
                         case "TEST_CAPTURE_LINK":
                             HandleTestCaptureLink();
+                            break;
+
+                        case "GET_SCHEDULE":
+                            HandleGetSchedule();
+                            break;
+
+                        case "SAVE_SCHEDULE":
+                            HandleSaveSchedule(root);
+                            break;
+
+                        case "CANCEL_POWER_ACTION":
+                            _scheduler.CancelCountdown();
+                            break;
+
+                        case "EXECUTE_POWER_ACTION_NOW":
+                            _scheduler.ExecuteNow();
+                            break;
+
+                        case "TRIGGER_SCHEDULE_NOW":
+                            _scheduler.TriggerNow();
+                            break;
+
+                        case "START_ALL_QUEUED":
+                        case "RESUME_ALL":
+                            StartAllQueuedOrPausedDownloads();
                             break;
                     }
                 }
@@ -570,7 +606,11 @@ namespace WindowsFormsApp.IPC
                 Send(new
                 {
                     action = "PERFORMANCE_METRICS",
-                    data = dto
+                    data = dto,
+                    isSleepPrevented = PowerManagementHelper.IsSleepPrevented,
+                    isCountingDown = _scheduler.IsCountingDown,
+                    remainingSeconds = _scheduler.RemainingSeconds,
+                    powerAction = _scheduler.CurrentAction
                 });
             }
             catch { }
@@ -654,6 +694,7 @@ namespace WindowsFormsApp.IPC
                     {
                         SettingsManager.Save(settings);
                         _manager.ApplySettings(settings);
+                        if (settings.Schedule != null) _scheduler.UpdateSettings(settings.Schedule);
                         Send(new
                         {
                             action = "SETTINGS_SAVED",
@@ -1192,5 +1233,135 @@ namespace WindowsFormsApp.IPC
                 Send(new { action = "SHOW_TOAST", message = "Lỗi thử nghiệm link: " + ex.Message });
             }
         }
-    }
+    
+        // ------------------------------------------------------------------ Lập lịch & Nguồn điện Windows
+
+        private void OnSchedulerTriggered()
+        {
+            StartAllQueuedOrPausedDownloads();
+            var s = SettingsManager.Current.Schedule;
+            Send(new
+            {
+                action = "SCHEDULE_TRIGGERED",
+                time = s?.StartTime ?? "01:00",
+                actionOnComplete = s?.ActionOnComplete ?? "none",
+                message = $"Đã đến giờ hẹn ({s?.StartTime}), tự động bắt đầu tải hàng đợi!"
+            });
+        }
+
+        private void OnAllDownloadsCompleted()
+        {
+            var s = SettingsManager.Current.Schedule;
+            if (s != null && !string.Equals(s.ActionOnComplete, "none", StringComparison.OrdinalIgnoreCase))
+            {
+                int sec = s.CountdownSeconds > 0 ? s.CountdownSeconds : 60;
+                _scheduler.StartCountdown(s.ActionOnComplete, sec);
+            }
+        }
+
+        private void OnSchedulerCountdownTick(string action, int remaining)
+        {
+            Send(new
+            {
+                action = "POWER_ACTION_COUNTDOWN",
+                powerAction = action,
+                remainingSeconds = remaining
+            });
+        }
+
+        private void OnSchedulerCountdownFinished(string action)
+        {
+            Send(new
+            {
+                action = "POWER_ACTION_FINISHED",
+                powerAction = action
+            });
+        }
+
+        private void OnSchedulerCountdownCancelled()
+        {
+            Send(new
+            {
+                action = "POWER_ACTION_CANCELLED",
+                message = "Đã hủy lệnh tắt máy / ngủ thành công."
+            });
+        }
+
+        public void StartAllQueuedOrPausedDownloads()
+        {
+            try
+            {
+                _manager.StartAllQueued();
+
+                var history = DatabaseHelper.GetAll();
+                foreach (var rec in history)
+                {
+                    if (rec.State == "paused" || rec.State == "queued")
+                    {
+                        if (!_manager.HasJob(rec.Id))
+                        {
+                            string folder = !string.IsNullOrWhiteSpace(rec.TargetPath)
+                                ? (Directory.Exists(rec.TargetPath) ? rec.TargetPath : Path.GetDirectoryName(rec.TargetPath))
+                                : Application.StartupPath;
+                            _ = HandleStartDownloadAsync(rec.Id, rec.SourceUrl, folder, rec.Threads > 0 ? rec.Threads : 4, rec.FileName);
+                        }
+                        else
+                        {
+                            _manager.Resume(rec.Id);
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine("[MessageHandler] StartAllQueuedOrPausedDownloads error: " + ex.Message);
+            }
+        }
+
+        private void HandleGetSchedule()
+        {
+            var cur = SettingsManager.Current;
+            Send(new
+            {
+                action = "SCHEDULE_CONFIG",
+                schedule = cur.Schedule,
+                isSleepPrevented = PowerManagementHelper.IsSleepPrevented,
+                isCountingDown = _scheduler.IsCountingDown,
+                remainingSeconds = _scheduler.RemainingSeconds,
+                currentAction = _scheduler.CurrentAction
+            });
+        }
+
+        private void HandleSaveSchedule(JsonElement root)
+        {
+            try
+            {
+                var cur = SettingsManager.Current;
+                if (cur.Schedule == null) cur.Schedule = new ScheduleSettings();
+
+                if (root.TryGetProperty("schedule", out JsonElement schedEl))
+                {
+                    if (schedEl.TryGetProperty("enabled", out var e)) cur.Schedule.Enabled = e.GetBoolean();
+                    if (schedEl.TryGetProperty("startTime", out var st)) cur.Schedule.StartTime = st.GetString();
+                    if (schedEl.TryGetProperty("actionOnComplete", out var ac)) cur.Schedule.ActionOnComplete = ac.GetString();
+                    if (schedEl.TryGetProperty("countdownSeconds", out var cs)) cur.Schedule.CountdownSeconds = cs.GetInt32();
+                }
+
+                SettingsManager.Save(cur);
+                _scheduler.UpdateSettings(cur.Schedule);
+
+                Send(new
+                {
+                    action = "SCHEDULE_SAVED",
+                    success = true,
+                    schedule = cur.Schedule,
+                    isSleepPrevented = PowerManagementHelper.IsSleepPrevented
+                });
+            }
+            catch (Exception ex)
+            {
+                Send(new { action = "SCHEDULE_SAVED", success = false, message = ex.Message });
+            }
+        }
+}
 }
