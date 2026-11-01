@@ -42,6 +42,7 @@ namespace WindowsFormsApp.Download
         private readonly List<PendingDownloadItem> _pendingQueue = new List<PendingDownloadItem>();
         private readonly object _queueLock = new object();
         private int _maxConcurrentDownloads = 2; // 0 = Không giới hạn
+        private bool _dynamicThreadAllocation = false;
         private int _activePreparingCount = 0;
         private ProxySettings _currentProxy;
         private readonly System.Threading.Timer _timer;
@@ -57,6 +58,7 @@ namespace WindowsFormsApp.Download
         {
             var settings = SettingsManager.Load();
             _maxConcurrentDownloads = settings.MaxConcurrentDownloads;
+            _dynamicThreadAllocation = settings.DynamicThreadAllocation;
             _limiter.BytesPerSecond = settings.SpeedLimitKbps * 1024L;
             _currentProxy = settings.Proxy ?? new ProxySettings();
             _http = CreateHttpClient(_currentProxy);
@@ -164,10 +166,24 @@ namespace WindowsFormsApp.Download
             try { oldClient?.Dispose(); } catch { }
         }
 
+        public bool DynamicThreadAllocation
+        {
+            get { return _dynamicThreadAllocation; }
+            set
+            {
+                _dynamicThreadAllocation = value;
+                foreach (var job in _jobs.Values)
+                {
+                    job.DynamicThreads = value;
+                }
+            }
+        }
+
         public void ApplySettings(AppSettings settings)
         {
             if (settings == null) return;
             MaxConcurrentDownloads = settings.MaxConcurrentDownloads;
+            DynamicThreadAllocation = settings.DynamicThreadAllocation;
             SpeedLimitBytesPerSecond = settings.SpeedLimitKbps * 1024L;
             UpdateProxy(settings.Proxy);
             CheckAndProcessQueue();
@@ -320,7 +336,10 @@ namespace WindowsFormsApp.Download
             DownloadJob job;
             try
             {
-                job = new DownloadJob(taskId, url, info, target, threads, ranges, segments, _http, _limiter, queued: false);
+                job = new DownloadJob(taskId, url, info, target, threads, ranges, segments, _http, _limiter, queued: false)
+                {
+                    DynamicThreads = DynamicThreadAllocation
+                };
                 job.Changed += OnJobChanged;
                 _jobs[taskId] = job;
                 job.Start();

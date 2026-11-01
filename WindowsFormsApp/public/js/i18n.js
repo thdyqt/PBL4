@@ -575,6 +575,8 @@
             "settings.queue.threads_12": "12 luồng",
 
             "settings.queue.threads_16": "16 luồng",
+            "settings.queue.dynamic_threads": "Tự động thay đổi số luồng trong lúc tải",
+            "settings.queue.dynamic_threads_desc": "Tự động phân bổ và thay đổi số luồng linh hoạt (Dynamic Segment Splitting) trong lúc tải để tối ưu tốc độ.",
 
 
 
@@ -741,6 +743,8 @@
             "settings.shell.toast_complete": "Thông báo Windows khi tải xong (Toast Notification)",
 
             "settings.shell.toast_complete_desc": "Hiển thị thông báo Toast / BalloonTip ở góc phải màn hình khi tệp hoàn tất, bấm vào thông báo để mở tệp ngay.",
+            "settings.shell.open_folder_complete": "Tự động mở thư mục sau khi tải xong",
+            "settings.shell.open_folder_complete_desc": "Tự động mở Windows File Explorer và làm nổi bật tệp ngay khi tác vụ tải hoàn tất.",
 
 
 
@@ -1477,6 +1481,8 @@
             "settings.queue.threads_12": "12 threads",
 
             "settings.queue.threads_16": "16 threads",
+            "settings.queue.dynamic_threads": "Automatically change number of threads while downloading",
+            "settings.queue.dynamic_threads_desc": "Dynamically adjust thread allocation and split segments during download to maximize download speed.",
 
 
 
@@ -1643,6 +1649,8 @@
             "settings.shell.toast_complete": "Windows Notification on completion (Toast Notification)",
 
             "settings.shell.toast_complete_desc": "Display a Windows notification banner when a file completes; click the notification to open the file immediately.",
+            "settings.shell.open_folder_complete": "Open folder when download completes",
+            "settings.shell.open_folder_complete_desc": "Automatically open Windows File Explorer and highlight the downloaded file upon completion.",
 
 
 

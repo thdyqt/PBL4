@@ -37,6 +37,7 @@ namespace WindowsFormsApp.Download
         public ProxySettings Proxy { get; set; } = new ProxySettings();
         public string DefaultSavePath { get; set; } = "";
         public int DefaultThreads { get; set; } = 4;
+        public bool DynamicThreadAllocation { get; set; } = false; // Tự động thay đổi số luồng trong lúc tải (mặc định tắt)
         public bool AutoStartNextInQueue { get; set; } = true;
         public bool ConfirmBeforeDelete { get; set; } = true;
         public string Theme { get; set; } = "light"; // "light", "dark", "system"
@@ -45,6 +46,7 @@ namespace WindowsFormsApp.Download
         public bool StartWithWindows { get; set; } = false;
         public bool MinimizeToTrayOnClose { get; set; } = true;
         public bool ShowToastOnCompletion { get; set; } = true;
+        public bool AutoOpenFolderOnCompletion { get; set; } = false; // Tự động mở thư mục sau khi tải xong (mặc định tắt)
     }
 
     public class ProxyTestResult

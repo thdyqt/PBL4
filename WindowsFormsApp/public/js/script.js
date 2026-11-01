@@ -1397,6 +1397,10 @@ let currentSettings = {
 
     defaultThreads: 4,
 
+    dynamicThreadAllocation: false,
+
+    autoOpenFolderOnCompletion: false,
+
     autoStartNextInQueue: true
 
 };
@@ -1496,6 +1500,10 @@ function populateSettingsForm(s) {
     const defThreads = document.getElementById("setting-default-threads");
 
     if (defThreads) defThreads.value = String(s.defaultThreads ?? 4);
+
+    const dynThreads = document.getElementById("setting-dynamic-threads");
+
+    if (dynThreads) dynThreads.checked = s.dynamicThreadAllocation ?? false;
 
 
 
@@ -1672,6 +1680,10 @@ function populateSettingsForm(s) {
     const toastComp = document.getElementById("setting-toast-on-completion");
 
     if (toastComp) toastComp.checked = s.showToastOnCompletion !== false;
+
+    const autoOpenFolder = document.getElementById("setting-auto-open-folder");
+
+    if (autoOpenFolder) autoOpenFolder.checked = s.autoOpenFolderOnCompletion ?? false;
 
 
 
@@ -1992,6 +2004,8 @@ function openSettingsModal(defaultTab = "tab-queue") {
         content.classList.toggle("active", content.id === defaultTab);
 
     });
+
+    initSettingsTabsWheel();
 
     const tabsContainer = modal.querySelector(".settings-tabs");
     if (tabsContainer) {
@@ -2510,7 +2524,11 @@ if (btnSaveSettings) {
 
         const showToast = document.getElementById("setting-toast-on-completion")?.checked ?? true;
 
+        const autoOpenFolder = document.getElementById("setting-auto-open-folder")?.checked ?? false;
 
+
+
+        const dynamicThreads = document.getElementById("setting-dynamic-threads")?.checked ?? false;
 
         const newSettings = {
 
@@ -2524,6 +2542,8 @@ if (btnSaveSettings) {
 
             defaultThreads: defaultThreads,
 
+            dynamicThreadAllocation: dynamicThreads,
+
             autoStartNextInQueue: autoNext,
 
             confirmBeforeDelete: confirmBeforeDelete,
@@ -2533,6 +2553,8 @@ if (btnSaveSettings) {
             minimizeToTrayOnClose: minimizeToTray,
 
             showToastOnCompletion: showToast,
+
+            autoOpenFolderOnCompletion: autoOpenFolder,
 
             theme: themeVal,
 
@@ -3847,3 +3869,26 @@ document.addEventListener("DOMContentLoaded", () => {
 
 });
 
+
+
+// Lắng nghe lăn con chuột trên menu tab cài đặt để cuộn thanh scrollbar ngang
+function initSettingsTabsWheel() {
+    const tabsContainer = document.querySelector("#settings-modal .settings-tabs");
+    if (tabsContainer && !tabsContainer.dataset.wheelBound) {
+        tabsContainer.dataset.wheelBound = "true";
+        tabsContainer.addEventListener("wheel", (e) => {
+            if (e.deltaY !== 0 && Math.abs(e.deltaY) >= Math.abs(e.deltaX)) {
+                e.preventDefault();
+                tabsContainer.scrollLeft += e.deltaY;
+            }
+        }, { passive: false });
+    }
+}
+window.initSettingsTabsWheel = initSettingsTabsWheel;
+
+// Tự động kích hoạt lắng nghe con lăn trên menu tab cài đặt ngay khi load
+if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", initSettingsTabsWheel);
+} else {
+    initSettingsTabsWheel();
+}

@@ -74,6 +74,7 @@ namespace WindowsFormsApp.Download
         public string ETag { get; }
         public DateTimeOffset? LastModified { get; }
         public int RequestedThreads { get; }
+        public bool DynamicThreads { get; set; } = false;
         public bool SupportsRanges { get; }
         public List<Segment> Segments { get; }
         public DownloadState State { get; private set; }
@@ -307,7 +308,7 @@ namespace WindowsFormsApp.Download
                     seg = Segments.FirstOrDefault(s => !s.Finished && !_activeSegments.Contains(s));
 
                     // 3. Ưu tiên 2: Cắt đôi phân đoạn động (Dynamic Segment Splitting / Work Stealing kiểu IDM)
-                    if (seg == null && Segments.Count < RequestedThreads)
+                    if (seg == null && DynamicThreads && Segments.Count < SegmentPlanner.MaxDynamicSegments)
                     {
                         Segment longest = null;
                         long maxRemaining = 0;
@@ -728,7 +729,7 @@ namespace WindowsFormsApp.Download
                         catch { }
 
                         segDtos = Segments.Select(s => new SegmentDto { Downloaded = s.Downloaded, Length = s.Length }).ToList();
-                        threadCount = RequestedThreads;
+                        threadCount = Math.Max(RequestedThreads, Segments.Count);
                     }
                 }
             }

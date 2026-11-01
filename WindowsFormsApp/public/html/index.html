@@ -898,6 +898,17 @@
 
                     </div>
 
+                    <div class="form-group switch-row">
+                        <div>
+                            <div class="form-label" data-i18n="settings.queue.dynamic_threads">Tự động thay đổi số luồng trong lúc tải</div>
+                            <div class="form-desc" data-i18n="settings.queue.dynamic_threads_desc">Tự động phân bổ và thay đổi số luồng linh hoạt (Dynamic Segment Splitting) trong lúc tải để tối ưu tốc độ.</div>
+                        </div>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="setting-dynamic-threads">
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+
                 </div>
 
 
@@ -1395,8 +1406,7 @@
                 <!-- Tab 5: Other Settings -->
 
                 <div class="settings-tab-content" id="tab-other">
-
-                    <!-- Theme Settings Card -->
+                                                <!-- Theme Settings Card -->
 
                     <div class="theme-settings-section">
 
@@ -1714,8 +1724,6 @@
 
                     </div>
 
-
-
                     <!-- Windows Shell Integration Section -->
 
                     <div class="theme-divider"></div>
@@ -1808,11 +1816,19 @@
 
                         </div>
 
+                        <!-- 4. Auto Open Folder on Completion -->
+                        <div class="form-group switch-row" style="margin-top: 10px;">
+                            <div>
+                                <div class="form-label" data-i18n="settings.shell.open_folder_complete">Tự động mở thư mục sau khi tải xong</div>
+                                <div class="form-desc" data-i18n="settings.shell.open_folder_complete_desc">Tự động mở Windows File Explorer và làm nổi bật tệp ngay khi tác vụ tải hoàn tất.</div>
+                            </div>
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="setting-auto-open-folder">
+                                <span class="toggle-slider"></span>
+                            </label>
+                        </div>
                     </div>
-
                 </div>
-
-
 
                 <!-- Tab 6: Schedule & Windows Power Management -->
 

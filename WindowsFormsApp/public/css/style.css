@@ -3033,6 +3033,7 @@ html[data-language="en"] .download-actions::before {
 #settings-modal .modal-card {
     max-width: 920px;
     width: 94%;
+    max-height: 94vh;
 }
 
 #settings-modal .modal-header {
@@ -3043,7 +3044,7 @@ html[data-language="en"] .download-actions::before {
     display: flex;
     flex-wrap: nowrap;
     overflow-x: auto;
-    overflow-y: visible;
+    overflow-y: hidden !important;
     padding: 8px 24px;
     gap: 8px;
     white-space: nowrap;
@@ -3084,11 +3085,13 @@ html[data-language="en"] .download-actions::before {
 }
 
 #settings-modal .modal-body {
-    padding: 28px 32px;
+    padding: 20px 28px;
+    scrollbar-width: thin;
+    scrollbar-color: #cbd5e1 transparent;
 }
 
 #settings-modal .settings-tab-content {
-    gap: 22px;
+    gap: 16px;
 }
 
 #settings-modal .modal-footer {
@@ -3238,6 +3241,25 @@ html[data-language="en"] .download-actions::before {
     padding: 24px 28px;
     overflow-y: auto;
     flex: 1;
+    scrollbar-width: thin;
+    scrollbar-color: #cbd5e1 transparent;
+}
+
+.modal-body::-webkit-scrollbar {
+    width: 6px;
+}
+
+.modal-body::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.modal-body::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 6px;
+}
+
+.modal-body::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
 }
 
 .settings-tab-content {
@@ -6716,7 +6738,7 @@ html[data-theme="dark"] .status-pill-cancelled {
 #tab-schedule {
     display: none;
     flex-direction: column;
-    gap: 24px;
+    gap: 12px;
 }
 
 #tab-schedule.active {
@@ -6726,18 +6748,18 @@ html[data-theme="dark"] .status-pill-cancelled {
 .schedule-section {
     display: flex;
     flex-direction: column;
-    gap: 16px;
+    gap: 10px;
 }
 
 .schedule-section-header {
     display: flex;
     align-items: center;
-    gap: 16px;
+    gap: 12px;
 }
 
 .schedule-icon-wrap {
-    width: 48px;
-    height: 48px;
+    width: 38px;
+    height: 38px;
     border-radius: 12px;
     display: flex;
     align-items: center;
@@ -6846,16 +6868,16 @@ html[data-theme="dark"] .status-pill-cancelled {
 .os-interop-card {
     background: linear-gradient(135deg, #f0f9ff, #e0f2fe);
     border: 1px solid #bae6fd;
-    border-radius: 12px;
-    padding: 16px 20px;
-    margin-top: 6px;
+    border-radius: 10px;
+    padding: 10px 14px;
+    margin-top: 4px;
 }
 
 .os-interop-head {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    margin-bottom: 8px;
+    margin-bottom: 4px;
     gap: 12px;
 }
 
@@ -6918,8 +6940,8 @@ html[data-theme="dark"] .status-pill-cancelled {
 .power-card {
     display: flex;
     align-items: flex-start;
-    gap: 14px;
-    padding: 16px 14px;
+    gap: 10px;
+    padding: 10px 12px;
     background: #ffffff;
     border: 2px solid #e2e8f0;
     border-radius: 12px;

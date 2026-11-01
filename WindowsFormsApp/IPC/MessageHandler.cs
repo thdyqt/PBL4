@@ -1842,15 +1842,59 @@ namespace WindowsFormsApp.IPC
 
                             var currentSettings = SettingsManager.Current;
 
+                            string fName = !string.IsNullOrEmpty(dto.FileName) ? dto.FileName : rec.FileName;
+
+                            string tPath = !string.IsNullOrEmpty(dto.TargetPath) ? dto.TargetPath : rec.TargetPath;
+
                             if (currentSettings != null && currentSettings.ShowToastOnCompletion)
 
                             {
 
-                                string fName = !string.IsNullOrEmpty(dto.FileName) ? dto.FileName : rec.FileName;
-
-                                string tPath = !string.IsNullOrEmpty(dto.TargetPath) ? dto.TargetPath : rec.TargetPath;
-
                                 _mainForm.ShowDownloadCompletedToast(fName, tPath);
+
+                            }
+
+                            if (currentSettings != null && currentSettings.AutoOpenFolderOnCompletion && !string.IsNullOrEmpty(tPath))
+
+                            {
+
+                                try
+
+                                {
+
+                                    if (File.Exists(tPath))
+
+                                    {
+
+                                        System.Diagnostics.Process.Start("explorer.exe", "/select,\"" + tPath + "\"");
+
+                                    }
+
+                                    else
+
+                                    {
+
+                                        string dir = Path.GetDirectoryName(tPath);
+
+                                        if (!string.IsNullOrEmpty(dir) && Directory.Exists(dir))
+
+                                        {
+
+                                            System.Diagnostics.Process.Start("explorer.exe", "\"" + dir + "\"");
+
+                                        }
+
+                                    }
+
+                                }
+
+                                catch (Exception ex)
+
+                                {
+
+                                    System.Diagnostics.Debug.WriteLine("[AutoOpenFolder] Error: " + ex.Message);
+
+                                }
 
                             }
 
