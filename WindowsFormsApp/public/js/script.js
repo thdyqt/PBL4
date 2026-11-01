@@ -2155,6 +2155,9 @@ document.addEventListener("click", (e) => {
         const activeContent = document.getElementById(tabId);
 
         if (activeContent) activeContent.classList.add("active");
+        try {
+            tabBtn.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "nearest" });
+        } catch (_) {}
 
         return;
 
