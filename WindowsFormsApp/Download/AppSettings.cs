@@ -35,7 +35,7 @@ namespace WindowsFormsApp.Download
         public int MaxConcurrentDownloads { get; set; } = 2; // 0 = Không giới hạn
         public long SpeedLimitKbps { get; set; } = 0;        // 0 = Không giới hạn (KB/s)
         public ProxySettings Proxy { get; set; } = new ProxySettings();
-        public string DefaultSavePath { get; set; } = "";
+        public string DefaultSavePath { get; set; } = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Downloads");
         public int DefaultThreads { get; set; } = 4;
         public bool DynamicThreadAllocation { get; set; } = false; // Tự động thay đổi số luồng trong lúc tải (mặc định tắt)
         public bool AutoStartNextInQueue { get; set; } = true;
@@ -95,6 +95,10 @@ namespace WindowsFormsApp.Download
                             if (settings.Proxy == null) settings.Proxy = new ProxySettings();
                             if (settings.Schedule == null) settings.Schedule = new ScheduleSettings();
                             if (string.IsNullOrWhiteSpace(settings.Language)) settings.Language = "vi";
+                            if (string.IsNullOrWhiteSpace(settings.DefaultSavePath))
+                            {
+                                settings.DefaultSavePath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Downloads");
+                            }
                             try
                             {
                                 settings.StartWithWindows = ShellIntegrationHelper.IsRunOnStartupEnabled();

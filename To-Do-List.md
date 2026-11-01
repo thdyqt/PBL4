@@ -52,7 +52,7 @@ Dưới đây là các chức năng được phân loại theo mức độ giá 
   - *Xác minh toán học khắt khe:* Hàm `VerifyIntegrity()` tự động sắp xếp toàn bộ phân đoạn theo `Start`, kiểm tra tính liên tục tuyệt đối `segments[i].End + 1 == segments[i+1].Start`, không có byte chồng lấn, không có khe hở và tổng độ dài khớp 100% `TotalBytes`.
   - *Trực quan hóa thời gian thực (Frontend UI):* Giao diện WebView2 tự động mở rộng thêm các thanh tiến độ luồng khi có phân đoạn mới được cắt đôi kèm huy hiệu `[Chia nhỏ động]`.
 - **Độ khó:** ⭐⭐⭐⭐ *(Thuật toán đồng bộ hóa luồng đỉnh cao của Internet Download Manager, ghi điểm tối đa trước hội đồng).*
-
+bạn
 ### 6. Tải hàng loạt theo quy luật (Batch Download / Pattern Matching)
 - **Mô tả:**
   - Cho phép người dùng nhập cú pháp URL: `https://example.com/tailieu/chuong_[01-20].pdf`.

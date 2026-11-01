@@ -10,14 +10,14 @@ Tiện ích mở rộng chính thức cho trình duyệt Google Chrome và Micro
 1. Mở Chrome, truy cập vào đường dẫn: `chrome://extensions`
 2. Bật công tắc **"Chế độ dành cho nhà phát triển" (Developer mode)** ở góc trên bên phải.
 3. Nhấp vào nút **"Tải tiện ích đã giải nén" (Load unpacked)** ở góc trên bên trái.
-4. Chọn thư mục này: `C:\PBL4-Branch\BrowserExtension`.
+4. Chọn thư mục này: `C:\PBL4\BrowserExtension`.
 5. Biểu tượng **DUT Accelerator** sẽ xuất hiện trên thanh công cụ của trình duyệt!
 
 ### Đối với Microsoft Edge:
 1. Mở Edge, truy cập vào đường dẫn: `edge://extensions`
 2. Bật công tắc **"Chế độ dành cho nhà phát triển" (Developer mode)** ở menu bên trái.
 3. Nhấp vào nút **"Tải phần mở rộng đã giải nén" (Load unpacked)**.
-4. Chọn thư mục này: `C:\PBL4-Branch\BrowserExtension`.
+4. Chọn thư mục này: `C:\PBL4\BrowserExtension`.
 
 ---
 

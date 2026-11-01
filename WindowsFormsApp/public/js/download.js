@@ -716,39 +716,89 @@
         if (window.applyFilter) window.applyFilter();
     }
 
-    function handleBrowserLinkCaptured(data) {
-        if (!data || !data.url) return;
+    function handleBrowserLinkCaptured(data, defaultSavePath) {
+        if (!data) return;
+        const targetUrl = data.url || data.Url;
+        if (!targetUrl) return;
 
-        // 1. Chuyển sang Tab Home (Tất cả) nếu đang ở tab khác
-        const allNav = document.querySelector('.inner-menu a[data-filter="all"]');
-        if (allNav) {
-            allNav.click();
+        const targetFileName = data.fileName || data.FileName || "";
+        const targetAutoStart = data.autoStart !== undefined ? (data.autoStart === true) : (data.AutoStart === true);
+        const targetTotalBytes = data.totalBytes !== undefined ? data.totalBytes : (data.TotalBytes || 0);
+
+        // 1. Tự động đóng các modal nếu đang mở (Cài đặt, Tải nhiều link...)
+        const settingsModal = document.getElementById("settings-modal");
+        if (settingsModal) settingsModal.style.display = "none";
+        const batchModal = document.getElementById("batch-modal");
+        if (batchModal) batchModal.style.display = "none";
+
+        // 2. Tự động chuyển về Tab "Trang chủ" (data-filter="home")
+        const homeNav = document.querySelector('.inner-menu a[data-filter="home"]');
+        if (homeNav) {
+            document.querySelectorAll(".inner-menu a").forEach((el) => el.classList.remove("active"));
+            homeNav.classList.add("active");
+            if (typeof window.applyFilter === "function") {
+                window.applyFilter("home");
+            } else {
+                homeNav.click();
+            }
         } else if (typeof window.applyFilter === "function") {
-            window.applyFilter("all");
+            window.applyFilter("home");
         }
+
+        // Đảm bảo Form tải (section-2) hiển thị rõ ràng tại Trang chủ
+        const sec2 = document.querySelector(".section-2");
+        if (sec2) sec2.style.display = "";
+        const sec1 = document.querySelector(".section-1");
+        if (sec1) sec1.style.display = "";
+        const secChart = document.getElementById("section-chart");
+        if (secChart) secChart.style.display = "none";
+        const secDevice = document.getElementById("section-device");
+        if (secDevice) secDevice.style.display = "none";
+        const fileToolbar = document.getElementById("file-toolbar");
+        if (fileToolbar) fileToolbar.style.display = "";
 
         // 2. Điền URL vào ô #url
         const urlInput = document.getElementById("url");
         if (urlInput) {
-            urlInput.value = data.url;
+            urlInput.value = targetUrl;
             urlInput.dispatchEvent(new Event("input", { bubbles: true }));
             urlInput.dispatchEvent(new Event("change", { bubbles: true }));
         }
 
         // 3. Nếu có gợi ý tên file từ Extension -> điền vào ô #custom-file-name
         const customNameEl = document.getElementById("custom-file-name");
-        if (customNameEl && data.fileName) {
-            customNameEl.value = data.fileName;
+        if (customNameEl && targetFileName) {
+            customNameEl.value = targetFileName;
             customNameEl.dispatchEvent(new Event("input", { bubbles: true }));
+            customNameEl.dispatchEvent(new Event("change", { bubbles: true }));
         }
 
         // 4. Nếu ô lưu file chưa có -> lấy thư mục lưu mặc định
         const saveInput = document.getElementById("save-path");
-        if (saveInput && !saveInput.value && window.currentSettings && window.currentSettings.defaultSavePath) {
-            saveInput.value = window.currentSettings.defaultSavePath;
+        let savePath = (saveInput ? saveInput.value : "").trim();
+        if (!savePath) {
+            const defPath = defaultSavePath
+                         || (window.currentSettings && window.currentSettings.defaultSavePath)
+                         || (typeof currentSettings !== "undefined" && currentSettings.defaultSavePath)
+                         || document.getElementById("setting-default-save")?.value
+                         || "";
+            if (defPath && saveInput) {
+                saveInput.value = defPath;
+                savePath = defPath;
+                saveInput.dispatchEvent(new Event("input", { bubbles: true }));
+                saveInput.dispatchEvent(new Event("change", { bubbles: true }));
+            }
         }
 
-        // 5. Hiệu ứng Visual WOW: Ánh hào quang nổi bật form tải (pulse glow)
+        // 5. Revalidate với JustValidate để đánh dấu hợp lệ
+        if (window.mainFormValidator) {
+            try {
+                window.mainFormValidator.revalidateField("#url");
+                window.mainFormValidator.revalidateField("#save-path");
+            } catch (e) { }
+        }
+
+        // 6. Hiệu ứng Visual WOW: Ánh hào quang nổi bật form tải (pulse glow)
         const inputForm = document.getElementById("input-form");
         if (inputForm) {
             inputForm.classList.remove("browser-captured-glow");
@@ -761,19 +811,32 @@
             } catch (e) { }
         }
 
-        // 6. Hiển thị thông báo Toast
-        const displayFileName = data.fileName || "Tệp từ trình duyệt";
-        const fileSizeText = (data.totalBytes && data.totalBytes > 0) ? ` (${fmtBytes(data.totalBytes)})` : "";
+        // 7. Hiển thị thông báo Toast
+        const displayFileName = targetFileName || "Tệp từ trình duyệt";
+        const fileSizeText = (targetTotalBytes > 0) ? ` (${fmtBytes(targetTotalBytes)})` : "";
         if (window.showAppToast) {
             window.showAppToast(`🚀 Đã bắt link từ trình duyệt: ${displayFileName}${fileSizeText}`);
         }
 
-        // 7. Tự động tải nếu người dùng bật AutoStart trong Extension Popup
-        if (data.autoStart) {
+        // 8. Tự động tải nếu người dùng bật AutoStart trong Extension Popup
+        if (targetAutoStart) {
             setTimeout(() => {
-                const downloadBtn = document.querySelector(".inner-download-button");
-                if (downloadBtn) {
-                    downloadBtn.click();
+                const finalSave = (saveInput ? saveInput.value.trim() : "") || savePath || defaultSavePath;
+                if (typeof window.addDownloadTask === "function" && targetUrl && finalSave) {
+                    const threadEl = document.getElementById("thread");
+                    const threadNum = threadEl ? parseInt(threadEl.value, 10) : 4;
+                    const thread = (!isNaN(threadNum) && threadNum >= 1) ? threadNum : 4;
+                    window.addDownloadTask(targetUrl, finalSave, thread, targetFileName);
+                    if (urlInput) {
+                        urlInput.value = "";
+                        urlInput.classList.remove("just-validate-success-field", "just-validate-error-field");
+                    }
+                    if (customNameEl) customNameEl.value = "";
+                } else {
+                    const downloadBtn = document.querySelector(".inner-download-button");
+                    if (downloadBtn) {
+                        downloadBtn.click();
+                    }
                 }
             }, 600);
         }
@@ -795,7 +858,7 @@
                     handleVirusScanResult(msg);
                 }
                 else if (msg.action === "BROWSER_LINK_CAPTURED") {
-                    handleBrowserLinkCaptured(msg.data);
+                    handleBrowserLinkCaptured(msg.data, msg.defaultSavePath);
                 }
                 else if (msg.action === "BATCH_FILE_IMPORTED") {
                     const ta = document.getElementById("batch-urls-input");

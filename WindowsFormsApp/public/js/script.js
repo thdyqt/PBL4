@@ -1113,6 +1113,8 @@ function setupMainValidator() {
 
     });
 
+    window.mainFormValidator = mainFormValidator;
+
 
 
     mainFormValidator
@@ -1365,7 +1367,7 @@ if (urlInputMain) {
 
 
 
-let currentSettings = {
+let currentSettings = window.currentSettings = {
 
     maxConcurrentDownloads: 2,
 
@@ -1480,6 +1482,7 @@ function populateSettingsForm(s) {
     if (!s) return;
 
     currentSettings = s;
+    window.currentSettings = s;
 
 
 

@@ -298,17 +298,29 @@ namespace WindowsFormsApp
         /// 1. Tự động phục hồi và đưa cửa sổ C# lên trên cùng màn hình (Win32 API).
         /// 2. Gửi thông điệp BROWSER_LINK_CAPTURED sang WebView2 để điền URL vào form tải.
         /// </summary>
+        private static readonly JsonSerializerOptions CamelCaseJsonOptions = new JsonSerializerOptions
+        {
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+        };
+
         private void OnBrowserLinkCaptured(CapturedLinkDto link)
         {
             BringToFrontAndRestore();
 
+            string defaultPath = SettingsManager.Current?.DefaultSavePath;
+            if (string.IsNullOrWhiteSpace(defaultPath))
+            {
+                defaultPath = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Downloads");
+            }
+
             var payload = new
             {
                 action = "BROWSER_LINK_CAPTURED",
-                data = link
+                data = link,
+                defaultSavePath = defaultPath
             };
 
-            SendToWeb(JsonSerializer.Serialize(payload));
+            SendToWeb(JsonSerializer.Serialize(payload, CamelCaseJsonOptions));
         }
 
         /// <summary>
