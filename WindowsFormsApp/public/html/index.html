@@ -18,7 +18,7 @@
 
     <script>
 
-        (function() {
+        (function () {
 
             try {
 
@@ -36,7 +36,7 @@
 
                 document.documentElement.setAttribute('data-theme-setting', theme);
 
-            } catch(e) {}
+            } catch (e) { }
 
         })();
 
@@ -90,9 +90,11 @@
 
                             <label for="url" class="inner-label" data-i18n="add.url_label">Liên kết tải về</label>
 
-                            <button type="button" class="btn-batch-link" id="btn-open-batch-modal" data-i18n-title="add.batch_title" title="Thêm nhiều liên kết cùng lúc">
+                            <button type="button" class="btn-batch-link" id="btn-open-batch-modal"
+                                data-i18n-title="add.batch_title" title="Thêm nhiều liên kết cùng lúc">
 
-                                <i class="fa-solid fa-list-check"></i> <span data-i18n="add.batch_btn">Tải nhiều link (Batch)</span>
+                                <i class="fa-solid fa-list-check"></i> <span data-i18n="add.batch_btn">Tải nhiều link
+                                    (Batch)</span>
 
                             </button>
 
@@ -100,16 +102,20 @@
 
                         <div class="url-input">
 
-                            <input type="url" class="inner-input" id="url" name="url" inputmode="url" data-i18n-placeholder="add.url_placeholder" placeholder="https://example.com/tep-can-tai.zip" autocomplete="url">
+                            <input type="url" class="inner-input" id="url" name="url" inputmode="url"
+                                data-i18n-placeholder="add.url_placeholder"
+                                placeholder="https://example.com/tep-can-tai.zip" autocomplete="url">
 
-                            <i class="fa-regular fa-clipboard btn-paste" data-i18n-title="add.paste_title" title="Dán từ Clipboard"></i>
+                            <i class="fa-regular fa-clipboard btn-paste" data-i18n-title="add.paste_title"
+                                title="Dán từ Clipboard"></i>
 
                         </div>
 
                         <!-- Real-time Pattern Detector Badge -->
                         <div class="url-pattern-detector" id="url-pattern-detector" style="display: none;">
                             <i class="fa-solid fa-wand-magic-sparkles"></i>
-                            <span id="url-pattern-detector-text">Phát hiện URL quy luật: Sẽ tự động sinh các tác vụ tải và đưa vào hàng đợi.</span>
+                            <span id="url-pattern-detector-text">Phát hiện URL quy luật: Sẽ tự động sinh các tác vụ tải
+                                và đưa vào hàng đợi.</span>
                         </div>
 
                     </div>
@@ -120,13 +126,17 @@
 
                             <label for="custom-file-name" class="inner-label">
 
-                                <i class="fa-solid fa-pen-to-square"></i> <span data-i18n="add.custom_name_label">Tên tệp lưu</span> <span class="label-hint" data-i18n="add.custom_name_hint">(Tùy chọn đổi tên trước khi tải)</span>
+                                <i class="fa-solid fa-pen-to-square"></i> <span data-i18n="add.custom_name_label">Tên
+                                    tệp lưu</span> <span class="label-hint" data-i18n="add.custom_name_hint">(Tùy chọn
+                                    đổi tên trước khi tải)</span>
 
                             </label>
 
-                            <button type="button" class="btn-reset-filename" id="btn-reset-filename" title="Khôi phục lại tên tệp gốc từ đường link" style="display: none;">
+                            <button type="button" class="btn-reset-filename" id="btn-reset-filename"
+                                title="Khôi phục lại tên tệp gốc từ đường link" style="display: none;">
 
-                                <i class="fa-solid fa-rotate-left"></i> <span data-i18n="add.reset_original_name">Tên gốc</span>
+                                <i class="fa-solid fa-rotate-left"></i> <span data-i18n="add.reset_original_name">Tên
+                                    gốc</span>
 
                             </button>
 
@@ -134,7 +144,10 @@
 
                         <div class="filename-input">
 
-                            <input type="text" class="inner-input" id="custom-file-name" name="custom-file-name" data-i18n-placeholder="add.custom_name_placeholder" placeholder="Tự động nhận diện từ liên kết (hoặc nhập tên bạn muốn đổi)" autocomplete="off" spellcheck="false">
+                            <input type="text" class="inner-input" id="custom-file-name" name="custom-file-name"
+                                data-i18n-placeholder="add.custom_name_placeholder"
+                                placeholder="Tự động nhận diện từ liên kết (hoặc nhập tên bạn muốn đổi)"
+                                autocomplete="off" spellcheck="false">
 
                             <i class="fa-solid fa-file-pen filename-icon" title="Tùy chỉnh tên tệp tải về"></i>
 
@@ -150,11 +163,15 @@
 
                             <div class="save-path-row">
 
-                                <input type="text" class="inner-input" id="save-path" name="save-path" data-i18n-placeholder="add.save_placeholder" placeholder="Chưa chọn vị trí lưu (Bấm để chọn)" readonly>
+                                <input type="text" class="inner-input" id="save-path" name="save-path"
+                                    data-i18n-placeholder="add.save_placeholder"
+                                    placeholder="Chưa chọn vị trí lưu (Bấm để chọn)" readonly>
 
-                                <button type="button" class="inner-browse-button" id="btn-browse-folder" data-i18n-title="add.browse_title" title="Chọn thư mục lưu tệp">
+                                <button type="button" class="inner-browse-button" id="btn-browse-folder"
+                                    data-i18n-title="add.browse_title" title="Chọn thư mục lưu tệp">
 
-                                    <i class="fa-regular fa-folder-open"></i> <span data-i18n="add.browse">Chọn nơi lưu</span>
+                                    <i class="fa-regular fa-folder-open"></i> <span data-i18n="add.browse">Chọn nơi
+                                        lưu</span>
 
                                 </button>
 
@@ -184,7 +201,8 @@
 
                                 </select>
 
-                                <button type="submit" class="inner-download-button" data-i18n="add.start_btn">Bắt đầu tải</button>
+                                <button type="submit" class="inner-download-button" data-i18n="add.start_btn">Bắt đầu
+                                    tải</button>
 
                             </div>
 
@@ -216,7 +234,8 @@
 
                     <div class="chart-title-row">
 
-                        <h2 class="chart-frame-title" data-i18n="chart.main_title">Biểu đồ Tốc độ tải & Tài nguyên hệ thống</h2>
+                        <h2 class="chart-frame-title" data-i18n="chart.main_title">Biểu đồ Tốc độ tải & Tài nguyên hệ
+                            thống</h2>
 
                         <div class="chart-live-indicator" id="chart-live-indicator">
 
@@ -228,7 +247,8 @@
 
                     </div>
 
-                    <p class="chart-frame-desc" data-i18n="chart.main_desc">Theo dõi biến thiên tốc độ tải về theo thời gian thực (500ms), mức sử dụng CPU và bộ nhớ RAM của ứng dụng.</p>
+                    <p class="chart-frame-desc" data-i18n="chart.main_desc">Theo dõi biến thiên tốc độ tải về theo thời
+                        gian thực (500ms), mức sử dụng CPU và bộ nhớ RAM của ứng dụng.</p>
 
                 </div>
 
@@ -256,7 +276,8 @@
 
                     </div>
 
-                    <button type="button" class="btn-chart-action" id="btn-toggle-chart-stream" title="Tạm dừng / Tiếp tục cập nhật dữ liệu">
+                    <button type="button" class="btn-chart-action" id="btn-toggle-chart-stream"
+                        title="Tạm dừng / Tiếp tục cập nhật dữ liệu">
 
                         <i class="fa-solid fa-pause" id="chart-pause-icon"></i>
 
@@ -264,7 +285,8 @@
 
                     </button>
 
-                    <button type="button" class="btn-chart-action secondary" id="btn-clear-chart-data" title="Xóa dữ liệu cũ và vẽ lại từ đầu">
+                    <button type="button" class="btn-chart-action secondary" id="btn-clear-chart-data"
+                        title="Xóa dữ liệu cũ và vẽ lại từ đầu">
 
                         <i class="fa-solid fa-rotate-left"></i>
 
@@ -442,7 +464,8 @@
 
                         </h3>
 
-                        <p class="chart-panel-subtitle" data-i18n="chart.speed_chart_subtitle">Đo đạc lưu lượng mạng thực tế gửi từ máy chủ theo từng giây</p>
+                        <p class="chart-panel-subtitle" data-i18n="chart.speed_chart_subtitle">Đo đạc lưu lượng mạng
+                            thực tế gửi từ máy chủ theo từng giây</p>
 
                     </div>
 
@@ -456,7 +479,8 @@
 
                 <div class="chart-canvas-wrapper speed-canvas-wrap">
 
-                    <canvas id="speed-chart-canvas" role="img" aria-label="Bi?u ?? t?c ?? t?i th?i gian th?c / Real-time download speed chart"></canvas>
+                    <canvas id="speed-chart-canvas" role="img"
+                        aria-label="Bi?u ?? t?c ?? t?i th?i gian th?c / Real-time download speed chart"></canvas>
 
                 </div>
 
@@ -488,7 +512,8 @@
 
                     <div class="chart-canvas-wrapper sub-canvas-wrap">
 
-                        <canvas id="cpu-chart-canvas" role="img" aria-label="Bi?u ?? m?c s? d?ng CPU / CPU utilization chart"></canvas>
+                        <canvas id="cpu-chart-canvas" role="img"
+                            aria-label="Bi?u ?? m?c s? d?ng CPU / CPU utilization chart"></canvas>
 
                     </div>
 
@@ -516,7 +541,8 @@
 
                     <div class="chart-canvas-wrapper sub-canvas-wrap">
 
-                        <canvas id="ram-chart-canvas" role="img" aria-label="Bi?u ?? b? nh? RAM / RAM usage chart"></canvas>
+                        <canvas id="ram-chart-canvas" role="img"
+                            aria-label="Bi?u ?? b? nh? RAM / RAM usage chart"></canvas>
 
                     </div>
 
@@ -560,11 +586,16 @@
 
                     <i class="fa-solid fa-magnifying-glass search-icon"></i>
 
-                    <input type="text" id="search-file-input" class="search-input" data-i18n-placeholder="search.placeholder" placeholder="Tìm kiếm tên file, đuôi mở rộng (.mp4, .zip...), link..." autocomplete="off" spellcheck="false" data-i18n-title="search.title" title="Tìm kiếm tệp (Phím tắt: Ctrl + F hoặc /)">
+                    <input type="text" id="search-file-input" class="search-input"
+                        data-i18n-placeholder="search.placeholder"
+                        placeholder="Tìm kiếm tên file, đuôi mở rộng (.mp4, .zip...), link..." autocomplete="off"
+                        spellcheck="false" data-i18n-title="search.title"
+                        title="Tìm kiếm tệp (Phím tắt: Ctrl + F hoặc /)">
 
                     <span class="search-count-pill" id="search-count-pill" style="display: none;">0 kết quả</span>
 
-                    <button type="button" class="btn-clear-search" id="btn-clear-search" data-i18n-title="search.clear_title" title="Xóa nội dung tìm kiếm (Esc)" style="display: none;">
+                    <button type="button" class="btn-clear-search" id="btn-clear-search"
+                        data-i18n-title="search.clear_title" title="Xóa nội dung tìm kiếm (Esc)" style="display: none;">
 
                         <i class="fa-solid fa-xmark"></i>
 
@@ -594,7 +625,8 @@
 
                             <option value="size" data-i18n="sort.opt_size">Độ lớn file (Dung lượng)</option>
 
-                            <option value="duration" data-i18n="sort.opt_duration">Thời gian tải về (Nhanh / Lâu)</option>
+                            <option value="duration" data-i18n="sort.opt_duration">Thời gian tải về (Nhanh / Lâu)
+                            </option>
 
                             <option value="speed" data-i18n="sort.opt_speed">Tốc độ tải</option>
 
@@ -606,7 +638,8 @@
 
 
 
-                    <button type="button" class="btn-sort-order" id="btn-sort-order" data-i18n-title="sort.order_title" title="Đảo chiều sắp xếp">
+                    <button type="button" class="btn-sort-order" id="btn-sort-order" data-i18n-title="sort.order_title"
+                        title="Đảo chiều sắp xếp">
 
                         <i class="fa-solid fa-arrow-down-wide-short" id="sort-order-icon"></i>
 
@@ -616,7 +649,9 @@
 
 
 
-                    <button type="button" class="btn-reset-toolbar" id="btn-reset-toolbar" data-i18n-title="sort.reset_title" title="Đặt lại tìm kiếm & sắp xếp mặc định" style="display: none;">
+                    <button type="button" class="btn-reset-toolbar" id="btn-reset-toolbar"
+                        data-i18n-title="sort.reset_title" title="Đặt lại tìm kiếm & sắp xếp mặc định"
+                        style="display: none;">
 
                         <i class="fa-solid fa-rotate-left"></i>
 
@@ -650,7 +685,8 @@
 
                 <h3 data-i18n="empty.search_title">Không tìm thấy tệp phù hợp</h3>
 
-                <div class="search-empty-desc">Không có tệp nào khớp với từ khóa "<strong id="search-keyword-display"></strong>" trong danh mục này.</div>
+                <div class="search-empty-desc">Không có tệp nào khớp với từ khóa "<strong
+                        id="search-keyword-display"></strong>" trong danh mục này.</div>
 
                 <button type="button" class="btn-clear-search-action" id="btn-empty-clear">
 
@@ -676,17 +712,20 @@
 
                 <div class="device-frame-title-wrap">
 
-                    <div class="device-frame-badge"><i class="fa-solid fa-microchip"></i> <span data-i18n="device.badge">HỆ THỐNG</span></div>
+                    <div class="device-frame-badge"><i class="fa-solid fa-microchip"></i> <span
+                            data-i18n="device.badge">HỆ THỐNG</span></div>
 
                     <h2 class="device-frame-title" data-i18n="device.main_title">Thông tin thiết bị & Bộ nhớ</h2>
 
-                    <p class="device-frame-desc" data-i18n="device.main_desc">Theo dõi thông số phần cứng, dung lượng các ổ đĩa và khả năng lưu trữ tệp tin trên máy tính của bạn.</p>
+                    <p class="device-frame-desc" data-i18n="device.main_desc">Theo dõi thông số phần cứng, dung lượng
+                        các ổ đĩa và khả năng lưu trữ tệp tin trên máy tính của bạn.</p>
 
                 </div>
 
                 <div class="device-frame-actions">
 
-                    <button type="button" class="btn-device-action" id="btn-refresh-device-main" data-i18n-title="device.refresh_title" title="Cập nhật lại thông tin mới nhất">
+                    <button type="button" class="btn-device-action" id="btn-refresh-device-main"
+                        data-i18n-title="device.refresh_title" title="Cập nhật lại thông tin mới nhất">
 
                         <i class="fa-solid fa-arrows-rotate"></i> <span data-i18n="device.refresh">Làm mới</span>
 
@@ -766,13 +805,15 @@
 
                         <h3 class="modal-title" data-i18n="settings.title">Cài đặt nâng cao</h3>
 
-                        <div class="modal-subtitle" data-i18n="settings.subtitle">Hàng đợi tải về, Giới hạn băng thông & Cấu hình Proxy</div>
+                        <div class="modal-subtitle" data-i18n="settings.subtitle">Hàng đợi tải về, Giới hạn băng thông &
+                            Cấu hình Proxy</div>
 
                     </div>
 
                 </div>
 
-                <button type="button" class="btn-modal-close" id="btn-close-settings" data-i18n-title="settings.close_title" title="Đóng">&times;</button>
+                <button type="button" class="btn-modal-close" id="btn-close-settings"
+                    data-i18n-title="settings.close_title" title="Đóng">&times;</button>
 
             </div>
 
@@ -790,7 +831,8 @@
 
                 <button type="button" class="settings-tab-btn" data-tab="tab-bandwidth">
 
-                    <i class="fa-solid fa-gauge-high"></i> <span data-i18n="settings.tab.bandwidth">Băng thông (Speed)</span>
+                    <i class="fa-solid fa-gauge-high"></i> <span data-i18n="settings.tab.bandwidth">Băng thông
+                        (Speed)</span>
 
                 </button>
 
@@ -802,11 +844,12 @@
 
                 <button type="button" class="settings-tab-btn" data-tab="tab-browser">
 
-                    <i class="fa-solid fa-puzzle-piece"></i> <span data-i18n="settings.tab.browser">Trình duyệt (Browser)</span>
+                    <i class="fa-solid fa-puzzle-piece"></i> <span data-i18n="settings.tab.browser">Trình duyệt
+                        (Browser)</span>
 
                 </button>
 
-                                <button type="button" class="settings-tab-btn" data-tab="tab-schedule">
+                <button type="button" class="settings-tab-btn" data-tab="tab-schedule">
 
                     <i class="fa-solid fa-clock"></i> <span data-i18n="settings.tab.schedule">Lập lịch & Nguồn</span>
 
@@ -830,15 +873,20 @@
 
                     <div class="form-group">
 
-                        <label class="form-label" for="setting-max-concurrent" data-i18n="settings.queue.max_concurrent">Số tệp tải đồng thời tối đa (Max Concurrent Downloads)</label>
+                        <label class="form-label" for="setting-max-concurrent"
+                            data-i18n="settings.queue.max_concurrent">Số tệp tải đồng thời tối đa (Max Concurrent
+                            Downloads)</label>
 
-                        <div class="form-desc" data-i18n="settings.queue.max_concurrent_desc">Kiểm soát số lượng tệp được tải cùng lúc. Các tệp vượt quá sẽ nằm trong hàng đợi và tự động kích hoạt khi có tệp hoàn tất.</div>
+                        <div class="form-desc" data-i18n="settings.queue.max_concurrent_desc">Kiểm soát số lượng tệp
+                            được tải cùng lúc. Các tệp vượt quá sẽ nằm trong hàng đợi và tự động kích hoạt khi có tệp
+                            hoàn tất.</div>
 
                         <select id="setting-max-concurrent" class="form-select">
 
                             <option value="1" data-i18n="settings.queue.opt_1">1 tệp (Tải tuần tự từng tệp)</option>
 
-                            <option value="2" selected data-i18n="settings.queue.opt_2">2 tệp đồng thời (Khuyên dùng)</option>
+                            <option value="2" selected data-i18n="settings.queue.opt_2">2 tệp đồng thời (Khuyên dùng)
+                            </option>
 
                             <option value="3" data-i18n="settings.queue.opt_3">3 tệp đồng thời</option>
 
@@ -858,9 +906,11 @@
 
                         <div>
 
-                            <div class="form-label" data-i18n="settings.queue.auto_next">Tự động bắt đầu tệp tiếp theo trong hàng đợi</div>
+                            <div class="form-label" data-i18n="settings.queue.auto_next">Tự động bắt đầu tệp tiếp theo
+                                trong hàng đợi</div>
 
-                            <div class="form-desc" data-i18n="settings.queue.auto_next_desc">Kích hoạt tác vụ tiếp theo ngay khi một tệp hoàn thành hoặc bị hủy.</div>
+                            <div class="form-desc" data-i18n="settings.queue.auto_next_desc">Kích hoạt tác vụ tiếp theo
+                                ngay khi một tệp hoàn thành hoặc bị hủy.</div>
 
                         </div>
 
@@ -878,7 +928,8 @@
 
                     <div class="form-group">
 
-                        <label class="form-label" for="setting-default-threads" data-i18n="settings.queue.threads">Số luồng tải mặc định cho mỗi tệp</label>
+                        <label class="form-label" for="setting-default-threads" data-i18n="settings.queue.threads">Số
+                            luồng tải mặc định cho mỗi tệp</label>
 
                         <select id="setting-default-threads" class="form-select">
 
@@ -900,8 +951,11 @@
 
                     <div class="form-group switch-row">
                         <div>
-                            <div class="form-label" data-i18n="settings.queue.dynamic_threads">Tự động thay đổi số luồng trong lúc tải</div>
-                            <div class="form-desc" data-i18n="settings.queue.dynamic_threads_desc">Tự động phân bổ và thay đổi số luồng linh hoạt (Dynamic Segment Splitting) trong lúc tải để tối ưu tốc độ.</div>
+                            <div class="form-label" data-i18n="settings.queue.dynamic_threads">Tự động thay đổi số luồng
+                                trong lúc tải</div>
+                            <div class="form-desc" data-i18n="settings.queue.dynamic_threads_desc">Tự động phân bổ và
+                                thay đổi số luồng linh hoạt (Dynamic Segment Splitting) trong lúc tải để tối ưu tốc độ.
+                            </div>
                         </div>
                         <label class="toggle-switch">
                             <input type="checkbox" id="setting-dynamic-threads">
@@ -921,9 +975,11 @@
 
                         <div>
 
-                            <div class="form-label" data-i18n="settings.speed.enable">Giới hạn băng thông (Bandwidth Throttling)</div>
+                            <div class="form-label" data-i18n="settings.speed.enable">Giới hạn băng thông (Bandwidth
+                                Throttling)</div>
 
-                            <div class="form-desc" data-i18n="settings.speed.enable_desc">Áp dụng thuật toán Virtual Clock Leaky Bucket đa luồng, phân phối mượt mà cho toàn ứng dụng.</div>
+                            <div class="form-desc" data-i18n="settings.speed.enable_desc">Áp dụng thuật toán Virtual
+                                Clock Leaky Bucket đa luồng, phân phối mượt mà cho toàn ứng dụng.</div>
 
                         </div>
 
@@ -941,7 +997,8 @@
 
                     <div id="speed-limit-sub-wrap" class="sub-controls" style="display: none;">
 
-                        <label class="form-label" data-i18n="settings.speed.presets">Chọn mức giới hạn nhanh (Presets):</label>
+                        <label class="form-label" data-i18n="settings.speed.presets">Chọn mức giới hạn nhanh
+                            (Presets):</label>
 
                         <div class="preset-pills">
 
@@ -961,11 +1018,13 @@
 
                         <div class="form-group custom-speed-wrap">
 
-                            <label class="form-label" for="setting-custom-speed" data-i18n="settings.speed.custom_label">Hoặc nhập tốc độ tuỳ chỉnh (KB/giây):</label>
+                            <label class="form-label" for="setting-custom-speed"
+                                data-i18n="settings.speed.custom_label">Hoặc nhập tốc độ tuỳ chỉnh (KB/giây):</label>
 
                             <div class="input-addon-wrap">
 
-                                <input type="number" id="setting-custom-speed" class="form-input" min="10" max="1000000" data-i18n-placeholder="settings.speed.custom_placeholder" placeholder="vd: 2048">
+                                <input type="number" id="setting-custom-speed" class="form-input" min="10" max="1000000"
+                                    data-i18n-placeholder="settings.speed.custom_placeholder" placeholder="vd: 2048">
 
                                 <span class="input-addon">KB/s</span>
 
@@ -989,7 +1048,8 @@
 
                             <div class="form-label" data-i18n="settings.proxy.enable">Kích hoạt Proxy</div>
 
-                            <div class="form-desc" data-i18n="settings.proxy.enable_desc">Chuyển hướng mọi luồng tải và dò tìm thông tin tệp qua máy chủ Proxy.</div>
+                            <div class="form-desc" data-i18n="settings.proxy.enable_desc">Chuyển hướng mọi luồng tải và
+                                dò tìm thông tin tệp qua máy chủ Proxy.</div>
 
                         </div>
 
@@ -1011,7 +1071,8 @@
 
                             <label class="form-label" for="setting-proxy-mode">
 
-                                <i class="fa-solid fa-sliders"></i> <span data-i18n="settings.proxy.mode">Chế độ Proxy</span>
+                                <i class="fa-solid fa-sliders"></i> <span data-i18n="settings.proxy.mode">Chế độ
+                                    Proxy</span>
 
                             </label>
 
@@ -1021,11 +1082,14 @@
 
                                 <select id="setting-proxy-mode" class="form-select proxy-mode-select">
 
-                                    <option value="manual" data-i18n="settings.proxy.mode_manual">Tùy chỉnh máy chủ Proxy thủ công</option>
+                                    <option value="manual" data-i18n="settings.proxy.mode_manual">Tùy chỉnh máy chủ
+                                        Proxy thủ công</option>
 
-                                    <option value="system" data-i18n="settings.proxy.mode_system">Sử dụng cấu hình Proxy hệ thống Windows</option>
+                                    <option value="system" data-i18n="settings.proxy.mode_system">Sử dụng cấu hình Proxy
+                                        hệ thống Windows</option>
 
-                                    <option value="direct" data-i18n="settings.proxy.mode_direct">Kết nối trực tiếp (Bỏ qua Proxy)</option>
+                                    <option value="direct" data-i18n="settings.proxy.mode_direct">Kết nối trực tiếp (Bỏ
+                                        qua Proxy)</option>
 
                                 </select>
 
@@ -1043,9 +1107,12 @@
 
                             <div class="banner-content">
 
-                                <div class="banner-title" data-i18n="settings.proxy.info_system_title">Proxy hệ thống Windows</div>
+                                <div class="banner-title" data-i18n="settings.proxy.info_system_title">Proxy hệ thống
+                                    Windows</div>
 
-                                <div class="banner-desc" data-i18n="settings.proxy.info_system_desc">Ứng dụng sẽ tự động đồng bộ và sử dụng cấu hình Proxy đang hoạt động trong thiết lập mạng của Windows.</div>
+                                <div class="banner-desc" data-i18n="settings.proxy.info_system_desc">Ứng dụng sẽ tự động
+                                    đồng bộ và sử dụng cấu hình Proxy đang hoạt động trong thiết lập mạng của Windows.
+                                </div>
 
                             </div>
 
@@ -1059,9 +1126,12 @@
 
                             <div class="banner-content">
 
-                                <div class="banner-title" data-i18n="settings.proxy.info_direct_title">Kết nối Internet trực tiếp</div>
+                                <div class="banner-title" data-i18n="settings.proxy.info_direct_title">Kết nối Internet
+                                    trực tiếp</div>
 
-                                <div class="banner-desc" data-i18n="settings.proxy.info_direct_desc">Mọi tác vụ tải về sẽ kết nối thẳng tới máy chủ tệp mà không thông qua bất kỳ máy chủ trung gian nào.</div>
+                                <div class="banner-desc" data-i18n="settings.proxy.info_direct_desc">Mọi tác vụ tải về
+                                    sẽ kết nối thẳng tới máy chủ tệp mà không thông qua bất kỳ máy chủ trung gian nào.
+                                </div>
 
                             </div>
 
@@ -1077,7 +1147,8 @@
 
                                 <span class="proxy-card-title">
 
-                                    <i class="fa-solid fa-server"></i> <span data-i18n="settings.proxy.server_title">Cấu hình máy chủ</span>
+                                    <i class="fa-solid fa-server"></i> <span data-i18n="settings.proxy.server_title">Cấu
+                                        hình máy chủ</span>
 
                                 </span>
 
@@ -1093,7 +1164,8 @@
 
                                 <div class="form-group proxy-col-protocol">
 
-                                    <label class="form-label" for="setting-proxy-type" data-i18n="settings.proxy.type">Giao thức</label>
+                                    <label class="form-label" for="setting-proxy-type"
+                                        data-i18n="settings.proxy.type">Giao thức</label>
 
                                     <div class="input-with-icon">
 
@@ -1113,13 +1185,16 @@
 
                                 <div class="form-group proxy-col-host">
 
-                                    <label class="form-label" for="setting-proxy-host" data-i18n="settings.proxy.host">Địa chỉ máy chủ (Host / IP)</label>
+                                    <label class="form-label" for="setting-proxy-host"
+                                        data-i18n="settings.proxy.host">Địa chỉ máy chủ (Host / IP)</label>
 
                                     <div class="input-with-icon">
 
                                         <i class="fa-solid fa-globe input-icon"></i>
 
-                                        <input type="text" id="setting-proxy-host" class="form-input" data-i18n-placeholder="settings.proxy.host_placeholder" placeholder="vd: 127.0.0.1 hoặc proxy.example.com">
+                                        <input type="text" id="setting-proxy-host" class="form-input"
+                                            data-i18n-placeholder="settings.proxy.host_placeholder"
+                                            placeholder="vd: 127.0.0.1 hoặc proxy.example.com">
 
                                     </div>
 
@@ -1127,13 +1202,15 @@
 
                                 <div class="form-group proxy-col-port">
 
-                                    <label class="form-label" for="setting-proxy-port" data-i18n="settings.proxy.port">Cổng (Port)</label>
+                                    <label class="form-label" for="setting-proxy-port"
+                                        data-i18n="settings.proxy.port">Cổng (Port)</label>
 
                                     <div class="input-with-icon">
 
                                         <i class="fa-solid fa-hashtag input-icon"></i>
 
-                                        <input type="number" id="setting-proxy-port" class="form-input text-center" placeholder="8080" min="1" max="65535">
+                                        <input type="number" id="setting-proxy-port" class="form-input text-center"
+                                            placeholder="8080" min="1" max="65535">
 
                                     </div>
 
@@ -1155,9 +1232,11 @@
 
                                         <div>
 
-                                            <div class="form-label" data-i18n="settings.proxy.auth">Yêu cầu xác thực tài khoản (Authentication)</div>
+                                            <div class="form-label" data-i18n="settings.proxy.auth">Yêu cầu xác thực tài
+                                                khoản (Authentication)</div>
 
-                                            <div class="form-desc" data-i18n="settings.proxy.auth_desc">Bật nếu máy chủ Proxy yêu cầu Tên đăng nhập và Mật khẩu truy cập.</div>
+                                            <div class="form-desc" data-i18n="settings.proxy.auth_desc">Bật nếu máy chủ
+                                                Proxy yêu cầu Tên đăng nhập và Mật khẩu truy cập.</div>
 
                                         </div>
 
@@ -1179,13 +1258,16 @@
 
                                     <div class="form-group">
 
-                                        <label class="form-label" for="setting-proxy-user" data-i18n="settings.proxy.user">Tên đăng nhập (Username)</label>
+                                        <label class="form-label" for="setting-proxy-user"
+                                            data-i18n="settings.proxy.user">Tên đăng nhập (Username)</label>
 
                                         <div class="input-with-icon">
 
                                             <i class="fa-solid fa-user input-icon"></i>
 
-                                            <input type="text" id="setting-proxy-user" class="form-input" data-i18n-placeholder="settings.proxy.user_placeholder" placeholder="Nhập tên tài khoản...">
+                                            <input type="text" id="setting-proxy-user" class="form-input"
+                                                data-i18n-placeholder="settings.proxy.user_placeholder"
+                                                placeholder="Nhập tên tài khoản...">
 
                                         </div>
 
@@ -1193,15 +1275,19 @@
 
                                     <div class="form-group">
 
-                                        <label class="form-label" for="setting-proxy-pass" data-i18n="settings.proxy.pass">Mật khẩu (Password)</label>
+                                        <label class="form-label" for="setting-proxy-pass"
+                                            data-i18n="settings.proxy.pass">Mật khẩu (Password)</label>
 
                                         <div class="input-with-icon password-input-wrap">
 
                                             <i class="fa-solid fa-key input-icon"></i>
 
-                                            <input type="password" id="setting-proxy-pass" class="form-input" data-i18n-placeholder="settings.proxy.pass_placeholder" placeholder="Nhập mật khẩu...">
+                                            <input type="password" id="setting-proxy-pass" class="form-input"
+                                                data-i18n-placeholder="settings.proxy.pass_placeholder"
+                                                placeholder="Nhập mật khẩu...">
 
-                                            <button type="button" class="btn-toggle-pw" id="btn-toggle-proxy-pass" title="Hiện/Ẩn mật khẩu">
+                                            <button type="button" class="btn-toggle-pw" id="btn-toggle-proxy-pass"
+                                                title="Hiện/Ẩn mật khẩu">
 
                                                 <i class="fa-regular fa-eye"></i>
 
@@ -1229,9 +1315,11 @@
 
                                     <div class="checkbox-text-wrap">
 
-                                        <span class="checkbox-title" data-i18n="settings.proxy.bypass">Bỏ qua Proxy đối với các địa chỉ mạng cục bộ (Bypass Local Addresses)</span>
+                                        <span class="checkbox-title" data-i18n="settings.proxy.bypass">Bỏ qua Proxy đối
+                                            với các địa chỉ mạng cục bộ (Bypass Local Addresses)</span>
 
-                                        <span class="checkbox-desc" data-i18n="settings.proxy.bypass_desc">Không định tuyến qua Proxy khi tải từ localhost, 127.0.0.1 hoặc mạng nội bộ LAN.</span>
+                                        <span class="checkbox-desc" data-i18n="settings.proxy.bypass_desc">Không định
+                                            tuyến qua Proxy khi tải từ localhost, 127.0.0.1 hoặc mạng nội bộ LAN.</span>
 
                                     </div>
 
@@ -1251,11 +1339,13 @@
 
                                 <button type="button" class="btn-test-proxy" id="btn-test-proxy">
 
-                                    <i class="fa-solid fa-bolt-lightning"></i> <span data-i18n="settings.proxy.test_btn">Kiểm tra kết nối Proxy</span>
+                                    <i class="fa-solid fa-bolt-lightning"></i> <span
+                                        data-i18n="settings.proxy.test_btn">Kiểm tra kết nối Proxy</span>
 
                                 </button>
 
-                                <span class="test-proxy-hint" data-i18n="settings.proxy.test_hint">Gửi yêu cầu thử nghiệm để đo độ trễ và kiểm tra tính khả dụng</span>
+                                <span class="test-proxy-hint" data-i18n="settings.proxy.test_hint">Gửi yêu cầu thử
+                                    nghiệm để đo độ trễ và kiểm tra tính khả dụng</span>
 
                             </div>
 
@@ -1285,7 +1375,8 @@
 
                                 <div>
 
-                                    <div class="server-name" data-i18n="settings.browser.status_title">Cổng IPC Local Loopback đang lắng nghe</div>
+                                    <div class="server-name" data-i18n="settings.browser.status_title">Cổng IPC Local
+                                        Loopback đang lắng nghe</div>
 
                                     <div class="server-endpoint">http://127.0.0.1:8989/</div>
 
@@ -1299,7 +1390,8 @@
 
                         <p class="server-desc" data-i18n="settings.browser.status_desc">
 
-                            Trình duyệt Chrome / Edge sẽ tự động gửi URL và tên file qua cổng này ngay khi người dùng nhấn tải file trên web.
+                            Trình duyệt Chrome / Edge sẽ tự động gửi URL và tên file qua cổng này ngay khi người dùng
+                            nhấn tải file trên web.
 
                         </p>
 
@@ -1311,7 +1403,8 @@
 
                     <div class="browser-guide-title">
 
-                        <i class="fa-solid fa-circle-info"></i> <span data-i18n="settings.browser.guide_title">Hướng dẫn cài đặt Extension cho Chrome / Edge (3 bước)</span>
+                        <i class="fa-solid fa-circle-info"></i> <span data-i18n="settings.browser.guide_title">Hướng dẫn
+                            cài đặt Extension cho Chrome / Edge (3 bước)</span>
 
                     </div>
 
@@ -1325,11 +1418,14 @@
 
                             <div class="step-content">
 
-                                <div class="step-title" data-i18n="settings.browser.step1_title">Mở trang quản lý Tiện ích mở rộng của Trình duyệt</div>
+                                <div class="step-title" data-i18n="settings.browser.step1_title">Mở trang quản lý Tiện
+                                    ích mở rộng của Trình duyệt</div>
 
                                 <div class="step-desc" data-i18n="settings.browser.step1_desc">
 
-                                    Mở Chrome và truy cập <code class="browser-code">chrome://extensions</code> hoặc Edge <code class="browser-code">edge://extensions</code>, sau đó bật công tắc <b>"Chế độ dành cho nhà phát triển" (Developer mode)</b> ở góc trên bên phải.
+                                    Mở Chrome và truy cập <code class="browser-code">chrome://extensions</code> hoặc
+                                    Edge <code class="browser-code">edge://extensions</code>, sau đó bật công tắc
+                                    <b>"Chế độ dành cho nhà phát triển" (Developer mode)</b> ở góc trên bên phải.
 
                                 </div>
 
@@ -1345,11 +1441,13 @@
 
                             <div class="step-content">
 
-                                <div class="step-title" data-i18n="settings.browser.step2_title">Nạp tiện ích đã giải nén (Load Unpacked)</div>
+                                <div class="step-title" data-i18n="settings.browser.step2_title">Nạp tiện ích đã giải
+                                    nén (Load Unpacked)</div>
 
                                 <div class="step-desc" data-i18n="settings.browser.step2_desc">
 
-                                    Bấm nút <b>"Tải tiện ích đã giải nén" (Load unpacked)</b> và chọn thư mục <code class="browser-code">BrowserExtension</code> của dự án.
+                                    Bấm nút <b>"Tải tiện ích đã giải nén" (Load unpacked)</b> và chọn thư mục <code
+                                        class="browser-code">BrowserExtension</code> của dự án.
 
                                 </div>
 
@@ -1365,11 +1463,15 @@
 
                             <div class="step-content">
 
-                                <div class="step-title" data-i18n="settings.browser.step3_title">Trải nghiệm bắt link tự động</div>
+                                <div class="step-title" data-i18n="settings.browser.step3_title">Trải nghiệm bắt link tự
+                                    động</div>
 
                                 <div class="step-desc" data-i18n="settings.browser.step3_desc">
 
-                                    Bấm vào bất kỳ link tải tệp (<code class="browser-code">.zip, .iso, .exe, .mp4, .pdf...</code>) hoặc nhấp chuột phải chọn <b>"Tải bằng DUT Download Accelerator"</b>, liên kết sẽ được tự động chuyển ngay về app!
+                                    Bấm vào bất kỳ link tải tệp (<code
+                                        class="browser-code">.zip, .iso, .exe, .mp4, .pdf...</code>) hoặc nhấp chuột
+                                    phải chọn <b>"Tải bằng DUT Download Accelerator"</b>, liên kết sẽ được tự động
+                                    chuyển ngay về app!
 
                                 </div>
 
@@ -1387,13 +1489,15 @@
 
                         <button type="button" class="btn-browser-action primary" id="btn-open-extension-folder">
 
-                            <i class="fa-solid fa-folder-open"></i> <span data-i18n="settings.browser.btn_open_folder">Mở thư mục Extension</span>
+                            <i class="fa-solid fa-folder-open"></i> <span
+                                data-i18n="settings.browser.btn_open_folder">Mở thư mục Extension</span>
 
                         </button>
 
                         <button type="button" class="btn-browser-action secondary" id="btn-test-capture">
 
-                            <i class="fa-solid fa-paper-plane"></i> <span data-i18n="settings.browser.btn_test_capture">Bắn link thử nghiệm (Test)</span>
+                            <i class="fa-solid fa-paper-plane"></i> <span
+                                data-i18n="settings.browser.btn_test_capture">Bắn link thử nghiệm (Test)</span>
 
                         </button>
 
@@ -1406,7 +1510,7 @@
                 <!-- Tab 5: Other Settings -->
 
                 <div class="settings-tab-content" id="tab-other">
-                                                <!-- Theme Settings Card -->
+                    <!-- Theme Settings Card -->
 
                     <div class="theme-settings-section">
 
@@ -1416,9 +1520,11 @@
 
                             <div>
 
-                                <div class="form-label" data-i18n="settings.theme.title">Giao diện hiển thị (Theme)</div>
+                                <div class="form-label" data-i18n="settings.theme.title">Giao diện hiển thị (Theme)
+                                </div>
 
-                                <div class="form-desc" data-i18n="settings.theme.desc">Tùy chỉnh chế độ sáng, tối hoặc tự động theo thiết lập hệ thống Windows (Mặc định: Chế độ sáng).</div>
+                                <div class="form-desc" data-i18n="settings.theme.desc">Tùy chỉnh chế độ sáng, tối hoặc
+                                    tự động theo thiết lập hệ thống Windows (Mặc định: Chế độ sáng).</div>
 
                             </div>
 
@@ -1432,7 +1538,8 @@
 
                             <div class="theme-option-card active" data-theme-val="light" id="theme-card-light">
 
-                                <input type="radio" name="setting-theme" value="light" id="setting-theme-light" checked class="theme-radio-input">
+                                <input type="radio" name="setting-theme" value="light" id="setting-theme-light" checked
+                                    class="theme-radio-input">
 
                                 <div class="theme-card-preview preview-light">
 
@@ -1474,7 +1581,8 @@
 
                                 </div>
 
-                                <div class="theme-card-desc" data-i18n="settings.theme.light_desc">Giao diện tươi sáng, rõ ràng và thanh thoát</div>
+                                <div class="theme-card-desc" data-i18n="settings.theme.light_desc">Giao diện tươi sáng,
+                                    rõ ràng và thanh thoát</div>
 
                                 <div class="theme-selected-indicator"><i class="fa-solid fa-circle-check"></i></div>
 
@@ -1486,7 +1594,8 @@
 
                             <div class="theme-option-card" data-theme-val="dark" id="theme-card-dark">
 
-                                <input type="radio" name="setting-theme" value="dark" id="setting-theme-dark" class="theme-radio-input">
+                                <input type="radio" name="setting-theme" value="dark" id="setting-theme-dark"
+                                    class="theme-radio-input">
 
                                 <div class="theme-card-preview preview-dark">
 
@@ -1526,7 +1635,8 @@
 
                                 </div>
 
-                                <div class="theme-card-desc" data-i18n="settings.theme.dark_desc">Tông màu tối hiện đại, bảo vệ mắt khi dùng lâu</div>
+                                <div class="theme-card-desc" data-i18n="settings.theme.dark_desc">Tông màu tối hiện đại,
+                                    bảo vệ mắt khi dùng lâu</div>
 
                                 <div class="theme-selected-indicator"><i class="fa-solid fa-circle-check"></i></div>
 
@@ -1538,7 +1648,8 @@
 
                             <div class="theme-option-card" data-theme-val="system" id="theme-card-system">
 
-                                <input type="radio" name="setting-theme" value="system" id="setting-theme-system" class="theme-radio-input">
+                                <input type="radio" name="setting-theme" value="system" id="setting-theme-system"
+                                    class="theme-radio-input">
 
                                 <div class="theme-card-preview preview-system">
 
@@ -1596,7 +1707,8 @@
 
                                 </div>
 
-                                <div class="theme-card-desc" data-i18n="settings.theme.system_desc">Tự động đồng bộ theo giao diện hệ điều hành Windows</div>
+                                <div class="theme-card-desc" data-i18n="settings.theme.system_desc">Tự động đồng bộ theo
+                                    giao diện hệ điều hành Windows</div>
 
                                 <div class="theme-selected-indicator"><i class="fa-solid fa-circle-check"></i></div>
 
@@ -1616,13 +1728,16 @@
 
                         <div class="theme-settings-header">
 
-                            <div class="theme-header-icon" style="background: #ecfdf5; color: #059669;"><i class="fa-solid fa-language"></i></div>
+                            <div class="theme-header-icon" style="background: #ecfdf5; color: #059669;"><i
+                                    class="fa-solid fa-language"></i></div>
 
                             <div>
 
-                                <div class="form-label" data-i18n="settings.lang.title">Ngôn ngữ hiển thị (Language)</div>
+                                <div class="form-label" data-i18n="settings.lang.title">Ngôn ngữ hiển thị (Language)
+                                </div>
 
-                                <div class="form-desc" data-i18n="settings.lang.desc">Chọn ngôn ngữ hiển thị trên toàn bộ giao diện phần mềm (Mặc định: Tiếng Việt).</div>
+                                <div class="form-desc" data-i18n="settings.lang.desc">Chọn ngôn ngữ hiển thị trên toàn
+                                    bộ giao diện phần mềm (Mặc định: Tiếng Việt).</div>
 
                             </div>
 
@@ -1636,7 +1751,8 @@
 
                             <div class="lang-option-card active" data-lang-val="vi" id="lang-card-vi">
 
-                                <input type="radio" name="setting-language" value="vi" id="setting-lang-vi" checked class="theme-radio-input">
+                                <input type="radio" name="setting-language" value="vi" id="setting-lang-vi" checked
+                                    class="theme-radio-input">
 
                                 <div class="lang-card-icon-wrap">
 
@@ -1656,7 +1772,8 @@
 
                                 </div>
 
-                                <div class="theme-card-desc" data-i18n="settings.lang.vi_desc">Giao diện ngôn ngữ Tiếng Việt chuẩn xác và trực quan</div>
+                                <div class="theme-card-desc" data-i18n="settings.lang.vi_desc">Giao diện ngôn ngữ Tiếng
+                                    Việt chuẩn xác và trực quan</div>
 
                                 <div class="theme-selected-indicator"><i class="fa-solid fa-circle-check"></i></div>
 
@@ -1668,7 +1785,8 @@
 
                             <div class="lang-option-card" data-lang-val="en" id="lang-card-en">
 
-                                <input type="radio" name="setting-language" value="en" id="setting-lang-en" class="theme-radio-input">
+                                <input type="radio" name="setting-language" value="en" id="setting-lang-en"
+                                    class="theme-radio-input">
 
                                 <div class="lang-card-icon-wrap">
 
@@ -1684,11 +1802,13 @@
 
                                     </div>
 
-                                    <div class="theme-card-badge en-badge" data-i18n="settings.lang.en_badge">International</div>
+                                    <div class="theme-card-badge en-badge" data-i18n="settings.lang.en_badge">
+                                        International</div>
 
                                 </div>
 
-                                <div class="theme-card-desc" data-i18n="settings.lang.en_desc">Standard English interface for global users</div>
+                                <div class="theme-card-desc" data-i18n="settings.lang.en_desc">Standard English
+                                    interface for global users</div>
 
                                 <div class="theme-selected-indicator"><i class="fa-solid fa-circle-check"></i></div>
 
@@ -1710,7 +1830,9 @@
 
                             <div class="form-label" data-i18n="settings.confirm_delete">Xác nhận trước khi xóa tệp</div>
 
-                            <div class="form-desc" data-i18n="settings.confirm_delete_desc">Hiển thị hộp thoại xác nhận khi bạn xóa tệp hoặc xóa tất cả tệp khỏi danh sách. Bỏ chọn nếu bạn muốn xóa ngay mà không cần xác nhận lại.</div>
+                            <div class="form-desc" data-i18n="settings.confirm_delete_desc">Hiển thị hộp thoại xác nhận
+                                khi bạn xóa tệp hoặc xóa tất cả tệp khỏi danh sách. Bỏ chọn nếu bạn muốn xóa ngay mà
+                                không cần xác nhận lại.</div>
 
                         </div>
 
@@ -1732,13 +1854,16 @@
 
                         <div class="theme-settings-header">
 
-                            <div class="theme-header-icon" style="background: #e0f2fe; color: #0284c7;"><i class="fa-brands fa-windows"></i></div>
+                            <div class="theme-header-icon" style="background: #e0f2fe; color: #0284c7;"><i
+                                    class="fa-brands fa-windows"></i></div>
 
                             <div>
 
-                                <div class="form-label" data-i18n="settings.shell.title">Tích hợp hệ điều hành Windows (Windows Shell)</div>
+                                <div class="form-label" data-i18n="settings.shell.title">Tích hợp hệ điều hành Windows
+                                    (Windows Shell)</div>
 
-                                <div class="form-desc" data-i18n="settings.shell.desc">Tùy biến hành vi hệ điều hành: Chạy nền trên khay hệ thống, khởi động cùng Windows và thông báo khi tải xong.</div>
+                                <div class="form-desc" data-i18n="settings.shell.desc">Tùy biến hành vi hệ điều hành:
+                                    Chạy nền trên khay hệ thống, khởi động cùng Windows và thông báo khi tải xong.</div>
 
                             </div>
 
@@ -1752,9 +1877,12 @@
 
                             <div>
 
-                                <div class="form-label" data-i18n="settings.shell.start_with_windows">Khởi động cùng Windows (Run on Startup)</div>
+                                <div class="form-label" data-i18n="settings.shell.start_with_windows">Khởi động cùng
+                                    Windows (Run on Startup)</div>
 
-                                <div class="form-desc" data-i18n="settings.shell.start_with_windows_desc">Tự động khởi chạy DUT Download Accelerator ngầm trên khay hệ thống khi bạn đăng nhập Windows (Registry HKCU\Run).</div>
+                                <div class="form-desc" data-i18n="settings.shell.start_with_windows_desc">Tự động khởi
+                                    chạy DUT Download Accelerator ngầm trên khay hệ thống khi bạn đăng nhập Windows
+                                    (Registry HKCU\Run).</div>
 
                             </div>
 
@@ -1776,9 +1904,12 @@
 
                             <div>
 
-                                <div class="form-label" data-i18n="settings.shell.minimize_to_tray">Thu nhỏ xuống khay hệ thống khi đóng [X]</div>
+                                <div class="form-label" data-i18n="settings.shell.minimize_to_tray">Thu nhỏ xuống khay
+                                    hệ thống khi đóng [X]</div>
 
-                                <div class="form-desc" data-i18n="settings.shell.minimize_to_tray_desc">Khi bấm dấu [X] tắt ứng dụng, app sẽ thu nhỏ xuống khay hệ thống (System Tray) để tiếp tục tải ngầm thay vì tắt hẳn.</div>
+                                <div class="form-desc" data-i18n="settings.shell.minimize_to_tray_desc">Khi bấm dấu [X]
+                                    tắt ứng dụng, app sẽ thu nhỏ xuống khay hệ thống (System Tray) để tiếp tục tải ngầm
+                                    thay vì tắt hẳn.</div>
 
                             </div>
 
@@ -1800,9 +1931,12 @@
 
                             <div>
 
-                                <div class="form-label" data-i18n="settings.shell.toast_complete">Thông báo Windows khi tải xong (Toast Notification)</div>
+                                <div class="form-label" data-i18n="settings.shell.toast_complete">Thông báo Windows khi
+                                    tải xong (Toast Notification)</div>
 
-                                <div class="form-desc" data-i18n="settings.shell.toast_complete_desc">Hiển thị thông báo Toast / BalloonTip ở góc phải màn hình khi tệp hoàn tất, bấm vào thông báo để mở tệp ngay.</div>
+                                <div class="form-desc" data-i18n="settings.shell.toast_complete_desc">Hiển thị thông báo
+                                    Toast / BalloonTip ở góc phải màn hình khi tệp hoàn tất, bấm vào thông báo để mở tệp
+                                    ngay.</div>
 
                             </div>
 
@@ -1819,8 +1953,10 @@
                         <!-- 4. Auto Open Folder on Completion -->
                         <div class="form-group switch-row" style="margin-top: 10px;">
                             <div>
-                                <div class="form-label" data-i18n="settings.shell.open_folder_complete">Tự động mở thư mục sau khi tải xong</div>
-                                <div class="form-desc" data-i18n="settings.shell.open_folder_complete_desc">Tự động mở Windows File Explorer và làm nổi bật tệp ngay khi tác vụ tải hoàn tất.</div>
+                                <div class="form-label" data-i18n="settings.shell.open_folder_complete">Tự động mở thư
+                                    mục sau khi tải xong</div>
+                                <div class="form-desc" data-i18n="settings.shell.open_folder_complete_desc">Tự động mở
+                                    Windows File Explorer và làm nổi bật tệp ngay khi tác vụ tải hoàn tất.</div>
                             </div>
                             <label class="toggle-switch">
                                 <input type="checkbox" id="setting-auto-open-folder">
@@ -1844,9 +1980,11 @@
 
                             <div class="schedule-text-wrap">
 
-                                <div class="form-label" data-i18n="schedule.title">Lập lịch bắt đầu tải (Download Scheduler)</div>
+                                <div class="form-label" data-i18n="schedule.title">Lập lịch bắt đầu tải (Download
+                                    Scheduler)</div>
 
-                                <div class="form-desc" data-i18n="schedule.desc">Tự động khởi động tất cả tác vụ trong hàng đợi hoặc đang tạm dừng vào đúng khung giờ chỉ định.</div>
+                                <div class="form-desc" data-i18n="schedule.desc">Tự động khởi động tất cả tác vụ trong
+                                    hàng đợi hoặc đang tạm dừng vào đúng khung giờ chỉ định.</div>
 
                             </div>
 
@@ -1868,13 +2006,15 @@
 
                                 <div class="form-group">
 
-                                    <label class="form-label" for="setting-schedule-time" data-i18n="schedule.time_label">Giờ bắt đầu tải (Start Time):</label>
+                                    <label class="form-label" for="setting-schedule-time"
+                                        data-i18n="schedule.time_label">Giờ bắt đầu tải (Start Time):</label>
 
                                     <div class="input-with-icon">
 
                                         <i class="fa-solid fa-clock input-icon"></i>
 
-                                        <input type="time" id="setting-schedule-time" class="form-input time-picker-input" value="01:00">
+                                        <input type="time" id="setting-schedule-time"
+                                            class="form-input time-picker-input" value="01:00">
 
                                     </div>
 
@@ -1886,13 +2026,16 @@
 
                                         <span class="status-pulse-dot" id="schedule-pulse-dot"></span>
 
-                                        <span id="schedule-status-text" data-i18n="schedule.status_waiting">Đang chờ đến giờ hẹn 01:00...</span>
+                                        <span id="schedule-status-text" data-i18n="schedule.status_waiting">Đang chờ đến
+                                            giờ hẹn 01:00...</span>
 
                                     </div>
 
-                                    <button type="button" class="btn-pill btn-test-schedule" id="btn-trigger-schedule-now" title="Chạy thử ngay danh sách hàng đợi">
+                                    <button type="button" class="btn-pill btn-test-schedule"
+                                        id="btn-trigger-schedule-now" title="Chạy thử ngay danh sách hàng đợi">
 
-                                        <i class="fa-solid fa-play"></i> <span data-i18n="schedule.trigger_now">Thử chạy ngay</span>
+                                        <i class="fa-solid fa-play"></i> <span data-i18n="schedule.trigger_now">Thử chạy
+                                            ngay</span>
 
                                     </button>
 
@@ -1918,9 +2061,11 @@
 
                             <div>
 
-                                <div class="form-label" data-i18n="power.title">Quản lý nguồn điện Windows (Power Management)</div>
+                                <div class="form-label" data-i18n="power.title">Quản lý nguồn điện Windows (Power
+                                    Management)</div>
 
-                                <div class="form-desc" data-i18n="power.desc">Tương tác trực tiếp Win32 API: Chống ru ngủ khi tải và tự động hành động sau khi hoàn tất.</div>
+                                <div class="form-desc" data-i18n="power.desc">Tương tác trực tiếp Win32 API: Chống ru
+                                    ngủ khi tải và tự động hành động sau khi hoàn tất.</div>
 
                             </div>
 
@@ -1936,7 +2081,7 @@
 
                                 <div class="os-badge-title">
 
-                                    <i class="fa-brands fa-windows"></i> <span>Win32 API: SetThreadExecutionState</span>
+                                    <i class="fa-brands fa-windows"></i> <span>Win32 API</span>
 
                                 </div>
 
@@ -1944,7 +2089,7 @@
 
                                     <span class="os-state-dot"></span>
 
-                                    <span id="os-sleep-status-text">Đang bảo vệ (ES_SYSTEM_REQUIRED)</span>
+                                    <span id="os-sleep-status-text">Đang bảo vệ</span>
 
                                 </span>
 
@@ -1952,7 +2097,8 @@
 
                             <p class="os-interop-desc" data-i18n="power.os_desc">
 
-                                Windows sẽ không tự động kích hoạt chế độ Sleep hoặc tắt màn hình khi đang có ít nhất 1 tác vụ tải ngầm đang hoạt động (ES_SYSTEM_REQUIRED | ES_CONTINUOUS).
+                                Windows sẽ không tự động kích hoạt chế độ Sleep hoặc tắt màn hình khi đang có ít nhất 1
+                                tác vụ tải ngầm đang hoạt động.
 
                             </p>
 
@@ -1964,7 +2110,8 @@
 
                         <div class="form-group" style="margin-top: 18px;">
 
-                            <label class="form-label" data-i18n="power.action_label">Hành động khi tải xong toàn bộ danh sách hàng đợi:</label>
+                            <label class="form-label" data-i18n="power.action_label">Hành động khi tải xong toàn bộ danh
+                                sách hàng đợi:</label>
 
                             <div class="power-action-cards" id="power-action-cards">
 
@@ -1972,7 +2119,8 @@
 
                                 <label class="power-card active" data-action="none" id="power-card-none">
 
-                                    <input type="radio" name="setting-power-action" value="none" checked class="power-radio">
+                                    <input type="radio" name="setting-power-action" value="none" checked
+                                        class="power-radio">
 
                                     <div class="power-card-icon"><i class="fa-solid fa-ban"></i></div>
 
@@ -1980,7 +2128,8 @@
 
                                         <div class="power-card-title" data-i18n="power.action_none">Không làm gì</div>
 
-                                        <div class="power-card-desc" data-i18n="power.action_none_desc">Giữ máy tính hoạt động bình thường, phục hồi chế độ ngủ mặc định của HĐH.</div>
+                                        <div class="power-card-desc" data-i18n="power.action_none_desc">Giữ máy tính
+                                            hoạt động bình thường, phục hồi chế độ ngủ mặc định của HĐH.</div>
 
                                     </div>
 
@@ -2000,9 +2149,11 @@
 
                                     <div class="power-card-info">
 
-                                        <div class="power-card-title" data-i18n="power.action_sleep">Ngủ (Sleep / Suspend)</div>
+                                        <div class="power-card-title" data-i18n="power.action_sleep">Ngủ (Sleep /
+                                            Suspend)</div>
 
-                                        <div class="power-card-desc" data-i18n="power.action_sleep_desc">Đưa máy tính vào trạng thái tiết kiệm điện năng sau khi hết thời gian đếm ngược.</div>
+                                        <div class="power-card-desc" data-i18n="power.action_sleep_desc">Đưa máy tính
+                                            vào trạng thái tiết kiệm điện năng sau khi hết thời gian đếm ngược.</div>
 
                                     </div>
 
@@ -2016,15 +2167,18 @@
 
                                 <label class="power-card" data-action="shutdown" id="power-card-shutdown">
 
-                                    <input type="radio" name="setting-power-action" value="shutdown" class="power-radio">
+                                    <input type="radio" name="setting-power-action" value="shutdown"
+                                        class="power-radio">
 
                                     <div class="power-card-icon shutdown"><i class="fa-solid fa-power-off"></i></div>
 
                                     <div class="power-card-info">
 
-                                        <div class="power-card-title" data-i18n="power.action_shutdown">Tắt máy tính (Shutdown)</div>
+                                        <div class="power-card-title" data-i18n="power.action_shutdown">Tắt máy tính
+                                            (Shutdown)</div>
 
-                                        <div class="power-card-desc" data-i18n="power.action_shutdown_desc">Thực thi lệnh hệ thống shutdown.exe /s /t 60 để tắt máy an toàn sau khi tải xong.</div>
+                                        <div class="power-card-desc" data-i18n="power.action_shutdown_desc">Tắt máy sau
+                                            khi hết thời gian đếm ngược.</div>
 
                                     </div>
 
@@ -2045,30 +2199,39 @@
                                     <i class="fa-solid fa-stopwatch"></i>
                                 </div>
                                 <div class="countdown-header-text">
-                                    <label class="form-label" for="setting-countdown-sec" data-i18n="power.countdown_label">Thời gian đếm ngược cảnh báo trước khi thực hiện:</label>
-                                    <div class="form-desc" data-i18n="power.countdown_desc">Khoảng thời gian hiển thị thông báo để bạn kịp hủy nếu vẫn đang dùng máy tính.</div>
+                                    <label class="form-label" for="setting-countdown-sec"
+                                        data-i18n="power.countdown_label">Thời gian đếm ngược cảnh báo trước khi thực
+                                        hiện:</label>
+                                    <div class="form-desc" data-i18n="power.countdown_desc">Khoảng thời gian hiển thị
+                                        thông báo để bạn kịp hủy nếu vẫn đang dùng máy tính.</div>
                                 </div>
                             </div>
 
                             <div class="countdown-input-row">
                                 <div class="countdown-stepper-wrap">
-                                    <button type="button" class="btn-stepper" id="btn-countdown-minus" title="Giảm 10 giây">
+                                    <button type="button" class="btn-stepper" id="btn-countdown-minus"
+                                        title="Giảm 10 giây">
                                         <i class="fa-solid fa-minus"></i>
                                     </button>
                                     <div class="countdown-input-box">
-                                        <input type="number" id="setting-countdown-sec" class="countdown-number-input" min="10" max="600" step="5" value="60">
+                                        <input type="number" id="setting-countdown-sec" class="countdown-number-input"
+                                            min="10" max="600" step="5" value="60">
                                         <span class="countdown-unit-badge" data-i18n="power.seconds">giây</span>
                                     </div>
-                                    <button type="button" class="btn-stepper" id="btn-countdown-plus" title="Tăng 10 giây">
+                                    <button type="button" class="btn-stepper" id="btn-countdown-plus"
+                                        title="Tăng 10 giây">
                                         <i class="fa-solid fa-plus"></i>
                                     </button>
                                 </div>
 
                                 <div class="countdown-presets-pills">
                                     <button type="button" class="countdown-preset-pill" data-sec="30">30s</button>
-                                    <button type="button" class="countdown-preset-pill active" data-sec="60">60s (Khuyên dùng)</button>
-                                    <button type="button" class="countdown-preset-pill" data-sec="120">120s (2 phút)</button>
-                                    <button type="button" class="countdown-preset-pill" data-sec="300">300s (5 phút)</button>
+                                    <button type="button" class="countdown-preset-pill active" data-sec="60">60s (Khuyên
+                                        dùng)</button>
+                                    <button type="button" class="countdown-preset-pill" data-sec="120">120s (2
+                                        phút)</button>
+                                    <button type="button" class="countdown-preset-pill" data-sec="300">300s (5
+                                        phút)</button>
                                 </div>
                             </div>
                         </div>
@@ -2083,7 +2246,8 @@
 
             <div class="modal-footer">
 
-                <button type="button" class="btn-modal-cancel" id="btn-cancel-settings" data-i18n="settings.footer.cancel">Đóng</button>
+                <button type="button" class="btn-modal-cancel" id="btn-cancel-settings"
+                    data-i18n="settings.footer.cancel">Đóng</button>
 
                 <button type="button" class="btn-modal-save" id="btn-save-settings">
 
@@ -2115,13 +2279,15 @@
 
                         <h3 class="modal-title" data-i18n="batch.title">Tải hàng loạt liên kết (Batch URLs)</h3>
 
-                        <div class="modal-subtitle" data-i18n="batch.subtitle">Dán danh sách nhiều URL để tự động thêm tất cả vào hàng đợi tải về</div>
+                        <div class="modal-subtitle" data-i18n="batch.subtitle">Dán danh sách nhiều URL để tự động thêm
+                            tất cả vào hàng đợi tải về</div>
 
                     </div>
 
                 </div>
 
-                <button type="button" class="btn-modal-close" id="btn-close-batch" title="Đóng" data-i18n-title="common.close">&times;</button>
+                <button type="button" class="btn-modal-close" id="btn-close-batch" title="Đóng"
+                    data-i18n-title="common.close">&times;</button>
 
             </div>
 
@@ -2133,7 +2299,8 @@
 
                     <div class="batch-textarea-head">
 
-                        <label class="form-label" for="batch-urls-input" data-i18n="batch.list_label">Danh sách URL (mỗi dòng một liên kết):</label>
+                        <label class="form-label" for="batch-urls-input" data-i18n="batch.list_label">Danh sách URL (mỗi
+                            dòng một liên kết):</label>
 
                         <span class="batch-count-badge" id="batch-urls-count">0 liên kết hợp lệ</span>
 
@@ -2142,13 +2309,16 @@
 
                     <div class="batch-textarea-toolbar">
 
-                        <button type="button" id="btn-import-batch-file" class="btn-batch-tool" title="Nhập danh sách URL từ file .txt hoặc .csv">
+                        <button type="button" id="btn-import-batch-file" class="btn-batch-tool"
+                            title="Nhập danh sách URL từ file .txt hoặc .csv">
 
-                            <i class="fa-solid fa-file-import"></i> <span data-i18n="batch.import_btn">Nhập từ file .txt/.csv</span>
+                            <i class="fa-solid fa-file-import"></i> <span data-i18n="batch.import_btn">Nhập từ file
+                                .txt/.csv</span>
 
                         </button>
 
-                        <button type="button" id="btn-clear-batch" class="btn-batch-tool btn-batch-clear" title="Xóa toàn bộ danh sách URL">
+                        <button type="button" id="btn-clear-batch" class="btn-batch-tool btn-batch-clear"
+                            title="Xóa toàn bộ danh sách URL">
 
                             <i class="fa-solid fa-trash-can"></i> <span data-i18n="batch.clear_btn">Xóa danh sách</span>
 
@@ -2157,10 +2327,8 @@
                     </div>
 
                     <textarea id="batch-urls-input" class="form-textarea" rows="6"
-
-                              data-i18n-placeholder="batch.textarea_placeholder"
-
-                              placeholder="https://example.com/file1.zip&#10;https://example.com/file2.mp4&#10;https://example.com/file3.iso"></textarea>
+                        data-i18n-placeholder="batch.textarea_placeholder"
+                        placeholder="https://example.com/file1.zip&#10;https://example.com/file2.mp4&#10;https://example.com/file3.iso"></textarea>
 
                 </div>
 
@@ -2176,9 +2344,11 @@
 
                             <div>
 
-                                <label class="form-label" id="batch-save-label" for="batch-save-path" data-i18n="batch.save_title">Vị trí lưu tệp</label>
+                                <label class="form-label" id="batch-save-label" for="batch-save-path"
+                                    data-i18n="batch.save_title">Vị trí lưu tệp</label>
 
-                                <p class="batch-setting-desc" data-i18n="batch.save_desc">Chọn thư mục dùng cho toàn bộ liên kết trong danh sách.</p>
+                                <p class="batch-setting-desc" data-i18n="batch.save_desc">Chọn thư mục dùng cho toàn bộ
+                                    liên kết trong danh sách.</p>
 
                             </div>
 
@@ -2186,11 +2356,14 @@
 
                         <div class="batch-save-control">
 
-                            <input type="text" class="inner-input" id="batch-save-path" readonly placeholder="Chưa chọn thư mục lưu" data-i18n-placeholder="batch.save_placeholder">
+                            <input type="text" class="inner-input" id="batch-save-path" readonly
+                                placeholder="Chưa chọn thư mục lưu" data-i18n-placeholder="batch.save_placeholder">
 
-                            <button type="button" class="inner-browse-button" id="btn-batch-browse" title="Chọn thư mục lưu tệp" data-i18n-title="batch.choose_folder">
+                            <button type="button" class="inner-browse-button" id="btn-batch-browse"
+                                title="Chọn thư mục lưu tệp" data-i18n-title="batch.choose_folder">
 
-                                <i class="fa-solid fa-folder-plus"></i><span data-i18n="batch.choose_folder">Chọn thư mục</span>
+                                <i class="fa-solid fa-folder-plus"></i><span data-i18n="batch.choose_folder">Chọn thư
+                                    mục</span>
 
                             </button>
 
@@ -2208,9 +2381,11 @@
 
                             <div>
 
-                                <label class="form-label" id="batch-thread-label" for="batch-thread-select" data-i18n="batch.thread_title">Số luồng mỗi tệp</label>
+                                <label class="form-label" id="batch-thread-label" for="batch-thread-select"
+                                    data-i18n="batch.thread_title">Số luồng mỗi tệp</label>
 
-                                <p class="batch-setting-desc" data-i18n="batch.thread_desc">Nhiều luồng hơn có thể tăng tốc độ tải.</p>
+                                <p class="batch-setting-desc" data-i18n="batch.thread_desc">Nhiều luồng hơn có thể tăng
+                                    tốc độ tải.</p>
 
                             </div>
 
@@ -2242,11 +2417,13 @@
 
             <div class="modal-footer">
 
-                <button type="button" class="btn-modal-cancel" id="btn-cancel-batch" data-i18n="batch.cancel">Hủy bỏ</button>
+                <button type="button" class="btn-modal-cancel" id="btn-cancel-batch" data-i18n="batch.cancel">Hủy
+                    bỏ</button>
 
                 <button type="button" class="btn-modal-save" id="btn-submit-batch">
 
-                    <i class="fa-solid fa-cloud-arrow-down"></i> <span id="btn-submit-batch-text" data-i18n="batch.submit">Thêm vào hàng đợi</span>
+                    <i class="fa-solid fa-cloud-arrow-down"></i> <span id="btn-submit-batch-text"
+                        data-i18n="batch.submit">Thêm vào hàng đợi</span>
 
                 </button>
 
@@ -2276,11 +2453,13 @@
 
                     <h3 class="modal-title" id="disk-space-title" data-i18n="disk.title">Cảnh báo dung lượng ổ đĩa</h3>
 
-                    <div class="disk-space-subtitle" id="disk-space-subtitle" data-i18n="disk.subtitle">Kiểm tra không gian lưu trữ hệ thống</div>
+                    <div class="disk-space-subtitle" id="disk-space-subtitle" data-i18n="disk.subtitle">Kiểm tra không
+                        gian lưu trữ hệ thống</div>
 
                 </div>
 
-                <button type="button" class="btn-modal-close" id="btn-close-disk-modal" title="Đóng" data-i18n-title="common.close">&times;</button>
+                <button type="button" class="btn-modal-close" id="btn-close-disk-modal" title="Đóng"
+                    data-i18n-title="common.close">&times;</button>
 
             </div>
 
@@ -2292,7 +2471,8 @@
 
                     <div class="disk-compare-item current-drive">
 
-                        <span class="compare-label"><i class="fa-solid fa-database"></i> <span data-i18n="disk.current_drive">Ổ đĩa hiện tại</span></span>
+                        <span class="compare-label"><i class="fa-solid fa-database"></i> <span
+                                data-i18n="disk.current_drive">Ổ đĩa hiện tại</span></span>
 
                         <span class="compare-val" id="compare-current-val">-</span>
 
@@ -2302,7 +2482,8 @@
 
                     <div class="disk-compare-item suggested-drive">
 
-                        <span class="compare-label"><i class="fa-solid fa-circle-check"></i> <span data-i18n="disk.suggested_drive">Đề xuất đổi sang</span></span>
+                        <span class="compare-label"><i class="fa-solid fa-circle-check"></i> <span
+                                data-i18n="disk.suggested_drive">Đề xuất đổi sang</span></span>
 
                         <span class="compare-val" id="compare-suggested-val">-</span>
 
@@ -2314,11 +2495,14 @@
 
             <div class="disk-space-footer">
 
-                <button type="button" class="btn-disk-action secondary" id="btn-disk-close" data-i18n="disk.understood">Đã hiểu</button>
+                <button type="button" class="btn-disk-action secondary" id="btn-disk-close"
+                    data-i18n="disk.understood">Đã hiểu</button>
 
-                <button type="button" class="btn-disk-action primary" id="btn-disk-switch-folder" style="display: none;">
+                <button type="button" class="btn-disk-action primary" id="btn-disk-switch-folder"
+                    style="display: none;">
 
-                    <i class="fa-regular fa-folder-open"></i> <span data-i18n="disk.switch_folder">Đổi thư mục lưu ngay</span>
+                    <i class="fa-regular fa-folder-open"></i> <span data-i18n="disk.switch_folder">Đổi thư mục lưu
+                        ngay</span>
 
                 </button>
 
@@ -2330,7 +2514,7 @@
 
 
 
-        <!-- Power Action Countdown Modal -->
+    <!-- Power Action Countdown Modal -->
 
     <div class="modal-overlay" id="power-countdown-modal" style="display: none; z-index: 99999;">
 
@@ -2344,9 +2528,11 @@
 
                 </div>
 
-                <h3 class="power-modal-title" id="power-countdown-title" data-i18n="power.modal_title">HÀNG ĐỢI TẢI ĐÃ HOÀN TẤT</h3>
+                <h3 class="power-modal-title" id="power-countdown-title" data-i18n="power.modal_title">HÀNG ĐỢI TẢI ĐÃ
+                    HOÀN TẤT</h3>
 
-                <p class="power-modal-subtitle" id="power-countdown-subtitle" data-i18n="power.modal_subtitle">Máy tính sẽ tự động tắt nguồn trong:</p>
+                <p class="power-modal-subtitle" id="power-countdown-subtitle" data-i18n="power.modal_subtitle">Máy tính
+                    sẽ tự động tắt nguồn trong:</p>
 
             </div>
 
@@ -2366,7 +2552,8 @@
 
                 </div>
 
-                <p class="power-cancel-hint" data-i18n="power.cancel_hint">Nhấn "HỦY TẮT MÁY" hoặc phím ESC để dừng lệnh tắt máy tính.</p>
+                <p class="power-cancel-hint" data-i18n="power.cancel_hint">Nhấn "HỦY TẮT MÁY" hoặc phím ESC để dừng lệnh
+                    tắt máy tính.</p>
 
             </div>
 
@@ -2421,4 +2608,3 @@
 </body>
 
 </html>
-

@@ -3489,13 +3489,13 @@ function updateWin32SleepStatus(isSleepPrevented) {
 
         badge.classList.add("active");
 
-        text.textContent = isEn ? "Active protection (ES_SYSTEM_REQUIRED)" : "Đang bảo vệ (ES_SYSTEM_REQUIRED)";
+        text.textContent = isEn ? "Active protection" : "Đang bảo vệ";
 
     } else {
 
         badge.classList.remove("active");
 
-        text.textContent = isEn ? "Standby (ES_CONTINUOUS)" : "Chế độ chờ (ES_CONTINUOUS)";
+        text.textContent = isEn ? "Standby" : "Chế độ chờ";
 
     }
 

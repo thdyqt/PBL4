@@ -488,11 +488,11 @@
 
             "power.desc": "Tương tác trực tiếp Win32 API: Chống ru ngủ khi tải và tự động hành động sau khi hoàn tất.",
 
-            "power.os_desc": "Hệ điều hành Windows sẽ không tự động kích hoạt chế độ Sleep hoặc tắt màn hình khi đang có ít nhất 1 tác vụ tải ngầm đang hoạt động (ES_SYSTEM_REQUIRED | ES_CONTINUOUS).",
+            "power.os_desc": "Hệ điều hành Windows sẽ không tự động kích hoạt chế độ Sleep hoặc tắt màn hình khi đang có ít nhất 1 tác vụ tải ngầm đang hoạt động.",
 
-            "power.os_active": "Đang bảo vệ (ES_SYSTEM_REQUIRED)",
+            "power.os_active": "Đang bảo vệ",
 
-            "power.os_standby": "Chế độ chờ (ES_CONTINUOUS)",
+            "power.os_standby": "Chế độ chờ",
 
             "power.action_label": "Hành động khi tải xong toàn bộ danh sách hàng đợi:",
 
@@ -506,7 +506,7 @@
 
             "power.action_shutdown": "Tắt máy tính (Shutdown)",
 
-            "power.action_shutdown_desc": "Thực thi lệnh hệ thống shutdown.exe /s /t 60 để tắt máy an toàn sau khi tải xong.",
+            "power.action_shutdown_desc": "Tắt máu sau khi hết thời gian đếm ngược.",
 
             "power.countdown_label": "Thời gian đếm ngược cảnh báo trước khi hành động (giây):",
 
