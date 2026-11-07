@@ -577,6 +577,9 @@
             "settings.queue.threads_16": "16 luồng",
             "settings.queue.dynamic_threads": "Tự động thay đổi số luồng trong lúc tải",
             "settings.queue.dynamic_threads_desc": "Tự động phân bổ và thay đổi số luồng linh hoạt (Dynamic Segment Splitting) trong lúc tải để tối ưu tốc độ.",
+            "settings.queue.default_save": "Thư mục tải về mặc định",
+            "settings.queue.default_save_desc": "Thư mục lưu trữ mặc định khi bắt link từ trình duyệt hoặc thêm liên kết tải mới.",
+            "settings.queue.browse_btn": "Chọn nơi lưu",
 
 
 
@@ -868,7 +871,25 @@
 
             "hash.title": "Kiểm tra mã băm tệp (Checksum Hash)",
 
+            "hash.subtitle": "Tính toán và so khớp mã băm SHA-256 / MD5 của tệp",
+
             "hash.file_label": "Đường dẫn tệp đã tải xong:",
+
+            "hash.algo_label": "Thuật toán băm:",
+
+            "hash.actual_hash": "Mã băm thực tế của tệp:",
+
+            "hash.copy": "Sao chép",
+
+            "hash.copied": "Đã sao chép!",
+
+            "hash.click_to_compute": "Nhấn \"Tính toán mã băm\" để quét tệp...",
+
+            "hash.computing": "Đang tính mã băm, vui lòng đợi...",
+
+            "hash.btn_label": "Mã băm",
+
+            "hash.compare_btn": "So khớp",
 
             "hash.expected_label": "Mã băm mong đợi từ nguồn cung cấp (Tùy chọn so khớp):",
 
@@ -1483,6 +1504,9 @@
             "settings.queue.threads_16": "16 threads",
             "settings.queue.dynamic_threads": "Automatically change number of threads while downloading",
             "settings.queue.dynamic_threads_desc": "Dynamically adjust thread allocation and split segments during download to maximize download speed.",
+            "settings.queue.default_save": "Default Download Directory",
+            "settings.queue.default_save_desc": "Default directory used when capturing links from browser extension or adding new tasks.",
+            "settings.queue.browse_btn": "Browse",
 
 
 
@@ -1774,7 +1798,25 @@
 
             "hash.title": "File Checksum Verification (Hash)",
 
+            "hash.subtitle": "Compute and verify SHA-256 / MD5 checksum of the file",
+
             "hash.file_label": "Downloaded File Path:",
+
+            "hash.algo_label": "Hash Algorithm:",
+
+            "hash.actual_hash": "Actual Computed Hash:",
+
+            "hash.copy": "Copy",
+
+            "hash.copied": "Copied!",
+
+            "hash.click_to_compute": "Click \"Calculate Hash\" to scan file...",
+
+            "hash.computing": "Computing hash, please wait...",
+
+            "hash.btn_label": "Checksum",
+
+            "hash.compare_btn": "Compare",
 
             "hash.expected_label": "Expected Hash from source (Optional match):",
 

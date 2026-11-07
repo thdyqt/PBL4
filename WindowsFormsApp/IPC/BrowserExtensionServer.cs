@@ -135,7 +135,18 @@ namespace WindowsFormsApp.IPC
                     return;
                 }
 
-                // 2. Bắt link tải: POST /capture
+                // 2. Kích hoạt và phục hồi cửa sổ ứng dụng (Single-Instance restore)
+                if (path == "/restore" || path == "/activate")
+                {
+                    LinkCaptured?.Invoke(new CapturedLinkDto { Url = "" });
+                    byte[] restoreBytes = Encoding.UTF8.GetBytes("{\"success\":true,\"message\":\"Window restored\"}");
+                    res.StatusCode = 200;
+                    await res.OutputStream.WriteAsync(restoreBytes, 0, restoreBytes.Length);
+                    res.Close();
+                    return;
+                }
+
+                // 3. Bắt link tải: POST /capture
                 if (path == "/capture" && req.HttpMethod == "POST")
                 {
                     string jsonBody;

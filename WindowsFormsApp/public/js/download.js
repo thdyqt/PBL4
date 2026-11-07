@@ -1,4 +1,4 @@
-﻿// Xử lý tiến độ tải, các tác vụ Tạm dừng / Tiếp tục / Hủy / Xóa.
+// Xử lý tiến độ tải, các tác vụ Tạm dừng / Tiếp tục / Hủy / Xóa.
 // Nhận thông điệp từ C# (DOWNLOAD_PROGRESS, DOWNLOAD_ERROR), gửi lệnh xuống C#.
 (function () {
     const hasHost = !!(window.chrome && window.chrome.webview);
@@ -289,6 +289,42 @@
             const btnOpenFolder = item.querySelector(".btn-open-folder span");
             if (btnOpenFolder) btnOpenFolder.textContent = t("item.open_folder", "Mở thư mục");
 
+            // Nút kiểm tra mã băm (Checksum Hash)
+            const btnVerifyHash = item.querySelector(".btn-verify-hash");
+            if (btnVerifyHash) {
+                const btnVerifySpan = btnVerifyHash.querySelector("span");
+                if (btnVerifySpan) btnVerifySpan.textContent = t("hash.btn_label", "Mã băm");
+                btnVerifyHash.title = isEn ? "Verify Checksum / Hash" : "Kiểm tra mã băm (Hash)";
+            }
+
+            // Huy hiệu kết quả quét mã độc Windows Defender
+            const virusBadge = item.querySelector(".virus-badge");
+            if (virusBadge) {
+                const vText = virusBadge.querySelector(".virus-badge-text");
+                const vStatus = (virusBadge.dataset.virusStatus || item.dataset.virusStatus || "").toLowerCase();
+                if (vText) {
+                    if (vStatus === "safe") {
+                        vText.textContent = t("antivirus.safe", "File an toàn");
+                        virusBadge.title = t("antivirus.safe_tooltip", "Windows Defender: Không phát hiện mối đe dọa");
+                    } else if (vStatus === "scanning") {
+                        vText.textContent = t("antivirus.scanning", "Đang quét virus...");
+                        virusBadge.title = t("antivirus.scanning", "Đang quét virus qua Windows Defender...");
+                    } else if (vStatus === "threat") {
+                        vText.textContent = t("antivirus.threat", "Phát hiện mối đe dọa!");
+                        virusBadge.title = t("antivirus.threat_tooltip", "Cảnh báo: Windows Defender phát hiện tệp có chứa mối đe dọa tiềm ẩn!");
+                    } else if (vStatus === "not_available") {
+                        vText.textContent = t("antivirus.not_available", "Defender không khả dụng");
+                        virusBadge.title = t("antivirus.not_available", "Windows Defender không khả dụng trên máy này");
+                    } else {
+                        vText.textContent = t("antivirus.error", "Chưa quét virus");
+                    }
+                }
+                const btnRescan = virusBadge.querySelector(".btn-rescan-virus");
+                if (btnRescan) {
+                    btnRescan.title = t("antivirus.rescan_tooltip", "Quét lại mã độc qua Windows Defender");
+                }
+            }
+
             // Segment bar titles
             const bars = item.querySelectorAll(".segment-bar");
             bars.forEach((bar, i) => {
@@ -316,24 +352,29 @@
         let label = t("antivirus.error", "Chưa quét virus");
         let tooltip = result || t("antivirus.error", "Chưa có thông tin quét mã độc");
 
+        let i18nKey = "antivirus.error";
         if (st === "safe") {
             badgeClass = "safe";
             iconClass = "fa-shield-check";
+            i18nKey = "antivirus.safe";
             label = t("antivirus.safe", "File an toàn");
             tooltip = result || t("antivirus.safe_tooltip", "Windows Defender: Không phát hiện mối đe dọa");
         } else if (st === "scanning") {
             badgeClass = "scanning";
             iconClass = "fa-shield-virus fa-spin";
+            i18nKey = "antivirus.scanning";
             label = t("antivirus.scanning", "Đang quét virus...");
             tooltip = t("antivirus.scanning", "Đang quét virus qua Windows Defender...");
         } else if (st === "threat") {
             badgeClass = "threat";
             iconClass = "fa-triangle-exclamation";
+            i18nKey = "antivirus.threat";
             label = t("antivirus.threat", "Phát hiện mối đe dọa!");
             tooltip = result || t("antivirus.threat_tooltip", "Cảnh báo: Windows Defender phát hiện tệp có chứa mối đe dọa tiềm ẩn!");
         } else if (st === "not_available") {
             badgeClass = "neutral";
             iconClass = "fa-shield";
+            i18nKey = "antivirus.not_available";
             label = t("antivirus.not_available", "Defender không khả dụng");
             tooltip = result || t("antivirus.not_available", "Windows Defender không khả dụng trên máy này");
         }
@@ -343,8 +384,8 @@
         return `
             <div class="virus-badge ${badgeClass}" id="virus-badge-${taskId}" title="${tooltip}" data-virus-status="${st}">
                 <i class="fa-solid ${iconClass}"></i>
-                <span class="virus-badge-text">${label}</span>
-                <button type="button" class="btn-rescan-virus" data-action="rescan-virus" title="${rescanTitle}">
+                <span class="virus-badge-text" data-i18n="${i18nKey}">${label}</span>
+                <button type="button" class="btn-rescan-virus" data-action="rescan-virus" title="${rescanTitle}" data-i18n-title="antivirus.rescan_tooltip">
                     <i class="fa-solid fa-arrows-rotate"></i>
                 </button>
             </div>
@@ -355,6 +396,7 @@
         let actions = item.querySelector(".download-actions");
         const openFileText = isEn ? "Open File" : "Mở file";
         const openFolderText = isEn ? "Open Folder" : "Mở thư mục";
+        const hashBtnText = (window.i18n && window.i18n.t) ? window.i18n.t("hash.btn_label", "Mã băm") : (isEn ? "Checksum" : "Mã băm");
         const vStatus = d.virusScanStatus || "scanning";
         const vResult = d.virusScanResult || "";
         const taskId = d.taskId || item.id;
@@ -366,8 +408,9 @@
             actions.className = "download-actions";
             actions.innerHTML = `
                 ${getVirusBadgeHtml(vStatus, vResult, taskId)}
-                <button type="button" class="btn-action btn-open-file" data-action="open-file"><i class="fa-solid fa-arrow-up-right-from-square"></i> <span>${openFileText}</span></button>
-                <button type="button" class="btn-action btn-open-folder" data-action="open-folder"><i class="fa-regular fa-folder-open"></i> <span>${openFolderText}</span></button>
+                <button type="button" class="btn-action btn-open-file" data-action="open-file"><i class="fa-solid fa-arrow-up-right-from-square"></i> <span data-i18n="item.open_file">${openFileText}</span></button>
+                <button type="button" class="btn-action btn-open-folder" data-action="open-folder"><i class="fa-regular fa-folder-open"></i> <span data-i18n="item.open_folder">${openFolderText}</span></button>
+                <button type="button" class="btn-action btn-verify-hash" data-action="verify-hash" title="${isEn ? 'Verify Checksum / Hash' : 'Kiểm tra mã băm (Hash)'}"><i class="fa-solid fa-fingerprint"></i> <span data-i18n="hash.btn_label">${hashBtnText}</span></button>
             `;
             item.appendChild(actions);
         } else {
@@ -725,11 +768,13 @@
         const targetAutoStart = data.autoStart !== undefined ? (data.autoStart === true) : (data.AutoStart === true);
         const targetTotalBytes = data.totalBytes !== undefined ? data.totalBytes : (data.TotalBytes || 0);
 
-        // 1. Tự động đóng các modal nếu đang mở (Cài đặt, Tải nhiều link...)
+        // 1. Tự động đóng các modal nếu đang mở (Cài đặt, Tải nhiều link, Mã băm...)
         const settingsModal = document.getElementById("settings-modal");
         if (settingsModal) settingsModal.style.display = "none";
         const batchModal = document.getElementById("batch-modal");
         if (batchModal) batchModal.style.display = "none";
+        const hashModal = document.getElementById("hash-modal");
+        if (hashModal) hashModal.style.display = "none";
 
         // 2. Tự động chuyển về Tab "Trang chủ" (data-filter="home")
         const homeNav = document.querySelector('.inner-menu a[data-filter="home"]');
@@ -961,6 +1006,11 @@
                 if (window.showAppToast) {
                     const isEnLang = window.i18n && window.i18n.getCurrentLanguage && window.i18n.getCurrentLanguage() === "en";
                     window.showAppToast(isEnLang ? "Triggered Windows Defender virus scan..." : "Đang kích hoạt Windows Defender quét mã độc...");
+                }
+            } else if (action === "verify-hash") {
+                if (window.openHashModal) {
+                    const fileName = item.dataset.fileName || item.querySelector(".file-name")?.textContent || "";
+                    window.openHashModal(taskId, path, fileName);
                 }
             }
             return;
@@ -1469,14 +1519,18 @@
             ? (isEn ? "Warning: Threat detected! Click to confirm before opening." : "Cảnh báo: Tệp chứa mối đe dọa! Bấm để xác nhận trước khi mở.")
             : (isScanning ? (isEn ? "Scanning with Windows Defender..." : "Đang quét mã độc qua Windows Defender, vui lòng đợi...") : "");
 
+        const hashBtnText = (window.i18n && window.i18n.t) ? window.i18n.t("hash.btn_label", "Mã băm") : (isEn ? "Checksum" : "Mã băm");
         const openFileBtn = state === "completed" ? `
             <div class="download-actions">
                 ${getVirusBadgeHtml(virusStatus, virusResult, rec.id)}
                 <button type="button" class="btn-action btn-open-file ${openThreatClass}" data-action="open-file" ${openDisabledAttr} title="${openTitle}">
-                    <i class="fa-solid fa-arrow-up-right-from-square"></i> <span>${openFileText}</span>
+                    <i class="fa-solid fa-arrow-up-right-from-square"></i> <span data-i18n="item.open_file">${openFileText}</span>
                 </button>
                 <button type="button" class="btn-action btn-open-folder" data-action="open-folder">
-                    <i class="fa-regular fa-folder-open"></i> <span>${openFolderText}</span>
+                    <i class="fa-regular fa-folder-open"></i> <span data-i18n="item.open_folder">${openFolderText}</span>
+                </button>
+                <button type="button" class="btn-action btn-verify-hash" data-action="verify-hash" title="${isEn ? 'Verify Checksum / Hash' : 'Kiểm tra mã băm (Hash)'}">
+                    <i class="fa-solid fa-fingerprint"></i> <span data-i18n="hash.btn_label">${hashBtnText}</span>
                 </button>
             </div>` : "";
 

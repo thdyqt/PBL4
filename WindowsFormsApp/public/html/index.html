@@ -871,6 +871,18 @@
 
                 <div class="settings-tab-content active" id="tab-queue">
 
+                    <!-- Thư mục tải về mặc định -->
+                    <div class="form-group">
+                        <label class="form-label" for="setting-default-save" data-i18n="settings.queue.default_save">Thư mục tải về mặc định</label>
+                        <div class="form-desc" data-i18n="settings.queue.default_save_desc">Thư mục lưu trữ mặc định khi bắt link từ trình duyệt hoặc thêm liên kết tải mới.</div>
+                        <div class="save-path-row">
+                            <input type="text" id="setting-default-save" class="inner-input" readonly placeholder="C:\Users\...\Downloads">
+                            <button type="button" class="inner-browse-button" id="btn-browse-default-save" title="Chọn nơi lưu" data-i18n-title="settings.queue.browse_btn">
+                                <i class="fa-regular fa-folder-open"></i> <span data-i18n="settings.queue.browse_btn">Chọn nơi lưu</span>
+                            </button>
+                        </div>
+                    </div>
+
                     <div class="form-group">
 
                         <label class="form-label" for="setting-max-concurrent"
@@ -2512,7 +2524,65 @@
 
     </div>
 
+    <!-- Checksum / Hash Verification Modal -->
+    <div class="modal-overlay" id="hash-modal" style="display: none;">
+        <div class="modal-card hash-modal-card">
+            <div class="hash-modal-header">
+                <div class="hash-icon-wrap">
+                    <i class="fa-solid fa-fingerprint"></i>
+                </div>
+                <div class="hash-title-info">
+                    <h3 class="modal-title" data-i18n="hash.title">Kiểm tra tính toàn vẹn (Checksum / Hash)</h3>
+                    <div class="hash-subtitle" data-i18n="hash.subtitle">Tính toán và so khớp mã băm SHA-256 / MD5 của tệp</div>
+                </div>
+                <button type="button" class="btn-modal-close" id="btn-close-hash-modal" title="Đóng" data-i18n-title="common.close">&times;</button>
+            </div>
+            <div class="hash-modal-body">
+                <div class="form-group">
+                    <label class="form-label" data-i18n="hash.file_label">Tệp đang kiểm tra:</label>
+                    <div class="hash-file-name" id="hash-file-name">-</div>
+                    <div class="hash-file-path" id="hash-file-path">-</div>
+                </div>
 
+                <div class="form-group" style="margin-top: 12px;">
+                    <label class="form-label" data-i18n="hash.algo_label">Thuật toán băm:</label>
+                    <div class="hash-algo-radios">
+                        <label class="radio-pill active"><input type="radio" name="hash-algo" value="sha256" checked> <span>SHA-256</span></label>
+                        <label class="radio-pill"><input type="radio" name="hash-algo" value="md5"> <span>MD5</span></label>
+                    </div>
+                </div>
+
+                <div class="form-group" style="margin-top: 14px;">
+                    <div class="hash-result-header">
+                        <label class="form-label" data-i18n="hash.actual_hash">Mã băm thực tế của tệp:</label>
+                        <button type="button" class="btn-copy-hash" id="btn-copy-hash" title="Sao chép mã băm" style="display: none;">
+                            <i class="fa-regular fa-copy"></i> <span data-i18n="hash.copy">Sao chép</span>
+                        </button>
+                    </div>
+                    <div class="hash-display-box" id="hash-display-box">
+                        <span class="hash-placeholder" data-i18n="hash.click_to_compute">Nhấn "Tính toán mã băm" để quét tệp...</span>
+                    </div>
+                </div>
+
+                <div class="form-group" style="margin-top: 14px;">
+                    <label class="form-label" for="hash-expected-input" data-i18n="hash.expected_label">Đối chiếu với mã băm mẫu (tùy chọn):</label>
+                    <div class="hash-compare-input-row">
+                        <input type="text" id="hash-expected-input" class="inner-input" placeholder="Dán mã băm do website nguồn cung cấp..." data-i18n-placeholder="hash.expected_placeholder">
+                        <button type="button" class="btn-hash-action secondary" id="btn-compare-hash">
+                            <i class="fa-solid fa-code-compare"></i> <span data-i18n="hash.compare_btn">So khớp</span>
+                        </button>
+                    </div>
+                    <div class="hash-match-status" id="hash-match-status" style="display: none;"></div>
+                </div>
+            </div>
+            <div class="hash-modal-footer">
+                <button type="button" class="btn-hash-action secondary" id="btn-hash-close" data-i18n="common.close">Đóng</button>
+                <button type="button" class="btn-hash-action primary" id="btn-compute-hash">
+                    <i class="fa-solid fa-calculator"></i> <span data-i18n="hash.calc_btn">Tính toán mã băm</span>
+                </button>
+            </div>
+        </div>
+    </div>
 
     <!-- Power Action Countdown Modal -->
 

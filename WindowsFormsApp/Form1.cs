@@ -30,6 +30,7 @@ namespace WindowsFormsApp
 
         private const int SW_RESTORE = 9;
         private const int SW_SHOW = 5;
+        private const int SW_MAXIMIZE = 3;
 
         private readonly bool _startInBackground;
         private MessageHandler _messageHandler;
@@ -45,14 +46,16 @@ namespace WindowsFormsApp
         private bool _allowActualExit = false;
         private string _lastCompletedFilePath = null;
         private bool _hasShownTrayHint = false;
+        private readonly string _initialUrl = null;
 
-        public Form1() : this(false)
+        public Form1() : this(false, null)
         {
         }
 
-        public Form1(bool startInBackground)
+        public Form1(bool startInBackground, string initialUrl = null)
         {
             _startInBackground = startInBackground;
+            _initialUrl = initialUrl;
             InitializeComponent();
             InitializeTrayIcon();
             _messageHandler = new MessageHandler(this);
@@ -245,6 +248,20 @@ namespace WindowsFormsApp
         {
             // Trang đã load xong -> gửi lịch sử tải từ DB để frontend hiển thị
             _messageHandler.SendHistoryOnStartup();
+
+            // Nếu được truyền URL từ tham số dòng lệnh ban đầu -> nạp vào form tải
+            if (!string.IsNullOrWhiteSpace(_initialUrl))
+            {
+                try
+                {
+                    OnBrowserLinkCaptured(new CapturedLinkDto
+                    {
+                        Url = _initialUrl,
+                        FileName = System.IO.Path.GetFileName(_initialUrl.Split('?')[0])
+                    });
+                }
+                catch { }
+            }
         }
 
         private void Form1_Load(object sender, EventArgs e)
@@ -305,7 +322,10 @@ namespace WindowsFormsApp
 
         private void OnBrowserLinkCaptured(CapturedLinkDto link)
         {
-            BringToFrontAndRestore();
+            // Yêu cầu: khi tải file thông qua extension thì cửa sổ chương trình bật lên phải phóng to toàn màn hình (Maximize)
+            BringToFrontAndRestore(maximize: true);
+
+            if (link == null || string.IsNullOrWhiteSpace(link.Url)) return;
 
             string defaultPath = SettingsManager.Current?.DefaultSavePath;
             if (string.IsNullOrWhiteSpace(defaultPath))
@@ -326,12 +346,13 @@ namespace WindowsFormsApp
         /// <summary>
         /// Khôi phục cửa sổ nếu đang thu nhỏ (Minimized) hoặc đang ẩn dưới System Tray
         /// và đưa lên tiền cảnh (Foreground).
+        /// Tham số maximize = true cho phép phóng to toàn màn hình khi bắt link từ trình duyệt.
         /// </summary>
-        public void BringToFrontAndRestore()
+        public void BringToFrontAndRestore(bool maximize = false)
         {
             if (InvokeRequired)
             {
-                try { BeginInvoke(new Action(BringToFrontAndRestore)); } catch { }
+                try { BeginInvoke(new Action(() => BringToFrontAndRestore(maximize))); } catch { }
                 return;
             }
 
@@ -340,7 +361,12 @@ namespace WindowsFormsApp
                 this.Show();
                 this.ShowInTaskbar = true;
 
-                if (WindowState == FormWindowState.Minimized || IsIconic(this.Handle))
+                if (maximize)
+                {
+                    WindowState = FormWindowState.Maximized;
+                    ShowWindow(this.Handle, SW_MAXIMIZE);
+                }
+                else if (WindowState == FormWindowState.Minimized || IsIconic(this.Handle))
                 {
                     ShowWindow(this.Handle, SW_RESTORE);
                     WindowState = FormWindowState.Normal;

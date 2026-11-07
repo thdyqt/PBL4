@@ -913,35 +913,22 @@ namespace WindowsFormsApp.IPC
         {
 
             string taskId = GetString(root, "taskId");
-
-            string expectedHash = GetString(root, "hash");
-
+            string expectedHash = GetString(root, "hash") ?? GetString(root, "expectedHash");
+            string algo = GetString(root, "algo");
             string filePath = GetString(root, "path") ?? _manager.GetTargetPath(taskId);
 
-
-
             if (string.IsNullOrWhiteSpace(filePath) || !File.Exists(filePath))
-
             {
-
                 Send(new { action = "HASH_RESULT", taskId = taskId, success = false, match = false,
-
                            message = "Không tìm thấy tệp để kiểm tra.", actualHash = (string)null });
-
                 return;
-
             }
 
-
-
             try
-
             {
-
-                // Tự nhận dạng: MD5 = 32 ký tự, SHA-256 = 64 ký tự
-
-                bool useMd5 = expectedHash != null && expectedHash.Trim().Length == 32;
-
+                // Tự nhận dạng: MD5 hoặc người dùng chọn MD5; mặc định SHA-256
+                bool useMd5 = string.Equals(algo, "md5", StringComparison.OrdinalIgnoreCase)
+                    || (expectedHash != null && expectedHash.Trim().Length == 32);
                 string algoName = useMd5 ? "MD5" : "SHA-256";
 
 

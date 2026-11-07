@@ -309,27 +309,23 @@ if (btnResetFilename) {
 
 
 // Tính năng "Chọn nơi lưu" (Gửi lệnh mở hộp thoại xuống C#)
-
 let isBrowsingForBatch = false;
+let browseFolderTarget = "main"; // "main", "batch", "setting"
 
-
-
-function requestBrowseFolder(forBatch = false) {
-
-    isBrowsingForBatch = forBatch;
+function requestBrowseFolder(target = "main") {
+    if (typeof target === "boolean") {
+        browseFolderTarget = target ? "batch" : "main";
+    } else {
+        browseFolderTarget = target || "main";
+    }
+    isBrowsingForBatch = (browseFolderTarget === "batch");
 
     if (window.chrome && window.chrome.webview) {
-
         window.chrome.webview.postMessage(JSON.stringify({ action: "BROWSE_FOLDER" }));
-
     } else {
-
         const msg = (window.i18n && window.i18n.t) ? window.i18n.t("validate.browse_desktop_only") : "Tính năng chọn thư mục chỉ hoạt động trên ứng dụng Desktop!";
-
         alert(msg);
-
     }
-
 }
 
 window.requestBrowseFolder = requestBrowseFolder;
@@ -417,59 +413,54 @@ if (window.chrome && window.chrome.webview) {
             
 
             // Xử lý kịch bản nhận đường dẫn thư mục
-
             if (response.action === "FOLDER_SELECTED") {
-
                 const selectedPath = response.data;
-
                 const savePathInput = document.getElementById("save-path");
-
                 const batchSavePath = document.getElementById("batch-save-path");
-
-                
+                const settingSavePath = document.getElementById("setting-default-save");
 
                 if (selectedPath) {
-
-                    if (savePathInput) {
-
-                        savePathInput.value = selectedPath;
-
-                        const form = document.querySelector("#input-form");
-
-                        if (form && form.justValidate) {
-
-                            form.justValidate.revalidateField("#save-path");
-
+                    if (browseFolderTarget === "setting") {
+                        if (settingSavePath) settingSavePath.value = selectedPath;
+                    } else if (browseFolderTarget === "batch") {
+                        if (batchSavePath) batchSavePath.value = selectedPath;
+                    } else {
+                        if (savePathInput) {
+                            savePathInput.value = selectedPath;
+                            const form = document.querySelector("#input-form");
+                            if (form && form.justValidate) {
+                                form.justValidate.revalidateField("#save-path");
+                            }
                         }
-
                     }
-
-
-
-                    if (batchSavePath) {
-
-                        batchSavePath.value = selectedPath;
-
-                    }
-
-
 
                     if (window.showAppToast) {
-
                         const shortName = selectedPath.length > 35 ? "..." + selectedPath.slice(-32) : selectedPath;
-
                         const isEn = window.i18n && window.i18n.getLanguage && window.i18n.getLanguage() === "en";
-
                         window.showAppToast((isEn ? "Save location: " : "Đã chọn nơi lưu: ") + shortName);
-
                     }
-
                 }
 
-
-
+                browseFolderTarget = "main";
                 isBrowsingForBatch = false;
+            }
 
+            // Xử lý thông báo Toast từ C#
+            if (response.action === "SHOW_TOAST") {
+                const toastMsg = response.message || response.data || "";
+                if (window.showAppToast && toastMsg) window.showAppToast(toastMsg);
+            }
+
+            // Xử lý khi hành động tắt máy / ngủ đã hoàn tất
+            if (response.action === "POWER_ACTION_FINISHED") {
+                if (window.hidePowerCountdownModal) window.hidePowerCountdownModal();
+            }
+
+            // Xử lý kết quả kiểm tra mã băm (Checksum / Hash)
+            if (response.action === "HASH_RESULT") {
+                if (window.handleHashResult) {
+                    window.handleHashResult(response);
+                }
             }
 
 
@@ -485,19 +476,20 @@ if (window.chrome && window.chrome.webview) {
 
 
             // Xử lý sau khi lưu cài đặt
-
             if (response.action === "SETTINGS_SAVED") {
-
                 const toastMsg = (window.i18n && window.i18n.t) ? window.i18n.t("toast.settings_saved") : "Đã lưu cài đặt thành công!";
-
                 if (window.showAppToast) window.showAppToast(toastMsg);
-
                 if (window.populateSettingsForm) window.populateSettingsForm(response.data);
 
+                if (response.data && response.data.defaultSavePath) {
+                    const mainSavePath = document.getElementById("save-path");
+                    if (mainSavePath && !mainSavePath.value) {
+                        mainSavePath.value = response.data.defaultSavePath;
+                    }
+                }
+
                 const modal = document.getElementById("settings-modal");
-
                 if (modal) modal.style.display = "none";
-
             }
 
 
@@ -1487,6 +1479,8 @@ function populateSettingsForm(s) {
 
 
     // 1. Tab Hàng đợi
+    const defSave = document.getElementById("setting-default-save");
+    if (defSave) defSave.value = s.defaultSavePath || "";
 
     const maxConc = document.getElementById("setting-max-concurrent");
 
@@ -2544,7 +2538,7 @@ if (btnSaveSettings) {
 
             proxy: proxy,
 
-            defaultSavePath: document.getElementById("save-path")?.value || currentSettings.defaultSavePath || "",
+            defaultSavePath: document.getElementById("setting-default-save")?.value || document.getElementById("save-path")?.value || currentSettings.defaultSavePath || "",
 
             defaultThreads: defaultThreads,
 
@@ -3876,6 +3870,234 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 
+
+// ==========================================================================
+// CHECKSUM / HASH VERIFICATION MODAL CONTROLLER
+// ==========================================================================
+
+let currentHashTaskId = null;
+let currentHashFilePath = null;
+let currentComputedHash = null;
+
+function openHashModal(taskId, filePath, fileName) {
+    currentHashTaskId = taskId;
+    currentHashFilePath = filePath;
+    currentComputedHash = null;
+
+    const modal = document.getElementById("hash-modal");
+    if (!modal) return;
+
+    const nameEl = document.getElementById("hash-file-name");
+    const pathEl = document.getElementById("hash-file-path");
+    const displayBox = document.getElementById("hash-display-box");
+    const copyBtn = document.getElementById("btn-copy-hash");
+    const expectedInput = document.getElementById("hash-expected-input");
+    const matchStatus = document.getElementById("hash-match-status");
+
+    if (nameEl) nameEl.textContent = fileName || (filePath ? filePath.split(/[\\/]/).pop() : "-");
+    if (pathEl) pathEl.textContent = filePath || "-";
+    if (displayBox) {
+        const isEn = window.i18n && window.i18n.getCurrentLanguage && window.i18n.getCurrentLanguage() === "en";
+        const placeholder = (window.i18n && window.i18n.t)
+            ? window.i18n.t("hash.click_to_compute")
+            : (isEn ? "Click \"Calculate Hash\" to scan file..." : "Nhấn \"Tính toán mã băm\" để quét tệp...");
+        displayBox.innerHTML = `<span class="hash-placeholder">${placeholder}</span>`;
+    }
+    if (copyBtn) copyBtn.style.display = "none";
+    if (expectedInput) expectedInput.value = "";
+    if (matchStatus) {
+        matchStatus.style.display = "none";
+        matchStatus.className = "hash-match-status";
+        matchStatus.textContent = "";
+    }
+
+    modal.style.display = "flex";
+}
+window.openHashModal = openHashModal;
+
+function closeHashModal() {
+    const modal = document.getElementById("hash-modal");
+    if (modal) modal.style.display = "none";
+}
+window.closeHashModal = closeHashModal;
+
+function stringCompareIgnoreCase(a, b) {
+    if (!a || !b) return false;
+    return a.trim().toLowerCase() === b.trim().toLowerCase();
+}
+
+function handleHashResult(data) {
+    const displayBox = document.getElementById("hash-display-box");
+    const copyBtn = document.getElementById("btn-copy-hash");
+    const matchStatus = document.getElementById("hash-match-status");
+    const computeBtn = document.getElementById("btn-compute-hash");
+
+    if (computeBtn) {
+        computeBtn.disabled = false;
+        const isEn = window.i18n && window.i18n.getCurrentLanguage && window.i18n.getCurrentLanguage() === "en";
+        const btnText = (window.i18n && window.i18n.t) ? window.i18n.t("hash.calc_btn") : (isEn ? "Calculate Hash" : "Tính toán mã băm");
+        computeBtn.innerHTML = `<i class="fa-solid fa-calculator"></i> <span>${btnText}</span>`;
+    }
+
+    if (!data.success) {
+        if (displayBox) displayBox.innerHTML = `<span style="color: #ef4444;">${data.message || "Lỗi khi tính hash!"}</span>`;
+        if (copyBtn) copyBtn.style.display = "none";
+        return;
+    }
+
+    currentComputedHash = data.actualHash || "";
+    if (displayBox) displayBox.textContent = currentComputedHash;
+    if (copyBtn) copyBtn.style.display = "inline-flex";
+
+    const expectedInput = document.getElementById("hash-expected-input");
+    const expected = expectedInput ? expectedInput.value.trim() : "";
+
+    if (expected && matchStatus) {
+        const isMatch = stringCompareIgnoreCase(currentComputedHash, expected);
+        matchStatus.style.display = "block";
+        matchStatus.className = "hash-match-status " + (isMatch ? "match" : "mismatch");
+        const isEn = window.i18n && window.i18n.getCurrentLanguage && window.i18n.getCurrentLanguage() === "en";
+        if (isMatch) {
+            matchStatus.textContent = (window.i18n && window.i18n.t) ? window.i18n.t("hash.match_success") : (isEn ? "✔ Hash MATCHES PERFECTLY! The file is intact." : "✔ Mã băm HOÀN TOÀN KHỚP! Tệp tải về nguyên vẹn và an toàn.");
+        } else {
+            matchStatus.textContent = (window.i18n && window.i18n.t) ? window.i18n.t("hash.match_fail") : (isEn ? "✘ Hash MISMATCH! The file might be corrupted." : "✘ Mã băm KHÔNG KHỚP! Tệp có thể đã bị lỗi truyền tải hoặc bị sửa đổi.");
+        }
+    }
+}
+window.handleHashResult = handleHashResult;
+
+document.addEventListener("DOMContentLoaded", () => {
+    // 1. Thư mục tải về mặc định trong Modal Cài đặt
+    const btnBrowseDefault = document.getElementById("btn-browse-default-save");
+    if (btnBrowseDefault) {
+        btnBrowseDefault.addEventListener("click", () => {
+            requestBrowseFolder("setting");
+        });
+    }
+    const inputDefaultSave = document.getElementById("setting-default-save");
+    if (inputDefaultSave) {
+        inputDefaultSave.addEventListener("click", () => {
+            requestBrowseFolder("setting");
+        });
+    }
+
+    // 2. Các nút điều khiển trong Hash Modal
+    const hashModal = document.getElementById("hash-modal");
+    const btnCloseHash = document.getElementById("btn-close-hash-modal");
+    const btnHashClose = document.getElementById("btn-hash-close");
+    const btnComputeHash = document.getElementById("btn-compute-hash");
+    const btnCompareHash = document.getElementById("btn-compare-hash");
+    const btnCopyHash = document.getElementById("btn-copy-hash");
+    const algoRadios = document.querySelectorAll('input[name="hash-algo"]');
+
+    if (btnCloseHash) btnCloseHash.addEventListener("click", closeHashModal);
+    if (btnHashClose) btnHashClose.addEventListener("click", closeHashModal);
+
+    if (hashModal) {
+        hashModal.addEventListener("click", (e) => {
+            if (e.target === hashModal) closeHashModal();
+        });
+    }
+
+    algoRadios.forEach(radio => {
+        radio.addEventListener("change", () => {
+            document.querySelectorAll(".hash-algo-radios .radio-pill").forEach(p => p.classList.remove("active"));
+            const parent = radio.closest(".radio-pill");
+            if (parent) parent.classList.add("active");
+
+            const displayBox = document.getElementById("hash-display-box");
+            const copyBtn = document.getElementById("btn-copy-hash");
+            const matchStatus = document.getElementById("hash-match-status");
+            const isEn = window.i18n && window.i18n.getCurrentLanguage && window.i18n.getCurrentLanguage() === "en";
+            if (displayBox) {
+                const placeholder = (window.i18n && window.i18n.t)
+                    ? window.i18n.t("hash.click_to_compute")
+                    : (isEn ? "Click \"Calculate Hash\" to scan file..." : "Nhấn \"Tính toán mã băm\" để quét tệp...");
+                displayBox.innerHTML = `<span class="hash-placeholder">${placeholder}</span>`;
+            }
+            if (copyBtn) copyBtn.style.display = "none";
+            if (matchStatus) matchStatus.style.display = "none";
+        });
+    });
+
+    if (btnComputeHash) {
+        btnComputeHash.addEventListener("click", () => {
+            if (!currentHashTaskId && !currentHashFilePath) return;
+            const selectedAlgo = document.querySelector('input[name="hash-algo"]:checked')?.value || "sha256";
+            const expectedInput = document.getElementById("hash-expected-input");
+            const expectedHash = expectedInput ? expectedInput.value.trim() : "";
+
+            btnComputeHash.disabled = true;
+            const isEn = window.i18n && window.i18n.getCurrentLanguage && window.i18n.getCurrentLanguage() === "en";
+            const computingText = (window.i18n && window.i18n.t) ? window.i18n.t("hash.computing") : (isEn ? "Computing hash, please wait..." : "Đang tính mã băm, vui lòng đợi...");
+            btnComputeHash.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> <span>${computingText}</span>`;
+
+            const displayBox = document.getElementById("hash-display-box");
+            if (displayBox) {
+                displayBox.innerHTML = `<span style="color: #6366f1;"><i class="fa-solid fa-spinner fa-spin"></i> ${computingText}</span>`;
+            }
+
+            if (window.chrome && window.chrome.webview) {
+                window.chrome.webview.postMessage(JSON.stringify({
+                    action: "VERIFY_HASH",
+                    taskId: currentHashTaskId || "",
+                    path: currentHashFilePath || "",
+                    algo: selectedAlgo,
+                    expectedHash: expectedHash
+                }));
+            }
+        });
+    }
+
+    if (btnCompareHash) {
+        btnCompareHash.addEventListener("click", () => {
+            const expectedInput = document.getElementById("hash-expected-input");
+            const expected = expectedInput ? expectedInput.value.trim() : "";
+            const matchStatus = document.getElementById("hash-match-status");
+            const isEn = window.i18n && window.i18n.getCurrentLanguage && window.i18n.getCurrentLanguage() === "en";
+
+            if (!expected) {
+                if (window.showAppToast) {
+                    const msg = (window.i18n && window.i18n.t) ? window.i18n.t("hash.empty_expected") : (isEn ? "Please enter an expected hash." : "Vui lòng nhập mã băm mẫu để so khớp.");
+                    window.showAppToast(msg);
+                }
+                if (expectedInput) expectedInput.focus();
+                return;
+            }
+
+            if (!currentComputedHash) {
+                if (btnComputeHash) btnComputeHash.click();
+                return;
+            }
+
+            if (matchStatus) {
+                const isMatch = stringCompareIgnoreCase(currentComputedHash, expected);
+                matchStatus.style.display = "block";
+                matchStatus.className = "hash-match-status " + (isMatch ? "match" : "mismatch");
+                if (isMatch) {
+                    matchStatus.textContent = (window.i18n && window.i18n.t) ? window.i18n.t("hash.match_success") : (isEn ? "✔ Hash MATCHES PERFECTLY! The file is intact." : "✔ Mã băm HOÀN TOÀN KHỚP! Tệp tải về nguyên vẹn và an toàn.");
+                } else {
+                    matchStatus.textContent = (window.i18n && window.i18n.t) ? window.i18n.t("hash.match_fail") : (isEn ? "✘ Hash MISMATCH! The file might be corrupted." : "✘ Mã băm KHÔNG KHỚP! Tệp có thể đã bị lỗi truyền tải hoặc bị sửa đổi.");
+                }
+            }
+        });
+    }
+
+    if (btnCopyHash) {
+        btnCopyHash.addEventListener("click", () => {
+            if (!currentComputedHash) return;
+            navigator.clipboard.writeText(currentComputedHash).then(() => {
+                const isEn = window.i18n && window.i18n.getCurrentLanguage && window.i18n.getCurrentLanguage() === "en";
+                const copiedText = (window.i18n && window.i18n.t) ? window.i18n.t("hash.copied") : (isEn ? "Copied!" : "Đã sao chép!");
+                btnCopyHash.innerHTML = `<i class="fa-solid fa-check"></i> <span>${copiedText}</span>`;
+                setTimeout(() => {
+                    const copyText = (window.i18n && window.i18n.t) ? window.i18n.t("hash.copy") : (isEn ? "Copy" : "Sao chép");
+                    btnCopyHash.innerHTML = `<i class="fa-regular fa-copy"></i> <span>${copyText}</span>`;
+                }, 2000);
+            }).catch(() => { });
+        });
+    }
+});
 
 // Lắng nghe lăn con chuột trên menu tab cài đặt để cuộn thanh scrollbar ngang
 function initSettingsTabsWheel() {
