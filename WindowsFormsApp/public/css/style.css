@@ -324,13 +324,14 @@ a {
 
 
 
-.header .btn-warning:hover { 
+.header .btn-warning:hover,
+#btn-header-cancel-all:hover { 
 
-    background-color: #EA580C; 
+    background-color: #EA580C !important; 
 
-    color: white;
+    color: #ffffff !important;
 
-    border-color: #EA580C;
+    border-color: #EA580C !important;
 
     box-shadow: 0 6px 15px rgba(234, 88, 12, 0.25);
 
@@ -338,9 +339,14 @@ a {
 
 
 
-.header .btn-warning:hover i {
+.header .btn-warning:hover i,
+.header .btn-warning:hover span,
+.header .btn-warning:hover *,
+#btn-header-cancel-all:hover i,
+#btn-header-cancel-all:hover span,
+#btn-header-cancel-all:hover * {
 
-    color: white;
+    color: #ffffff !important;
 
 }
 
@@ -366,13 +372,14 @@ a {
 
 
 
-.header .btn-danger:hover { 
+.header .btn-danger:hover,
+#btn-header-delete-all:hover { 
 
-    background-color: #EF4444; 
+    background-color: #EF4444 !important; 
 
-    color: white;
+    color: #ffffff !important;
 
-    border-color: #EF4444;
+    border-color: #EF4444 !important;
 
     box-shadow: 0 6px 15px rgba(239, 68, 68, 0.25);
 
@@ -380,9 +387,14 @@ a {
 
 
 
-.header .btn-danger:hover i {
+.header .btn-danger:hover i,
+.header .btn-danger:hover span,
+.header .btn-danger:hover *,
+#btn-header-delete-all:hover i,
+#btn-header-delete-all:hover span,
+#btn-header-delete-all:hover * {
 
-    color: white;
+    color: #ffffff !important;
 
 }
 
@@ -15324,25 +15336,49 @@ html[data-theme="dark"] .countdown-preset-pill.active {
 
 
 
-.btn-batch-tool:hover {
+.btn-batch-tool:hover,
+#btn-import-batch-file:hover {
 
-    background: var(--primary-color, #6366f1);
+    background: var(--primary-color, #6366f1) !important;
 
-    color: #fff;
+    color: #ffffff !important;
 
-    border-color: var(--primary-color, #6366f1);
+    border-color: var(--primary-color, #6366f1) !important;
+
+}
+
+.btn-batch-tool:hover i,
+.btn-batch-tool:hover span,
+.btn-batch-tool:hover *,
+#btn-import-batch-file:hover i,
+#btn-import-batch-file:hover span,
+#btn-import-batch-file:hover * {
+
+    color: #ffffff !important;
 
 }
 
 
 
-.btn-batch-clear:hover {
+.btn-batch-clear:hover,
+#btn-clear-batch:hover {
 
-    background: #ef4444;
+    background: #ef4444 !important;
 
-    border-color: #ef4444;
+    border-color: #ef4444 !important;
 
-    color: #fff;
+    color: #ffffff !important;
+
+}
+
+.btn-batch-clear:hover i,
+.btn-batch-clear:hover span,
+.btn-batch-clear:hover *,
+#btn-clear-batch:hover i,
+#btn-clear-batch:hover span,
+#btn-clear-batch:hover * {
+
+    color: #ffffff !important;
 
 }
 
