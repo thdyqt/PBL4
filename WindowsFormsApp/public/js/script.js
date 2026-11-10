@@ -1678,6 +1678,10 @@ function populateSettingsForm(s) {
 
     if (toastComp) toastComp.checked = s.showToastOnCompletion !== false;
 
+    const soundComp = document.getElementById("setting-sound-on-completion");
+
+    if (soundComp) soundComp.checked = s.playSoundOnCompletion !== false;
+
     const autoOpenFolder = document.getElementById("setting-auto-open-folder");
 
     if (autoOpenFolder) autoOpenFolder.checked = s.autoOpenFolderOnCompletion ?? false;
@@ -2524,6 +2528,8 @@ if (btnSaveSettings) {
 
         const showToast = document.getElementById("setting-toast-on-completion")?.checked ?? true;
 
+        const playSound = document.getElementById("setting-sound-on-completion")?.checked ?? true;
+
         const autoOpenFolder = document.getElementById("setting-auto-open-folder")?.checked ?? false;
 
 
@@ -2553,6 +2559,8 @@ if (btnSaveSettings) {
             minimizeToTrayOnClose: minimizeToTray,
 
             showToastOnCompletion: showToast,
+
+            playSoundOnCompletion: playSound,
 
             autoOpenFolderOnCompletion: autoOpenFolder,
 

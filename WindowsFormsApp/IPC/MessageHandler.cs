@@ -71,6 +71,8 @@ namespace WindowsFormsApp.IPC
 
             = new System.Collections.Generic.HashSet<string>(StringComparer.Ordinal);
 
+        private long _lastSoundPlayedTicks = 0;
+
 
 
         public MessageHandler(Form1 mainForm)
@@ -1841,6 +1843,8 @@ namespace WindowsFormsApp.IPC
 
                             }
 
+                            PlayCompletionSound();
+
                             if (currentSettings != null && currentSettings.AutoOpenFolderOnCompletion && !string.IsNullOrEmpty(tPath))
 
                             {
@@ -2818,6 +2822,28 @@ namespace WindowsFormsApp.IPC
 
             }
 
+            PlayCompletionSound();
+
+        }
+
+        private void PlayCompletionSound()
+        {
+            try
+            {
+                var settings = SettingsManager.Current;
+                if (settings == null || !settings.PlaySoundOnCompletion) return;
+
+                long now = Environment.TickCount;
+                if (Math.Abs(now - _lastSoundPlayedTicks) > 1500)
+                {
+                    _lastSoundPlayedTicks = now;
+                    System.Media.SystemSounds.Asterisk.Play();
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine("[MessageHandler] PlayCompletionSound error: " + ex.Message);
+            }
         }
 
 

@@ -746,6 +746,8 @@
             "settings.shell.toast_complete": "Thông báo Windows khi tải xong (Toast Notification)",
 
             "settings.shell.toast_complete_desc": "Hiển thị thông báo Toast / BalloonTip ở góc phải màn hình khi tệp hoàn tất, bấm vào thông báo để mở tệp ngay.",
+            "settings.shell.sound_complete": "Âm thanh thông báo khi hoàn tất (Audio Notification)",
+            "settings.shell.sound_complete_desc": "Phát một tiếng chuông nhẹ của hệ thống Windows khi tải xong một tệp hoặc hoàn tất toàn bộ hàng đợi.",
             "settings.shell.open_folder_complete": "Tự động mở thư mục sau khi tải xong",
             "settings.shell.open_folder_complete_desc": "Tự động mở Windows File Explorer và làm nổi bật tệp ngay khi tác vụ tải hoàn tất.",
 
@@ -1673,6 +1675,8 @@
             "settings.shell.toast_complete": "Windows Notification on completion (Toast Notification)",
 
             "settings.shell.toast_complete_desc": "Display a Windows notification banner when a file completes; click the notification to open the file immediately.",
+            "settings.shell.sound_complete": "Sound notification on completion (Audio Notification)",
+            "settings.shell.sound_complete_desc": "Play a gentle Windows system sound when a file or the entire queue finishes downloading.",
             "settings.shell.open_folder_complete": "Open folder when download completes",
             "settings.shell.open_folder_complete_desc": "Automatically open Windows File Explorer and highlight the downloaded file upon completion.",
 

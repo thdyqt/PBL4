@@ -46,6 +46,7 @@ namespace WindowsFormsApp.Download
         public bool StartWithWindows { get; set; } = false;
         public bool MinimizeToTrayOnClose { get; set; } = true;
         public bool ShowToastOnCompletion { get; set; } = true;
+        public bool PlaySoundOnCompletion { get; set; } = true; // Phát tiếng chuông Asterisk khi hoàn tất tải file/hàng đợi
         public bool AutoOpenFolderOnCompletion { get; set; } = false; // Tự động mở thư mục sau khi tải xong (mặc định tắt)
     }
 
