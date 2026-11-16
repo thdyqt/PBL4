@@ -1,0 +1,379 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mxfile host="app.diagrams.net" modified="2026-11-15T20:30:00.000Z" agent="Antigravity" version="21.0.0" type="device">
+  <!-- Diagram 1: RemoteProbe Flowchart -->
+  <diagram id="page1" name="1. Quy trình Thăm dò RemoteProbe">
+    <mxGraphModel dx="1200" dy="900" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="827" background="#ffffff">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        
+        <!-- Start -->
+        <mxCell id="start" value="BẮT ĐẦU THĂM DÒ TỆP&#xa;(Nhận URL tải về)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#1e293b;strokeColor=#0f172a;fontColor=#ffffff;fontStyle=1;fontSize=13;arcSize=30;" vertex="1" parent="1">
+          <mxGeometry x="440" y="40" width="220" height="50" as="geometry" />
+        </mxCell>
+        
+        <!-- Step 1: Send HEAD -->
+        <mxCell id="step1" value="GỬI HTTP HEAD REQUEST&#xa;HeaderTimeout = 30s&#xa;User-Agent: DUTDownloadAccelerator/1.0" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e0f2fe;strokeColor=#0284c7;fontColor=#0369a1;fontStyle=1;fontSize=12;arcSize=10;" vertex="1" parent="1">
+          <mxGeometry x="420" y="130" width="260" height="60" as="geometry" />
+        </mxCell>
+        
+        <!-- Decision 1: HEAD Success? -->
+        <mxCell id="dec1" value="HEAD thành công &amp;amp;&#xa;Accept-Ranges: bytes &amp;amp;&#xa;Content-Length &amp;gt; 0?" style="rhombus;whiteSpace=wrap;html=1;fillColor=#fef3c7;strokeColor=#d97706;fontColor=#92400e;fontStyle=1;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="410" y="230" width="280" height="90" as="geometry" />
+        </mxCell>
+        
+        <!-- Success Case HEAD -->
+        <mxCell id="succ_head" value="XÁC NHẬN HỖ TRỢ RANGE&#xa;• Trích xuất TotalBytes = Content-Length&#xa;• Lưu ETag / Last-Modified&#xa;• Phân tích Content-Disposition / URL lấy FileName&#xa;• SupportsRanges = true" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dcfce7;strokeColor=#16a34a;fontColor=#15803d;fontStyle=0;fontSize=12;align=left;spacingLeft=15;" vertex="1" parent="1">
+          <mxGeometry x="780" y="240" width="320" height="90" as="geometry" />
+        </mxCell>
+        
+        <!-- Step 2: Fallback GET Range 0-0 -->
+        <mxCell id="step2" value="CƠ CHẾ DỰ PHÒNG THÔNG MINH&#xa;Gửi GET Request kèm Range: bytes=0-0&#xa;(Vượt qua lỗi 403/405 chặn HEAD của CDN)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fee2e2;strokeColor=#dc2626;fontColor=#991b1b;fontStyle=1;fontSize=12;arcSize=10;" vertex="1" parent="1">
+          <mxGeometry x="410" y="370" width="280" height="60" as="geometry" />
+        </mxCell>
+        
+        <!-- Decision 2: HTTP 206 Partial Content? -->
+        <mxCell id="dec2" value="Server trả về HTTP 206&#xa;kèm Content-Range:&#xa;bytes 0-0/TotalLength?" style="rhombus;whiteSpace=wrap;html=1;fillColor=#fef3c7;strokeColor=#d97706;fontColor=#92400e;fontStyle=1;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="420" y="470" width="260" height="90" as="geometry" />
+        </mxCell>
+        
+        <!-- Success Case Fallback -->
+        <mxCell id="succ_fallback" value="XÁC NHẬN HỖ TRỢ RANGE QUA FALLBACK&#xa;• TotalBytes = Content-Range.Length&#xa;• Lưu ETag / Last-Modified&#xa;• Đóng kết nối ngay (chỉ tốn đúng 1 byte)&#xa;• SupportsRanges = true" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dcfce7;strokeColor=#16a34a;fontColor=#15803d;fontStyle=0;fontSize=12;align=left;spacingLeft=15;" vertex="1" parent="1">
+          <mxGeometry x="780" y="470" width="320" height="90" as="geometry" />
+        </mxCell>
+        
+        <!-- Fallback Single Thread -->
+        <mxCell id="fail_single" value="MÁY CHỦ KHÔNG HỖ TRỢ RANGE&#xa;(HTTP 200 OK bỏ qua Range hoặc chunked)&#xa;• Chuyển sang chế độ tải 1 luồng duy nhất&#xa;• SupportsRanges = false&#xa;• Không hỗ trợ Resume theo dải byte" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f3f4f6;strokeColor=#6b7280;fontColor=#374151;fontStyle=0;fontSize=12;align=left;spacingLeft=15;" vertex="1" parent="1">
+          <mxGeometry x="50" y="475" width="300" height="80" as="geometry" />
+        </mxCell>
+        
+        <!-- Finalize Output -->
+        <mxCell id="finalize" value="ĐÓNG GÓI THÔNG TIN VÀO RemoteFileInfo&#xa;Truyền sang khâu SegmentPlanner để chia đoạn" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#1e293b;strokeColor=#0f172a;fontColor=#ffffff;fontStyle=1;fontSize=13;arcSize=20;" vertex="1" parent="1">
+          <mxGeometry x="410" y="620" width="280" height="55" as="geometry" />
+        </mxCell>
+
+        <!-- Edges -->
+        <mxCell id="e1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#0284c7;" edge="1" parent="1" source="start" target="step1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#0284c7;" edge="1" parent="1" source="step1" target="dec1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e3" value="CÓ (Hợp lệ)" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#16a34a;fontColor=#15803d;fontStyle=1;" edge="1" parent="1" source="dec1" target="succ_head">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e4" value="KHÔNG (Chặn/Thiếu)" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#dc2626;fontColor=#991b1b;fontStyle=1;" edge="1" parent="1" source="dec1" target="step2">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e5" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#dc2626;" edge="1" parent="1" source="step2" target="dec2">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e6" value="Mã 206 (Hỗ trợ)" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#16a34a;fontColor=#15803d;fontStyle=1;" edge="1" parent="1" source="dec2" target="succ_fallback">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e7" value="Mã 200 (Từ chối Range)" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#6b7280;fontColor=#374151;fontStyle=1;" edge="1" parent="1" source="dec2" target="fail_single">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e8" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#16a34a;" edge="1" parent="1" source="succ_head" target="finalize">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="940" y="648" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e9" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#16a34a;" edge="1" parent="1" source="succ_fallback" target="finalize">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="940" y="648" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e10" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#6b7280;" edge="1" parent="1" source="fail_single" target="finalize">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="200" y="648" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+
+  <!-- Diagram 2: Dynamic Segment Splitting & Work Stealing -->
+  <diagram id="page2" name="2. Phân đoạn &amp; Work Stealing">
+    <mxGraphModel dx="1200" dy="900" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="827" background="#ffffff">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        
+        <!-- Header -->
+        <mxCell id="title2" value="CƠ CHẾ PHÂN CHIA ĐOẠN VÀ ĐÁNH CẮP CÔNG VIỆC ĐỘNG (DYNAMIC WORK STEALING)" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontStyle=1;fontSize=16;fontColor=#0f172a;" vertex="1" parent="1">
+          <mxGeometry x="230" y="20" width="700" height="30" as="geometry" />
+        </mxCell>
+        
+        <!-- Phase 1 Box -->
+        <mxCell id="grp1" value="Giai đoạn 1: Phân bổ N phân đoạn ban đầu (SegmentPlanner.Split)" style="swimlane;whiteSpace=wrap;html=1;fillColor=#f8fafc;strokeColor=#cbd5e1;fontColor=#1e293b;fontStyle=1;fontSize=12;startSize=30;" vertex="1" parent="1">
+          <mxGeometry x="60" y="70" width="1040" height="160" as="geometry" />
+        </mxCell>
+        <mxCell id="f_total" value="Tổng không gian byte của tệp (0 đến TotalBytes - 1)&#xa;Công thức: baseSize = ⌊TotalBytes / N⌋; extra = TotalBytes % N" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e2e8f0;strokeColor=#94a3b8;fontColor=#334155;fontStyle=1;fontSize=11;" vertex="1" parent="grp1">
+          <mxGeometry x="30" y="40" width="980" height="35" as="geometry" />
+        </mxCell>
+        <mxCell id="seg0" value="Segment #0 [0 .. S0]&#xa;(baseSize + 1)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#bfdbfe;strokeColor=#3b82f6;fontColor=#1e3a8a;fontStyle=1;fontSize=11;" vertex="1" parent="grp1">
+          <mxGeometry x="30" y="90" width="230" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="seg1" value="Segment #1 [S0+1 .. S1]&#xa;(baseSize + 1)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#bfdbfe;strokeColor=#3b82f6;fontColor=#1e3a8a;fontStyle=1;fontSize=11;" vertex="1" parent="grp1">
+          <mxGeometry x="280" y="90" width="230" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="seg2" value="Segment #2 [S1+1 .. S2]&#xa;(baseSize)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dbeafe;strokeColor=#60a5fa;fontColor=#1e3a8a;fontStyle=1;fontSize=11;" vertex="1" parent="grp1">
+          <mxGeometry x="530" y="90" width="230" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="segn" value="Segment #(N-1) [SN-2+1 .. Total-1]&#xa;(baseSize)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dbeafe;strokeColor=#60a5fa;fontColor=#1e3a8a;fontStyle=1;fontSize=11;" vertex="1" parent="grp1">
+          <mxGeometry x="780" y="90" width="230" height="50" as="geometry" />
+        </mxCell>
+
+        <!-- Phase 2 Box -->
+        <mxCell id="grp2" value="Giai đoạn 2: Worker thực thi &amp;amp; Phục hồi phân đoạn rùa (Dynamic Segment Splitting / Work Stealing)" style="swimlane;whiteSpace=wrap;html=1;fillColor=#f8fafc;strokeColor=#cbd5e1;fontColor=#1e293b;fontStyle=1;fontSize=12;startSize=30;" vertex="1" parent="1">
+          <mxGeometry x="60" y="260" width="1040" height="350" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="w1_done" value="Worker 1: Tải xong sớm Segment #0&#xa;Trạng thái: RẢNH RỖI (Idle)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dcfce7;strokeColor=#16a34a;fontColor=#15803d;fontStyle=1;fontSize=11;" vertex="1" parent="grp2">
+          <mxGeometry x="30" y="45" width="250" height="50" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="w1_scan" value="Quét danh sách Segments đang chạy:&#xa;Tìm phân đoạn có Remaining = End - NextByte + 1 LỚN NHẤT&#xa;(Ví dụ: Segment #2 còn 120 MB chưa tải &amp;gt;= MinSplitSize 512KB)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fef3c7;strokeColor=#d97706;fontColor=#92400e;fontStyle=0;fontSize=11;" vertex="1" parent="grp2">
+          <mxGeometry x="320" y="45" width="400" height="50" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="w1_split" value="Kích hoạt TrySplit(newIndex)&#xa;Khóa bảo vệ luồng lock(_lock)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fee2e2;strokeColor=#dc2626;fontColor=#991b1b;fontStyle=1;fontSize=11;" vertex="1" parent="grp2">
+          <mxGeometry x="760" y="45" width="250" height="50" as="geometry" />
+        </mxCell>
+
+        <!-- Before Split Diagram -->
+        <mxCell id="lbl_before" value="Trước khi cắt đôi (Phân đoạn cũ #2 còn dài):" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;fontStyle=1;fontSize=11;fontColor=#475569;" vertex="1" parent="grp2">
+          <mxGeometry x="30" y="120" width="300" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="seg2_done" value="Đã tải: [Start .. NextByte - 1]&#xa;(30 MB)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#86efac;strokeColor=#22c55e;fontColor=#14532d;fontStyle=0;fontSize=11;" vertex="1" parent="grp2">
+          <mxGeometry x="30" y="145" width="250" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="seg2_rem" value="Chưa tải dở dang: [NextByte ................................................................ End]&#xa;(120 MB còn lại - Đang bị nghẽn mạng)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fed7aa;strokeColor=#f97316;fontColor=#7c2d12;fontStyle=1;fontSize=11;" vertex="1" parent="grp2">
+          <mxGeometry x="290" y="145" width="720" height="40" as="geometry" />
+        </mxCell>
+
+        <!-- After Split Diagram -->
+        <mxCell id="lbl_after" value="Sau khi cắt đôi (TrySplit): Worker 1 nhận phân đoạn mới tải song song:" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;fontStyle=1;fontSize=11;fontColor=#475569;" vertex="1" parent="grp2">
+          <mxGeometry x="30" y="215" width="450" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="seg2_retained" value="Phân đoạn #2 cũ thu hẹp:&#xa;[NextByte .. splitPoint - 1] (60 MB)&#xa;→ Worker cũ tiếp tục tải" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fed7aa;strokeColor=#f97316;fontColor=#7c2d12;fontStyle=1;fontSize=11;" vertex="1" parent="grp2">
+          <mxGeometry x="290" y="240" width="350" height="55" as="geometry" />
+        </mxCell>
+        <mxCell id="seg_new" value="Phân đoạn MỚI #N sinh ra:&#xa;[splitPoint .. oldEnd] (60 MB)&#xa;→ Worker 1 (rảnh) kết nối tải ngay!" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#c7d2fe;strokeColor=#6366f1;fontColor=#312e81;fontStyle=1;fontSize=11;" vertex="1" parent="grp2">
+          <mxGeometry x="660" y="240" width="350" height="55" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="benefit2" value="KẾT QUẢ: 100% tài nguyên CPU &amp;amp; Socket mạng luôn hoạt động hết công suất đến byte cuối cùng. Loại bỏ hoàn toàn độ trễ đuôi (Tail Latency)." style="rounded=1;whiteSpace=wrap;html=1;fillColor=#1e293b;strokeColor=#0f172a;fontColor=#ffffff;fontStyle=1;fontSize=12;" vertex="1" parent="grp2">
+          <mxGeometry x="30" y="305" width="980" height="35" as="geometry" />
+        </mxCell>
+
+        <!-- Connectors -->
+        <mxCell id="ec1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#0284c7;" edge="1" parent="grp2" source="w1_done" target="w1_scan">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ec2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#0284c7;" edge="1" parent="grp2" source="w1_scan" target="w1_split">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+
+  <!-- Diagram 3: Zero-Copy Direct Disk Write -->
+  <diagram id="page3" name="3. Ghi đĩa trực tiếp Zero-Copy">
+    <mxGraphModel dx="1200" dy="900" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="827" background="#ffffff">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        
+        <mxCell id="title3" value="KIẾN TRÚC GHI ĐĨA TRỰC TIẾP ZERO-COPY (FILESTREAM.SEEK) TRÊN HỆ THỐNG TỆP WINDOWS" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontStyle=1;fontSize=15;fontColor=#0f172a;" vertex="1" parent="1">
+          <mxGeometry x="180" y="20" width="800" height="30" as="geometry" />
+        </mxCell>
+
+        <!-- Network Streams -->
+        <mxCell id="net_box" value="LUỒNG DỮ LIỆU TỪ MẠNG (HTTP SOCKET STREAMS)" style="swimlane;whiteSpace=wrap;html=1;fillColor=#eff6ff;strokeColor=#93c5fd;fontColor=#1e40af;fontStyle=1;startSize=25;" vertex="1" parent="1">
+          <mxGeometry x="50" y="70" width="260" height="420" as="geometry" />
+        </mxCell>
+        <mxCell id="t1" value="Worker 1 Socket Stream&#xa;GET Range: 0 - 26214399&#xa;Buffer: 80 KB" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dbeafe;strokeColor=#3b82f6;fontColor=#1e3a8a;fontStyle=1;fontSize=11;" vertex="1" parent="net_box">
+          <mxGeometry x="20" y="40" width="220" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="t2" value="Worker 2 Socket Stream&#xa;GET Range: 26214400 - 52428799&#xa;Buffer: 80 KB" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dbeafe;strokeColor=#3b82f6;fontColor=#1e3a8a;fontStyle=1;fontSize=11;" vertex="1" parent="net_box">
+          <mxGeometry x="20" y="135" width="220" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="t3" value="Worker 3 Socket Stream&#xa;GET Range: 52428800 - 78643199&#xa;Buffer: 80 KB" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dbeafe;strokeColor=#3b82f6;fontColor=#1e3a8a;fontStyle=1;fontSize=11;" vertex="1" parent="net_box">
+          <mxGeometry x="20" y="230" width="220" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="t4" value="Worker 4 Socket Stream&#xa;GET Range: 78643200 - 104857599&#xa;Buffer: 80 KB" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dbeafe;strokeColor=#3b82f6;fontColor=#1e3a8a;fontStyle=1;fontSize=11;" vertex="1" parent="net_box">
+          <mxGeometry x="20" y="325" width="220" height="60" as="geometry" />
+        </mxCell>
+
+        <!-- OS IO Layer -->
+        <mxCell id="os_box" value="TẦNG ĐIỀU PHỐI FILE I/O (.NET &amp;amp; WIN32 FILESTREAM)" style="swimlane;whiteSpace=wrap;html=1;fillColor=#fdf4ff;strokeColor=#f0abfc;fontColor=#701a75;fontStyle=1;startSize=25;" vertex="1" parent="1">
+          <mxGeometry x="370" y="70" width="330" height="420" as="geometry" />
+        </mxCell>
+        <mxCell id="fs1" value="FileStream #1 (bufferSize = 1)&#xa;fs.Seek(0 + dl_0, SeekOrigin.Begin)&#xa;fs.WriteAsync(buffer, 0, n)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fae8ff;strokeColor=#d946ef;fontColor=#701a75;fontStyle=1;fontSize=11;" vertex="1" parent="os_box">
+          <mxGeometry x="20" y="40" width="290" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="fs2" value="FileStream #2 (bufferSize = 1)&#xa;fs.Seek(26214400 + dl_1, SeekOrigin.Begin)&#xa;fs.WriteAsync(buffer, 0, n)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fae8ff;strokeColor=#d946ef;fontColor=#701a75;fontStyle=1;fontSize=11;" vertex="1" parent="os_box">
+          <mxGeometry x="20" y="135" width="290" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="fs3" value="FileStream #3 (bufferSize = 1)&#xa;fs.Seek(52428800 + dl_2, SeekOrigin.Begin)&#xa;fs.WriteAsync(buffer, 0, n)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fae8ff;strokeColor=#d946ef;fontColor=#701a75;fontStyle=1;fontSize=11;" vertex="1" parent="os_box">
+          <mxGeometry x="20" y="230" width="290" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="fs4" value="FileStream #4 (bufferSize = 1)&#xa;fs.Seek(78643200 + dl_3, SeekOrigin.Begin)&#xa;fs.WriteAsync(buffer, 0, n)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fae8ff;strokeColor=#d946ef;fontColor=#701a75;fontStyle=1;fontSize=11;" vertex="1" parent="os_box">
+          <mxGeometry x="20" y="325" width="290" height="60" as="geometry" />
+        </mxCell>
+
+        <!-- Disk Target File -->
+        <mxCell id="disk_box" value="TỆP ĐÍCH DUY NHẤT TRÊN ĐĨA (NTFS PRE-ALLOCATED FILE)&#xa;Cấp phát trước bằng fs.SetLength(TotalBytes) | FileShare.ReadWrite" style="swimlane;whiteSpace=wrap;html=1;fillColor=#ecfdf5;strokeColor=#6ee7b7;fontColor=#065f46;fontStyle=1;startSize=30;" vertex="1" parent="1">
+          <mxGeometry x="760" y="70" width="360" height="420" as="geometry" />
+        </mxCell>
+        <mxCell id="b1" value="[VÙNG BYTE 0 .. 25 MB]&#xa;Ghi trực tiếp bởi Worker 1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#a7f3d0;strokeColor=#10b981;fontColor=#064e3b;fontStyle=1;fontSize=11;" vertex="1" parent="disk_box">
+          <mxGeometry x="30" y="45" width="300" height="55" as="geometry" />
+        </mxCell>
+        <mxCell id="b2" value="[VÙNG BYTE 25 MB .. 50 MB]&#xa;Ghi trực tiếp bởi Worker 2" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#a7f3d0;strokeColor=#10b981;fontColor=#064e3b;fontStyle=1;fontSize=11;" vertex="1" parent="disk_box">
+          <mxGeometry x="30" y="140" width="300" height="55" as="geometry" />
+        </mxCell>
+        <mxCell id="b3" value="[VÙNG BYTE 50 MB .. 75 MB]&#xa;Ghi trực tiếp bởi Worker 3" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#a7f3d0;strokeColor=#10b981;fontColor=#064e3b;fontStyle=1;fontSize=11;" vertex="1" parent="disk_box">
+          <mxGeometry x="30" y="235" width="300" height="55" as="geometry" />
+        </mxCell>
+        <mxCell id="b4" value="[VÙNG BYTE 75 MB .. 100 MB]&#xa;Ghi trực tiếp bởi Worker 4" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#a7f3d0;strokeColor=#10b981;fontColor=#064e3b;fontStyle=1;fontSize=11;" vertex="1" parent="disk_box">
+          <mxGeometry x="30" y="330" width="300" height="55" as="geometry" />
+        </mxCell>
+
+        <!-- Benefit Summary Bottom -->
+        <mxCell id="summary_box" value="SO SÁNH VỚI CÁCH GHÉP FILE TẠM TRUYỀN THỐNG:&#xa;• Tiết kiệm 50% không gian đĩa (Không cần đĩa trống gấp đôi).&#xa;• Hoàn thành tức thì (0 ms): Byte cuối cùng tải xong là file sẵn sàng sử dụng ngay, không tốn thời gian nối file.&#xa;• Giảm 50% số lần đọc/ghi đĩa (Bảo vệ tối đa tuổi thọ chip nhớ NAND Flash của SSD)." style="rounded=1;whiteSpace=wrap;html=1;fillColor=#1e293b;strokeColor=#0f172a;fontColor=#ffffff;fontStyle=0;fontSize=12;align=left;spacingLeft=20;" vertex="1" parent="1">
+          <mxGeometry x="50" y="515" width="1070" height="85" as="geometry" />
+        </mxCell>
+
+        <!-- Edges -->
+        <mxCell id="arr1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#3b82f6;" edge="1" parent="1" source="t1" target="fs1"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="arr2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#3b82f6;" edge="1" parent="1" source="t2" target="fs2"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="arr3" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#3b82f6;" edge="1" parent="1" source="t3" target="fs3"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="arr4" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#3b82f6;" edge="1" parent="1" source="t4" target="fs4"><mxGeometry relative="1" as="geometry" /></mxCell>
+
+        <mxCell id="arr5" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#10b981;" edge="1" parent="1" source="fs1" target="b1"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="arr6" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#10b981;" edge="1" parent="1" source="fs2" target="b2"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="arr7" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#10b981;" edge="1" parent="1" source="fs3" target="b3"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="arr8" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#10b981;" edge="1" parent="1" source="fs4" target="b4"><mxGeometry relative="1" as="geometry" /></mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+
+  <!-- Diagram 4: Atomic Resume & State Recovery -->
+  <diagram id="page4" name="4. Khôi phục Resume &amp; Ghi nguyên tử">
+    <mxGraphModel dx="1200" dy="900" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="827" background="#ffffff">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+
+        <mxCell id="title4" value="CHU TRÌNH LƯU TRỮ VÀ PHỤC HỒI TRẠNG THÁI RESUME AN TOÀN TUYỆT ĐỐI" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontStyle=1;fontSize=15;fontColor=#0f172a;" vertex="1" parent="1">
+          <mxGeometry x="230" y="20" width="700" height="30" as="geometry" />
+        </mxCell>
+
+        <!-- Left: Normal Running & Dual Storage -->
+        <mxCell id="box_run" value="TIẾN TRÌNH TẢI ĐANG DIỄN RA&#xa;Mỗi 400ms hoặc khi có sự kiện Pause / Worker kết thúc" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e0f2fe;strokeColor=#0284c7;fontColor=#0369a1;fontStyle=1;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="60" y="80" width="340" height="50" as="geometry" />
+        </mxCell>
+
+        <!-- Storage 1: SQLite -->
+        <mxCell id="sql_store" value="TẦNG 1: CƠ SỞ DỮ LIỆU SQLITE&#xa;Tệp: downloads.db (Chế độ WAL)&#xa;• Cập nhật bản ghi download_history&#xa;• Chuỗi JSON segments_json lưu mảng SegmentMeta&#xa;• Ghi nhật ký trước WAL: Không nghẽn giao diện" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fef3c7;strokeColor=#d97706;fontColor=#92400e;fontStyle=0;fontSize=11;align=left;spacingLeft=15;" vertex="1" parent="1">
+          <mxGeometry x="60" y="170" width="340" height="90" as="geometry" />
+        </mxCell>
+
+        <!-- Storage 2: dlmeta Atomic Write -->
+        <mxCell id="meta_store" value="TẦNG 2: TỆP SIÊU DỮ LIỆU DỰ PHÒNG .dlmeta&#xa;KỸ THUẬT GHI NGUYÊN TỬ (ATOMIC REPLACE)&#xa;1. Ghi toàn bộ JSON ra tệp tạm: target.ext.dlmeta.tmp&#xa;2. Gọi Win32 ReplaceFile(tmp, target.ext.dlmeta)&#xa;→ Hoán đổi con trỏ thư mục NTFS tức thì, chống hỏng tệp khi mất điện" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fee2e2;strokeColor=#dc2626;fontColor=#991b1b;fontStyle=0;fontSize=11;align=left;spacingLeft=15;" vertex="1" parent="1">
+          <mxGeometry x="60" y="300" width="340" height="100" as="geometry" />
+        </mxCell>
+
+        <!-- Right: Resume Trigger -->
+        <mxCell id="resume_event" value="SỰ CỐ XẢY RA HOẶC NGƯỜI DÙNG BẤM RESUME&#xa;(Khởi động lại ứng dụng / Bấm 'Tiếp tục')" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f1f5f9;strokeColor=#64748b;fontColor=#334155;fontStyle=1;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="520" y="80" width="580" height="50" as="geometry" />
+        </mxCell>
+
+        <mxCell id="step_load" value="1. ĐỌC DỮ LIỆU PHỤC HỒI TỪ SQLITE HOẶC TỆP .dlmeta&#xa;• Lấy lại URL, ETag, LastModified, TotalBytes&#xa;• Nạp lại mảng segments: [{Index, Start, End, Downloaded, Finished}]" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ecfdf5;strokeColor=#10b981;fontColor=#064e3b;fontStyle=0;fontSize=11;align=left;spacingLeft=15;" vertex="1" parent="1">
+          <mxGeometry x="520" y="160" width="580" height="60" as="geometry" />
+        </mxCell>
+
+        <mxCell id="step_check_server" value="2. KIỂM TRA TÍNH TOÀN VẸN PHIÊN TẢI VỚI MÁY CHỦ&#xa;Gửi HTTP GET kèm header If-Range: &amp;quot;ETag&amp;quot;&#xa;• Nếu tệp trên server không đổi: Server trả HTTP 206 Partial Content (ĐƯỢC DUYỆT)&#xa;• Nếu tệp trên server đã bị ghi đè mới: Server trả HTTP 200 OK (CẢNH BÁO TẢI LẠI TỪ ĐẦU)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ecfdf5;strokeColor=#10b981;fontColor=#064e3b;fontStyle=0;fontSize=11;align=left;spacingLeft=15;" vertex="1" parent="1">
+          <mxGeometry x="520" y="250" width="580" height="75" as="geometry" />
+        </mxCell>
+
+        <mxCell id="step_calc_range" value="3. TÍNH TOÁN ĐIỂM TIẾP TỤC CHÍNH XÁC TỪNG BYTE CHO TỪNG PHÂN ĐOẠN&#xa;• Nếu Finished == true: BỎ QUA HOÀN TOÀN&#xa;• Nếu Finished == false:&#xa;    NextByte = Start + Downloaded&#xa;    Gửi request: Range: bytes=NextByte-End&#xa;    Ghi tiếp vào FileStream tại offset: fs.Seek(NextByte, SeekOrigin.Begin)&#xa;→ KHÔNG MẤT BẤT KỲ 1 BYTE NÀO ĐÃ TẢI TRƯỚC ĐÓ!" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dbeafe;strokeColor=#2563eb;fontColor=#1e40af;fontStyle=0;fontSize=11;align=left;spacingLeft=15;" vertex="1" parent="1">
+          <mxGeometry x="520" y="355" width="580" height="105" as="geometry" />
+        </mxCell>
+
+        <mxCell id="step_finish" value="4. HOÀN TẤT 100% VÀ DỌN DẸP AN TOÀN&#xa;• Xác minh VerifyIntegrity() 5 lớp&#xa;• Tự động xóa tệp dự phòng .dlmeta để giải phóng đĩa&#xa;• Cập nhật bản ghi trong SQLite thành 'completed'" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#1e293b;strokeColor=#0f172a;fontColor=#ffffff;fontStyle=1;fontSize=12;align=left;spacingLeft=15;" vertex="1" parent="1">
+          <mxGeometry x="520" y="490" width="580" height="65" as="geometry" />
+        </mxCell>
+
+        <!-- Edges -->
+        <mxCell id="earr1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#0284c7;" edge="1" parent="1" source="box_run" target="sql_store"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="earr2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#0284c7;" edge="1" parent="1" source="box_run" target="meta_store"><mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="30" y="105" /><mxPoint x="30" y="350" /></Array></mxGeometry></mxCell>
+        <mxCell id="earr3" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#64748b;" edge="1" parent="1" source="resume_event" target="step_load"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="earr4" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#10b981;" edge="1" parent="1" source="step_load" target="step_check_server"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="earr5" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#10b981;" edge="1" parent="1" source="step_check_server" target="step_calc_range"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="earr6" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#2563eb;" edge="1" parent="1" source="step_calc_range" target="step_finish"><mxGeometry relative="1" as="geometry" /></mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+
+  <!-- Diagram 5: Benchmark & Testbed Architecture -->
+  <diagram id="page5" name="5. Mô hình Thử nghiệm Đo kiểm">
+    <mxGraphModel dx="1200" dy="900" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="827" background="#ffffff">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+
+        <mxCell id="title5" value="MÔ HÌNH VÀ HẠ TẦNG ĐO KIỂM HIỆU NĂNG THỰC NGHIỆM" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontStyle=1;fontSize=15;fontColor=#0f172a;" vertex="1" parent="1">
+          <mxGeometry x="280" y="20" width="600" height="30" as="geometry" />
+        </mxCell>
+
+        <!-- Client Host -->
+        <mxCell id="client_box" value="MÁY TRẠM THỰC NGHIỆM (DUT CLIENT MACHINE)&#xa;HĐH: Windows 11 Pro 64-bit | RAM: 16 GB DDR4 | Ổ cứng: 512 GB NVMe PCIe SSD" style="swimlane;whiteSpace=wrap;html=1;fillColor=#f8fafc;strokeColor=#64748b;fontColor=#0f172a;fontStyle=1;startSize=30;" vertex="1" parent="1">
+          <mxGeometry x="60" y="70" width="460" height="420" as="geometry" />
+        </mxCell>
+
+        <mxCell id="c_app" value="ỨNG DỤNG DUT DOWNLOAD ACCELERATOR&#xa;• Lõi tải đa luồng (1, 2, 4, 8, 16 luồng)&#xa;• Động cơ ghi đĩa FileStream.Seek (Zero-Copy)&#xa;• Bộ điều phối hàng đợi &amp;amp; SpeedLimiter&#xa;• Trình giám sát PerformanceCounter (CPU, RAM)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dbeafe;strokeColor=#2563eb;fontColor=#1e40af;fontStyle=1;fontSize=11;align=left;spacingLeft=15;" vertex="1" parent="client_box">
+          <mxGeometry x="25" y="45" width="410" height="90" as="geometry" />
+        </mxCell>
+
+        <mxCell id="c_chrome" value="TRÌNH DUYỆT ĐỐI CHỨNG (CHROME &amp;amp; EDGE)&#xa;• Tải 1 luồng truyền thống mặc định&#xa;• Ghi đĩa qua cơ chế bộ nhớ đệm trình duyệt" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fee2e2;strokeColor=#dc2626;fontColor=#991b1b;fontStyle=1;fontSize=11;align=left;spacingLeft=15;" vertex="1" parent="client_box">
+          <mxGeometry x="25" y="160" width="410" height="60" as="geometry" />
+        </mxCell>
+
+        <mxCell id="c_metrics" value="BỘ CHỈ SỐ ĐO KIỂM THỰC NGHIỆM:&#xa;1. Thời gian tải thực tế (Tải hoàn tất) (giây)&#xa;2. Tốc độ truyền tải trung bình (MB/s)&#xa;3. Hệ số tăng tốc Sp = T1 / Tp&#xa;4. Mức chiếm dụng CPU (%) &amp;amp; Bộ nhớ RAM (MB)&#xa;5. Tính toàn vẹn dữ liệu: So khớp mã băm SHA-256" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ecfdf5;strokeColor=#10b981;fontColor=#064e3b;fontStyle=0;fontSize=11;align=left;spacingLeft=15;" vertex="1" parent="client_box">
+          <mxGeometry x="25" y="245" width="410" height="150" as="geometry" />
+        </mxCell>
+
+        <!-- Network Environment -->
+        <mxCell id="net_env" value="MÔI TRƯỜNG MẠNG VÀ CÁC NGUỒN TẢI ĐỐI CHỨNG" style="swimlane;whiteSpace=wrap;html=1;fillColor=#f8fafc;strokeColor=#64748b;fontColor=#0f172a;fontStyle=1;startSize=30;" vertex="1" parent="1">
+          <mxGeometry x="640" y="70" width="460" height="420" as="geometry" />
+        </mxCell>
+
+        <mxCell id="srv_local" value="1. MÁY CHỦ KIỂM THỬ NỘI BỘ (range_server.py)&#xa;• Địa chỉ: http://127.0.0.1:8000/&#xa;• Giả lập giới hạn băng thông từng kết nối (--limit-kbps)&#xa;• Giả lập lỗi chặn HEAD (405) và rớt gói mạng (--drop-rate)&#xa;• Kích thước tệp: 200 MB .. 1 GB" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fef3c7;strokeColor=#d97706;fontColor=#92400e;fontStyle=0;fontSize=11;align=left;spacingLeft=15;" vertex="1" parent="net_env">
+          <mxGeometry x="25" y="45" width="410" height="95" as="geometry" />
+        </mxCell>
+
+        <mxCell id="srv_cdn" value="2. MÁY CHỦ CDN TỐC ĐỘ CAO (Domestic / Regional CDN)&#xa;• Nguồn: Google Chrome CDN, Cloudflare CDN&#xa;• Băng thông vật lý: Gói cước FTTH 250 Mbps (Viettel/VNPT)&#xa;• Độ trễ mạng: RTT thấp (10ms - 25ms)&#xa;• Tệp thử nghiệm: Bộ cài đặt 100 MB, 500 MB" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f0fdf4;strokeColor=#22c55e;fontColor=#15803d;fontStyle=0;fontSize=11;align=left;spacingLeft=15;" vertex="1" parent="net_env">
+          <mxGeometry x="25" y="165" width="410" height="95" as="geometry" />
+        </mxCell>
+
+        <mxCell id="srv_global" value="3. MÁY CHỦ QUỐC TẾ TRỄ CAO (High Latency RTT)&#xa;• Nguồn: Ubuntu ISO Mirror (releases.ubuntu.com)&#xa;• Độ trễ mạng: RTT cao (180ms - 240ms)&#xa;• Băng thông đơn luồng bị giới hạn bởi TCP Window Size&#xa;• Tệp thử nghiệm: ubuntu-22.04-desktop-amd64.iso (3.65 GB)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#faf5ff;strokeColor=#a855f7;fontColor=#6b21a8;fontStyle=0;fontSize=11;align=left;spacingLeft=15;" vertex="1" parent="net_env">
+          <mxGeometry x="25" y="285" width="410" height="110" as="geometry" />
+        </mxCell>
+
+        <!-- Connecting Arrows -->
+        <mxCell id="earr_net1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#d97706;" edge="1" parent="1" source="c_app" target="srv_local"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="earr_net2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#22c55e;" edge="1" parent="1" source="c_app" target="srv_cdn"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="earr_net3" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#a855f7;" edge="1" parent="1" source="c_app" target="srv_global"><mxGeometry relative="1" as="geometry" /></mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
